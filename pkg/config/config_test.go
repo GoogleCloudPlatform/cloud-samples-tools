@@ -19,7 +19,7 @@ func TestLoadConfig(t *testing.T) {
 			fails:    true,
 		},
 		{
-			filename: "default-values.json",
+			filename: "simple.json",
 			config: &c.Config{
 				PackageFile: []string{"package.json"},
 				Match:       []string{"*"},
