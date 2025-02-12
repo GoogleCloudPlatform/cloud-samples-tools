@@ -34,11 +34,11 @@ For example:
 
   // Skip these packages, these could be handled by a different config.
   // Defaults to not exclude anything.
-  "exclude-packages": ["path/to/slow-to-test", "special-config-package"]
+  "exclude-packages": ["path/to/slow-to-test", "special-config-package"],
 }
 ```
 
-For more information, see [`pkg/config/config.go`](pkg/config/config.go).
+For more information, see [`pkg/utils/config.go`](pkg/utils/config.go).
 
 ## Building
 
@@ -46,7 +46,7 @@ To build the tools, we must change to the directory where the tools package is d
 We can run it in a subshell using parentheses to keep our working directory from changing.
 
 ```sh
-go build -o /tmp/tools ./cmd/...
+(go build -o /tmp/tools ./cmd/*)
 ```
 
 ## Running the tools unit tests
@@ -55,7 +55,7 @@ To the tools tests, we must change to the directory where the tools package is d
 We can run it in a subshell using parentheses to keep our working directory from changing.
 
 ```sh
-go test ./...
+(go test ./...)
 ```
 
 ## Finding affected packages

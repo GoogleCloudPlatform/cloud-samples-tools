@@ -35,7 +35,7 @@ func TestLoadConfig(t *testing.T) {
 			fails:    true,
 		},
 		{
-			filename: "simple.json",
+			filename: "default-values.json",
 			config: &c.Config{
 				PackageFile: []string{"package.json"},
 				Match:       []string{"*"},
@@ -60,7 +60,7 @@ func TestLoadConfig(t *testing.T) {
 			t.Fatal("error loading config\n", err)
 		}
 		if !reflect.DeepEqual(test.config, got) {
-			t.Fatal("expected equal\n", test.config, got)
+			t.Fatal("expected equal\n", test.config, "\n", got)
 		}
 	}
 }
@@ -94,7 +94,7 @@ func TestSaveLoadConfig(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(&config, loadedConfig) {
-		t.Fatal("expected equal\n", &config, loadedConfig)
+		t.Fatal("expected equal\n", &config, "\n", loadedConfig)
 	}
 }
 
@@ -124,7 +124,7 @@ func TestMatch(t *testing.T) {
 	for _, test := range tests {
 		got := c.Match(test.patterns, test.path)
 		if got != test.expected {
-			t.Fatal("expected equal\n", test.expected, got)
+			t.Fatal("expected equal\n", test.expected, "\n", got)
 		}
 	}
 }
@@ -148,7 +148,7 @@ func TestIsPackage(t *testing.T) {
 	for _, test := range tests {
 		got := config.IsPackageDir(test.path)
 		if test.expected != got {
-			t.Fatal("expected equal\n", test.expected, got)
+			t.Fatal("expected equal\n", test.expected, "\n", got)
 		}
 	}
 }
@@ -176,7 +176,7 @@ func TestFindPackage(t *testing.T) {
 	for _, test := range tests {
 		got := config.FindPackage(test.path)
 		if test.expected != got {
-			t.Fatal("expected equal\n", test.expected, got)
+			t.Fatal("expected equal\n", test.expected, "\n", got)
 		}
 	}
 }
@@ -218,7 +218,49 @@ func TestChanged(t *testing.T) {
 	for _, test := range tests {
 		got := config.Changed(os.Stderr, test.diffs)
 		if !reflect.DeepEqual(test.expected, got) {
-			t.Fatal("expected equal\n", test.expected, got)
+			t.Fatal("expected equal\n", test.expected, "\n", got)
 		}
+	}
+}
+
+func TestFindSetupFiles(t *testing.T) {
+	config := c.Config{
+		PackageFile:     []string{"package.json"},
+		CISetupFileName: "ci-setup.json",
+		CISetupDefaults: c.CISetup{
+			"my-number": 3.14,
+			"my-string": "hello",
+			"my-array":  []any{"a", "b", "c"},
+		},
+	}
+
+	emptyPath := filepath.Join("testdata", "setup", "empty")
+	defaultsPath := filepath.Join("testdata", "setup", "defaults")
+	overridePath := filepath.Join("testdata", "setup", "override")
+	paths := []string{emptyPath, defaultsPath, overridePath}
+	expected := &map[string]c.CISetup{
+		emptyPath: {
+			"my-number": 3.14,
+			"my-string": "hello",
+			"my-array":  []any{"a", "b", "c"},
+		},
+		defaultsPath: {
+			"my-number": 3.14,
+			"my-string": "hello",
+			"my-array":  []any{"a", "b", "c"},
+		},
+		overridePath: {
+			"my-number": 3.14,
+			"my-string": "custom-value",
+			"my-array":  []any{"A", "B", "C"},
+		},
+	}
+
+	got, err := config.FindSetupFiles(paths)
+	if err != nil {
+		t.Fatal("error finding setup files\n", err)
+	}
+	if !reflect.DeepEqual(expected, got) {
+		t.Fatal("expected equal\n", expected, "\n", got)
 	}
 }
