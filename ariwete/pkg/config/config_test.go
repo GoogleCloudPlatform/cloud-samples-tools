@@ -17,7 +17,7 @@
 package config_test
 
 import (
-	c "cloud-samples-tools/pkg/config"
+	c "ariwete/pkg/config"
 	"os"
 	"path/filepath"
 	"reflect"
