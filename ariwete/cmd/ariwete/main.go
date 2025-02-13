@@ -17,7 +17,7 @@
 package main
 
 import (
-	c "cloud-samples-tools/pkg/config"
+	c "ariwete/pkg/config"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -26,7 +26,7 @@ import (
 	"strings"
 )
 
-var usage = `usage: tools <command> ...
+var usage = `usage: ariwete <command> ...
 
 commands:
   affected path/to/config.jsonc diffs.txt paths.txt
