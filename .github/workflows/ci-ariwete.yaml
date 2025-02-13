@@ -33,7 +33,7 @@ jobs:
     timeout-minutes: 5
     defaults:
       run:
-        working-directory: 'airwete/'
+        working-directory: 'ariwete/'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -50,7 +50,7 @@ jobs:
     timeout-minutes: 5
     defaults:
       run:
-        working-directory: 'airwete/'
+        working-directory: 'ariwete/'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
