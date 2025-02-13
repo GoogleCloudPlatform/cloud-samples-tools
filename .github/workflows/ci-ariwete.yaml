@@ -15,9 +15,13 @@
 name: CI
 on:
   push:
+    paths:
+      - 'ariwete/**'
     branches:
       - main
   pull_request:
+    paths:
+      - 'ariwete/**'
 
 env:
   GO_VERSION: ^1.22.0
@@ -27,6 +31,9 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: 'airwete/'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -43,7 +50,7 @@ jobs:
     timeout-minutes: 5
     defaults:
       run:
-        working-directory: .
+        working-directory: 'airwete/'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
