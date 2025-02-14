@@ -1,0 +1,30 @@
+version: 2
+updates:
+- package-ecosystem: gomod
+  directories:
+    - "/"
+    - "/tools"
+  schedule:
+    interval: weekly
+  rebase-strategy: disabled
+  commit-message:
+      prefix: ":seedling:"
+  groups:
+    gomod:
+      patterns:
+        - "*"
+- package-ecosystem: "github-actions"
+  directory: "/"
+  schedule:
+      interval: "weekly"
+  rebase-strategy: disabled
+  commit-message:
+      prefix: ":seedling:"
+  groups:
+    github-actions:
+      patterns:
+        - "*"
+      # These actions directly influence the build process and are excluded from grouped updates
+      exclude-patterns:
+        - "actions/setup-go"
+        - "goreleaser/goreleaser-action"
