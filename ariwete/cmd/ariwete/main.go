@@ -133,9 +133,9 @@ func setupFilesCmd(configFile string, pathsFile string) {
 	// Trim whitespace to remove extra newline from diff output.
 	paths := strings.Split(strings.TrimSpace(string(pathsBytes)), "\n")
 
-	setups, err := config.FindSetupFiles(paths)
-	if err != nil {
-		log.Fatalln("❌ error finding setup files.\n", err)
+	setups, errors := config.FindSetupFiles(paths)
+	if len(errors) > 0 {
+		log.Fatalf("❌ could not load setup files.\n%v\n%v\n", err, strings.Join(errors, "\n"))
 	}
 
 	output, err := json.Marshal(setups)

@@ -195,7 +195,8 @@ func (c *Config) Affected(log io.Writer, diffs []string) ([]string, error) {
 	return paths, nil
 }
 
-func (c *Config) FindSetupFiles(paths []string) (*map[string]CISetup, error) {
+func (c *Config) FindSetupFiles(paths []string) (*map[string]CISetup, []string) {
+	var errors []string
 	setups := make(map[string]CISetup, len(paths))
 	for _, path := range paths {
 		setup := make(CISetup, len(c.CISetupDefaults))
@@ -208,58 +209,57 @@ func (c *Config) FindSetupFiles(paths []string) (*map[string]CISetup, error) {
 			// It keeps the default values if they're not in the JSON file.
 			err := readJsonc(setupFile, &setup)
 			if err != nil {
-				return nil, err
+				errors = append(errors, fmt.Sprintf("%v: %v", setupFile, err.Error()))
+				continue
 			}
 		}
-		err := c.ValidateCISetup(setupFile, setup)
-		if err != nil {
-			return nil, err
+		validationErrors := c.ValidateCISetup(setup)
+		for _, msg := range validationErrors {
+			errors = append(errors, fmt.Sprintf("%v: %v", setupFile, msg))
 		}
 		setups[path] = setup
 	}
-	return &setups, nil
+	return &setups, errors
 }
 
-func (c *Config) ValidateCISetup(path string, setup CISetup) error {
-	var sb strings.Builder
-	for field := range setup {
-		value, exists := c.CISetupDefaults[field]
+func (c *Config) ValidateCISetup(setup CISetup) []string {
+	errors := []string{}
+
+	validFields := make([]string, 0, len(c.CISetupDefaults))
+	for k := range c.CISetupDefaults {
+		validFields = append(validFields, k)
+	}
+	slices.Sort(validFields)
+
+	fields := make([]string, 0, len(setup))
+	for k := range setup {
+		fields = append(fields, k)
+	}
+	slices.Sort(fields)
+	for _, field := range fields {
 		if strings.HasPrefix(field, "_") {
 			// This is a comment field, no need to validate.
 			continue
 		}
 
-		// Check if the field exists.
+		defaultsValue, exists := c.CISetupDefaults[field]
 		if !exists {
-			sb.WriteString(fmt.Sprintf("%v: '%v' does not exist.\n", path, field))
-			sb.WriteString("\n")
-			sb.WriteString("These are the valid fields:\n")
-			keys := make([]string, 0, len(c.CISetupDefaults))
-			for k := range c.CISetupDefaults {
-				keys = append(keys, k)
+			msg := fmt.Sprintf("Unexpected field '%v': valid fields are %v", field, validFields)
+			errors = append(errors, msg)
+		} else {
+			expectedType := reflect.TypeOf(defaultsValue)
+			gotType := reflect.TypeOf(setup[field])
+			if gotType != expectedType {
+				msg := fmt.Sprintf("Unexpected type on '%v': expected '%v', but got '%v'", field, expectedType, gotType)
+				errors = append(errors, msg)
 			}
-			slices.Sort(keys)
-			sb.WriteString(fmt.Sprintf("%v\n", keys))
-			break
-		}
-
-		// Check the type of the field.
-		gotType := reflect.TypeOf(value)
-		expectedType := reflect.TypeOf(setup[field])
-		if gotType != expectedType {
-			sb.WriteString(fmt.Sprintf("%v: '%v' has the wrong type.\n", path, field))
-			sb.WriteString("\n")
-			sb.WriteString(fmt.Sprintf("It's defined as '%v', but got '%v'.\n", gotType, expectedType))
 		}
 	}
-
-	if sb.Len() > 0 {
-		if c.CISetupHelpURL != "" {
-			sb.WriteString("\n")
-			sb.WriteString("For more information, see:\n")
-			sb.WriteString(fmt.Sprintf("  %v\n", c.CISetupHelpURL))
-		}
-		return errors.New(sb.String())
-	}
-	return nil
+	// // Help URL.
+	// if c.CISetupHelpURL != "" {
+	// 	sb.WriteString("\n")
+	// 	sb.WriteString("For more information, see:\n")
+	// 	sb.WriteString(fmt.Sprintf("  %v\n", c.CISetupHelpURL))
+	// }
+	return errors
 }
