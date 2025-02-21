@@ -25,6 +25,20 @@ For example:
   // The package file where the tests should be run (required).
   "package-file": "package.json",
 
+  // CI setup file, must be located in the same directory as the package file.
+  "ci-setup-filename": "ci-setup.json",
+
+  // CI setup defaults, used when no setup file or field is not sepcified in file.
+  "ci-setup-defaults": {
+    "node-version": 20,
+    "timeout-minutes": 10,
+    "env": {}, // Key value pairs of environment variables.
+    "secrets": {} // Secret Manager secrets to export as environment variables.
+  },
+
+  // CI setup help URL, shown when a setup file validation fails.
+  "ci-setup-help-url": "https://example.com/path/to/config-setup-docs.html",
+
   // Match diffs only on .js and .ts files
   // Defaults to match all files.
   "match": ["*.js", "*.ts"],
