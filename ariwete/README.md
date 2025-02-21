@@ -2,9 +2,10 @@
 
 TODO: describe the tool and inspiration from community oriented endurance running.
 
-This tool has one function:
+This tool has two functions:
 
 - `affected` finds the affected packages given a list of diffs.
+- `setup-files` loads and validates the setup files settings for each package.
 
 ## Config files
 
@@ -40,22 +41,22 @@ For example:
 
 For more information, see [`pkg/utils/config.go`](pkg/utils/config.go).
 
-## Building
-
-To build the tools, we must change to the directory where the tools package is defined.
-We can run it in a subshell using parentheses to keep our working directory from changing.
-
-```sh
-(cd ariwete && go build -o /tmp/tools ./cmd/...)
-```
-
-## Running the tools unit tests
+## Running the unit tests
 
 To the tools tests, we must change to the directory where the tools package is defined.
 We can run it in a subshell using parentheses to keep our working directory from changing.
 
 ```sh
 (cd ariwete && go test -v ./...)
+```
+
+## Building
+
+To build the tools, we must change to the directory where the tools package is defined.
+We can run it in a subshell using parentheses to keep our working directory from changing.
+
+```sh
+(cd ariwete && go build -o /tmp/ariwete ./cmd/...)
 ```
 
 ## Finding affected packages
@@ -72,9 +73,32 @@ You can also create the file manually if you want to test something without comm
 git --no-pager diff --name-only HEAD origin/main | tee /tmp/diffs.txt
 ```
 
-Now we can check which packages have been affected.
-We pass the config file and the diffs file as positional arguments.
+Then run the `affected` command, with the following positional arguments:
+
+1. The `config.jsonc` file path.
+1. The `diffs.txt` file path.
+1. The `paths.txt` file path to write the affected packages to.
 
 ```sh
-/tmp/tools affected .github/config/nodejs.jsonc /tmp/diffs.txt
+/tmp/ariwete affected \
+    path/to/config.jsonc \
+    /tmp/diffs.txt \
+    /tmp/paths.txt
+```
+
+The output paths file contains one path per line.
+
+## Loading the setup files
+
+> This must run at the repository root directory.
+
+Then run the `setup-files` command, with the following positional arguments:
+
+1. The `config.jsonc` file path.
+1. The `paths.txt` file with the packages of interest.
+
+```sh
+/tmp/ariwete setup-files \
+    path/to/config.jsonc \
+    /tmp/paths.txt
 ```
