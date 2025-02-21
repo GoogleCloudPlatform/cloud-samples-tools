@@ -24,6 +24,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 )
@@ -37,6 +38,9 @@ type Config struct {
 
 	// CI setup defaults, used when no setup file or field is not sepcified in file.
 	CISetupDefaults CISetup `json:"ci-setup-defaults"`
+
+	// CI setup help URL, shown when a setup file validation fails.
+	CISetupHelpURL string `json:"ci-setup-help-url"`
 
 	// Pattern to match filenames or directories.
 	Match []string `json:"match"`
@@ -207,7 +211,55 @@ func (c *Config) FindSetupFiles(paths []string) (*map[string]CISetup, error) {
 				return nil, err
 			}
 		}
+		err := c.ValidateCISetup(setupFile, setup)
+		if err != nil {
+			return nil, err
+		}
 		setups[path] = setup
 	}
 	return &setups, nil
+}
+
+func (c *Config) ValidateCISetup(path string, setup CISetup) error {
+	var sb strings.Builder
+	for field := range setup {
+		value, exists := c.CISetupDefaults[field]
+		if strings.HasPrefix(field, "_") {
+			// This is a comment field, no need to validate.
+			continue
+		}
+
+		// Check if the field exists.
+		if !exists {
+			sb.WriteString(fmt.Sprintf("%v: '%v' does not exist.\n", path, field))
+			sb.WriteString("\n")
+			sb.WriteString("These are the valid fields:\n")
+			keys := make([]string, 0, len(c.CISetupDefaults))
+			for k := range c.CISetupDefaults {
+				keys = append(keys, k)
+			}
+			slices.Sort(keys)
+			sb.WriteString(fmt.Sprintf("%v\n", keys))
+			break
+		}
+
+		// Check the type of the field.
+		gotType := reflect.TypeOf(value)
+		expectedType := reflect.TypeOf(setup[field])
+		if gotType != expectedType {
+			sb.WriteString(fmt.Sprintf("%v: '%v' has the wrong type.\n", path, field))
+			sb.WriteString("\n")
+			sb.WriteString(fmt.Sprintf("It's defined as '%v', but got '%v'.\n", gotType, expectedType))
+		}
+	}
+
+	if sb.Len() > 0 {
+		if c.CISetupHelpURL != "" {
+			sb.WriteString("\n")
+			sb.WriteString("For more information, see:\n")
+			sb.WriteString(fmt.Sprintf("  %v\n", c.CISetupHelpURL))
+		}
+		return errors.New(sb.String())
+	}
+	return nil
 }

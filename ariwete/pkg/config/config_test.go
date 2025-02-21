@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -262,5 +263,106 @@ func TestFindSetupFiles(t *testing.T) {
 	}
 	if !reflect.DeepEqual(expected, got) {
 		t.Fatal("expected equal\n", expected, "\n", got)
+	}
+}
+func TestFindSetupFilesWithValidation(t *testing.T) {
+	config := c.Config{
+		PackageFile:     []string{"package.json"},
+		CISetupFileName: "ci-setup.json",
+		CISetupDefaults: c.CISetup{"my-string": "hello"},
+	}
+
+	// This ci-setup.json contains a 'my-array' field.
+	// That field is not defined in the defaults, so it should fail.
+	dir := filepath.Join("testdata", "setup", "override")
+	_, err := config.FindSetupFiles([]string{dir})
+	if err == nil {
+		path := filepath.Join(dir, config.CISetupFileName)
+		t.Fatalf("%v: Validation should fail, but it didn't.", path)
+	}
+}
+
+func TestValidateCISetup(t *testing.T) {
+	tests := []struct {
+		config   c.Config
+		ciSetup  c.CISetup
+		expected string
+	}{
+		{
+			// Valid setup.
+			config: c.Config{
+				CISetupDefaults: c.CISetup{"field1": "x", "field2": "y"},
+			},
+			ciSetup:  c.CISetup{"field1": "hello"},
+			expected: "",
+		},
+		{
+			// Comment fields.
+			config: c.Config{
+				CISetupDefaults: c.CISetup{"field1": "x", "field2": "y"},
+			},
+			ciSetup:  c.CISetup{"_comment1": "a", "_comment2": "b"},
+			expected: "",
+		},
+		{
+			// Undefined field.
+			config: c.Config{
+				CISetupDefaults: c.CISetup{"field1": "x", "field2": "y"},
+			},
+			ciSetup: c.CISetup{"undefined": ":)"},
+			expected: strings.Join([]string{
+				"my/ci-setup.json: 'undefined' does not exist.",
+				"",
+				"These are the valid fields:",
+				"[field1 field2]",
+				"",
+			}, "\n"),
+		},
+		{
+			// Help URL.
+			config: c.Config{
+				CISetupDefaults: c.CISetup{"field1": "x", "field2": "y"},
+				CISetupHelpURL:  "https://example.com",
+			},
+			ciSetup: c.CISetup{"undefined": ":)"},
+			expected: strings.Join([]string{
+				"my/ci-setup.json: 'undefined' does not exist.",
+				"",
+				"These are the valid fields:",
+				"[field1 field2]",
+				"",
+				"For more information, see:",
+				"  https://example.com",
+				"",
+			}, "\n"),
+		},
+		{
+			// Type mismatch.
+			config: c.Config{
+				CISetupDefaults: c.CISetup{"field1": "x", "field2": "y"},
+				CISetupHelpURL:  "https://example.com",
+			},
+			ciSetup: c.CISetup{"field1": 42},
+			expected: strings.Join([]string{
+				"my/ci-setup.json: 'field1' has the wrong type.",
+				"",
+				"It's defined as 'string', but got 'int'.",
+				"",
+				"For more information, see:",
+				"  https://example.com",
+				"",
+			}, "\n"),
+		},
+	}
+
+	for _, test := range tests {
+		err := test.config.ValidateCISetup("my/ci-setup.json", test.ciSetup)
+		got := ""
+		if err != nil {
+			got = err.Error()
+		}
+		if got != test.expected {
+			t.Fatal("expected equal\n", test.expected, "\n", got)
+		}
 	}
 }
