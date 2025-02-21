@@ -255,11 +255,5 @@ func (c *Config) ValidateCISetup(setup CISetup) []string {
 			}
 		}
 	}
-	// // Help URL.
-	// if c.CISetupHelpURL != "" {
-	// 	sb.WriteString("\n")
-	// 	sb.WriteString("For more information, see:\n")
-	// 	sb.WriteString(fmt.Sprintf("  %v\n", c.CISetupHelpURL))
-	// }
 	return errors
 }

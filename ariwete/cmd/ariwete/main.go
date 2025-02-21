@@ -135,7 +135,18 @@ func setupFilesCmd(configFile string, pathsFile string) {
 
 	setups, errors := config.FindSetupFiles(paths)
 	if len(errors) > 0 {
-		log.Fatalf("❌ could not load setup files.\n%v\n%v\n", err, strings.Join(errors, "\n"))
+		var sb strings.Builder
+		sb.WriteString("❌ could not load setup files.\n")
+		sb.WriteString(err.Error() + "\n")
+		for _, e := range errors {
+			sb.WriteString(e + "\n")
+		}
+		if config.CISetupHelpURL != "" {
+			sb.WriteString("\n")
+			sb.WriteString("For more information, see:\n")
+			sb.WriteString(fmt.Sprintf("  %v\n", config.CISetupHelpURL))
+		}
+		log.Fatalln(sb.String())
 	}
 
 	output, err := json.Marshal(setups)
