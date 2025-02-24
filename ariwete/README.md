@@ -1,6 +1,9 @@
-# Ariwete
+# 🏃🏽‍♀️‍➡️ Ariwete
 
-TODO: describe the tool and inspiration from community oriented endurance running.
+> Ariwete is named after the traditional footrace of the Rarámuri women of Chihuahua, Mexico.
+> They're known for their extraordinary long-distance running on rugged mountains and canyons.
+> Ariwete, symbolizes endurance, skill, and community.
+> Similarly, this tool aims to bring those qualities when _running_ our tests.
 
 This tool has two functions:
 
