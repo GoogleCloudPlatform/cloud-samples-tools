@@ -18,6 +18,7 @@ package config_test
 
 import (
 	c "ariwete/pkg/config"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -256,11 +257,95 @@ func TestFindSetupFiles(t *testing.T) {
 		},
 	}
 
-	got, err := config.FindSetupFiles(paths)
-	if err != nil {
-		t.Fatal("error finding setup files\n", err)
+	got, errors := config.FindSetupFiles(paths)
+	if len(errors) > 0 {
+		t.Fatal("error finding setup files\n", errors)
 	}
 	if !reflect.DeepEqual(expected, got) {
 		t.Fatal("expected equal\n", expected, "\n", got)
+	}
+}
+func TestFindSetupFilesWithValidation(t *testing.T) {
+	config := c.Config{
+		PackageFile:     []string{"package.json"},
+		CISetupFileName: "ci-setup.json",
+		CISetupDefaults: c.CISetup{"my-string": "hello"},
+	}
+
+	dir := filepath.Join("testdata", "setup", "override")
+	expected := []string{
+		fmt.Sprintf("%v: Unexpected field 'my-array': valid fields are [my-string]", filepath.Join(dir, config.CISetupFileName)),
+	}
+	_, got := config.FindSetupFiles([]string{dir})
+
+	if !reflect.DeepEqual(expected, got) {
+		t.Fatal("expected equal\n", expected, "\n", got)
+	}
+}
+
+func TestValidateCISetup(t *testing.T) {
+	tests := []struct {
+		name     string
+		config   c.Config
+		ciSetup  c.CISetup
+		expected []string
+	}{
+		{
+			name: "Valid setup",
+			config: c.Config{
+				CISetupDefaults: c.CISetup{"field1": "x", "field2": "y"},
+			},
+			ciSetup:  c.CISetup{"field1": "hello"},
+			expected: []string{},
+		},
+		{
+			name: "Comment fields",
+			config: c.Config{
+				CISetupDefaults: c.CISetup{"field1": "x", "field2": "y"},
+			},
+			ciSetup:  c.CISetup{"_comment1": "a", "_comment2": "b"},
+			expected: []string{},
+		},
+		{
+			name: "Undefined field",
+			config: c.Config{
+				CISetupDefaults: c.CISetup{"field1": "x", "field2": "y"},
+			},
+			ciSetup: c.CISetup{"undefined": ":)"},
+			expected: []string{
+				"Unexpected field 'undefined': valid fields are [field1 field2]",
+			},
+		},
+		{
+			name: "Type mismatch",
+			config: c.Config{
+				CISetupDefaults: c.CISetup{"field1": "x", "field2": "y"},
+				CISetupHelpURL:  "https://example.com",
+			},
+			ciSetup: c.CISetup{"field1": 42},
+			expected: []string{
+				"Unexpected type on 'field1': expected 'string', but got 'int'",
+			},
+		},
+		{
+			name: "Multiple errors",
+			config: c.Config{
+				CISetupDefaults: c.CISetup{"field1": "x", "field2": "y"},
+				CISetupHelpURL:  "https://example.com",
+			},
+			ciSetup: c.CISetup{"undefined": "hello", "field1": 42, "field2": []string{}},
+			expected: []string{
+				"Unexpected type on 'field1': expected 'string', but got 'int'",
+				"Unexpected type on 'field2': expected 'string', but got '[]string'",
+				"Unexpected field 'undefined': valid fields are [field1 field2]",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		got := test.config.ValidateCISetup(test.ciSetup)
+		if !reflect.DeepEqual(test.expected, got) {
+			t.Fatalf("%v -- expected equal\n%v\n%v", test.name, test.expected, got)
+		}
 	}
 }

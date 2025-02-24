@@ -24,6 +24,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 )
@@ -37,6 +38,9 @@ type Config struct {
 
 	// CI setup defaults, used when no setup file or field is not sepcified in file.
 	CISetupDefaults CISetup `json:"ci-setup-defaults"`
+
+	// CI setup help URL, shown when a setup file validation fails.
+	CISetupHelpURL string `json:"ci-setup-help-url"`
 
 	// Pattern to match filenames or directories.
 	Match []string `json:"match"`
@@ -191,7 +195,8 @@ func (c *Config) Affected(log io.Writer, diffs []string) ([]string, error) {
 	return paths, nil
 }
 
-func (c *Config) FindSetupFiles(paths []string) (*map[string]CISetup, error) {
+func (c *Config) FindSetupFiles(paths []string) (*map[string]CISetup, []string) {
+	var errors []string
 	setups := make(map[string]CISetup, len(paths))
 	for _, path := range paths {
 		setup := make(CISetup, len(c.CISetupDefaults))
@@ -204,10 +209,51 @@ func (c *Config) FindSetupFiles(paths []string) (*map[string]CISetup, error) {
 			// It keeps the default values if they're not in the JSON file.
 			err := readJsonc(setupFile, &setup)
 			if err != nil {
-				return nil, err
+				errors = append(errors, fmt.Sprintf("%v: %v", setupFile, err.Error()))
+				continue
 			}
+		}
+		validationErrors := c.ValidateCISetup(setup)
+		for _, msg := range validationErrors {
+			errors = append(errors, fmt.Sprintf("%v: %v", setupFile, msg))
 		}
 		setups[path] = setup
 	}
-	return &setups, nil
+	return &setups, errors
+}
+
+func (c *Config) ValidateCISetup(setup CISetup) []string {
+	errors := []string{}
+
+	validFields := make([]string, 0, len(c.CISetupDefaults))
+	for k := range c.CISetupDefaults {
+		validFields = append(validFields, k)
+	}
+	slices.Sort(validFields)
+
+	fields := make([]string, 0, len(setup))
+	for k := range setup {
+		fields = append(fields, k)
+	}
+	slices.Sort(fields)
+	for _, field := range fields {
+		if strings.HasPrefix(field, "_") {
+			// This is a comment field, no need to validate.
+			continue
+		}
+
+		defaultsValue, exists := c.CISetupDefaults[field]
+		if !exists {
+			msg := fmt.Sprintf("Unexpected field '%v': valid fields are %v", field, validFields)
+			errors = append(errors, msg)
+		} else {
+			expectedType := reflect.TypeOf(defaultsValue)
+			gotType := reflect.TypeOf(setup[field])
+			if gotType != expectedType {
+				msg := fmt.Sprintf("Unexpected type on '%v': expected '%v', but got '%v'", field, expectedType, gotType)
+				errors = append(errors, msg)
+			}
+		}
+	}
+	return errors
 }

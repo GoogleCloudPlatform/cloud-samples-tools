@@ -133,9 +133,20 @@ func setupFilesCmd(configFile string, pathsFile string) {
 	// Trim whitespace to remove extra newline from diff output.
 	paths := strings.Split(strings.TrimSpace(string(pathsBytes)), "\n")
 
-	setups, err := config.FindSetupFiles(paths)
-	if err != nil {
-		log.Fatalln("❌ error finding setup files.\n", err)
+	setups, errors := config.FindSetupFiles(paths)
+	if len(errors) > 0 {
+		var sb strings.Builder
+		sb.WriteString("❌ could not load setup files.\n")
+		sb.WriteString(err.Error() + "\n")
+		for _, e := range errors {
+			sb.WriteString(e + "\n")
+		}
+		if config.CISetupHelpURL != "" {
+			sb.WriteString("\n")
+			sb.WriteString("For more information, see:\n")
+			sb.WriteString(fmt.Sprintf("  %v\n", config.CISetupHelpURL))
+		}
+		log.Fatalln(sb.String())
 	}
 
 	output, err := json.Marshal(setups)
