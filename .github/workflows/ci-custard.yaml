@@ -28,7 +28,7 @@ env:
 
 jobs:
   lint:
-    name: Lint
+    name: "Lint: custard"
     runs-on: ubuntu-latest
     timeout-minutes: 5
     defaults:
@@ -45,7 +45,7 @@ jobs:
         run: test -z $(gofmt -l .)
 
   test:
-    name: Test
+    name: "Test: custard"
     runs-on: ubuntu-latest
     timeout-minutes: 5
     defaults:
