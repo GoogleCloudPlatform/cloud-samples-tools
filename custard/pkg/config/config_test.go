@@ -17,7 +17,7 @@
 package config_test
 
 import (
-	c "ariwete/pkg/config"
+	c "custard/pkg/config"
 	"fmt"
 	"os"
 	"path/filepath"

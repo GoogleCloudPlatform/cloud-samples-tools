@@ -17,7 +17,7 @@
 package main
 
 import (
-	c "ariwete/pkg/config"
+	c "custard/pkg/config"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -26,7 +26,7 @@ import (
 	"strings"
 )
 
-var usage = `usage: ariwete <command> ...
+var usage = `usage: custard <command> ...
 
 commands:
   affected path/to/config.jsonc diffs.txt paths.txt

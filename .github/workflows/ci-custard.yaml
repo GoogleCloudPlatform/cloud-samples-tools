@@ -16,24 +16,24 @@ name: CI
 on:
   push:
     paths:
-      - ariwete/**
+      - custard/**
     branches:
       - main
   pull_request:
     paths:
-      - ariwete/**
+      - custard/**
 
 env:
   GO_VERSION: ^1.22.0
 
 jobs:
   lint:
-    name: Lint
+    name: "Lint: custard"
     runs-on: ubuntu-latest
     timeout-minutes: 5
     defaults:
       run:
-        working-directory: ariwete/
+        working-directory: custard/
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -45,12 +45,12 @@ jobs:
         run: test -z $(gofmt -l .)
 
   test:
-    name: Test
+    name: "Test: custard"
     runs-on: ubuntu-latest
     timeout-minutes: 5
     defaults:
       run:
-        working-directory: ariwete/
+        working-directory: custard/
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5

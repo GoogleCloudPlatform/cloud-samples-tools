@@ -1,9 +1,4 @@
-# 🏃🏽‍♀️‍➡️ Ariwete
-
-> Ariwete is named after the traditional footrace of the Rarámuri women of Chihuahua, Mexico.
-> They're known for their extraordinary long-distance running on rugged mountains and canyons.
-> Ariwete, symbolizes endurance, skill, and community.
-> Similarly, this tool aims to bring those qualities when _running_ our tests.
+# 🍮 Custard - a test runner for cloud samples
 
 This tool has two functions:
 
@@ -18,7 +13,7 @@ To the tools tests, we must change to the directory where the tools package is d
 We can run it in a subshell using parentheses to keep our working directory from changing.
 
 ```sh
-(cd ariwete && go test -v ./...)
+(cd custard && go test -v ./...)
 ```
 
 ## Building
@@ -27,7 +22,7 @@ To build the tools, we must change to the directory where the tools package is d
 We can run it in a subshell using parentheses to keep our working directory from changing.
 
 ```sh
-(cd ariwete && go build -o /tmp/ariwete ./cmd/...)
+(cd custard && go build -o /tmp/custard ./cmd/...)
 ```
 
 ## Finding affected packages
@@ -51,7 +46,7 @@ Then run the `affected` command, with the following positional arguments:
 1. The `paths.txt` file path to write the affected packages to.
 
 ```sh
-/tmp/ariwete affected \
+/tmp/custard affected \
     path/to/config.jsonc \
     /tmp/diffs.txt \
     /tmp/paths.txt
@@ -69,7 +64,7 @@ Then run the `setup-files` command, with the following positional arguments:
 1. The `paths.txt` file with the packages of interest.
 
 ```sh
-/tmp/ariwete setup-files \
+/tmp/custard setup-files \
     path/to/config.jsonc \
     /tmp/paths.txt
 ```
