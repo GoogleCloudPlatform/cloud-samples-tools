@@ -16,12 +16,12 @@ name: CI
 on:
   push:
     paths:
-      - ariwete/**
+      - custard/**
     branches:
       - main
   pull_request:
     paths:
-      - ariwete/**
+      - custard/**
 
 env:
   GO_VERSION: ^1.22.0
@@ -33,7 +33,7 @@ jobs:
     timeout-minutes: 5
     defaults:
       run:
-        working-directory: ariwete/
+        working-directory: custard/
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -50,7 +50,7 @@ jobs:
     timeout-minutes: 5
     defaults:
       run:
-        working-directory: ariwete/
+        working-directory: custard/
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
