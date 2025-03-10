@@ -19,17 +19,21 @@ on:
         description: Path to the custard config file.
         required: true
         type: string
-      diffs:
-        description: Optional JSON array of diffs to use instead of git diff.
+      paths:
+        description: Comma-separated package paths instead of git diff.
         type: string
+      all:
+        description: Returns all packages instead of git diff.
+        type: boolean
+        default: false
       go-version:
         description: Go version to build the custard tools.
-        default: ^1.22.0
         type: string
+        default: ^1.22.0
       timeout-minutes:
         description: Timeout to find affected packages.
-        default: 2
         type: number
+        default: 2
 
     outputs:
       paths:
