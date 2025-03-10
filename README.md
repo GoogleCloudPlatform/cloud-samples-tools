@@ -40,7 +40,7 @@ These are used as steps within your workflow job.
 
 ### Custard setup
 
-[`GoogleCloudPlatform/cloud-samples-tools/.github/custard-setup`](.github/custard-setup/action.yaml)
+[`GoogleCloudPlatform/cloud-samples-tools/.github/setup-custard`](.github/setup-custard/action.yaml)
 
 This checks out your source code, authenticates to Google Cloud, sets up the environment variables and secrets from the `ci-setup.json` file.
 
@@ -57,8 +57,8 @@ jobs:
       matrix:
         path: ${{ fromJson(needs.affected.outputs.paths) }}
     steps:
-      - name: 🍮 Setup
-        uses: GoogleCloudPlatform/cloud-samples-tools/.github/custard-setup
+      - name: Setup Custard
+        uses: GoogleCloudPlatform/cloud-samples-tools/.github/setup-custard
         with:
           path: ${{ matrix.path }}
           ci-setup: ${{ toJson(fromJson(needs.affected.outputs.ci-setups)[matrix.path]) }}

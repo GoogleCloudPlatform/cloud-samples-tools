@@ -33,7 +33,7 @@ jobs:
       config-file: .github/test/config.jsonc
       paths: .github/test/pkg1
 
-  custard-setup:
+  setup-custard:
     needs: affected
     runs-on: ubuntu-latest
     timeout-minutes: 1
@@ -44,8 +44,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - name: 🍮 Setup
-        uses: ./.github/custard-setup
+      - name: Setup Custard
+        uses: ./.github/setup-custard
         with:
           path: ${{ matrix.path }}
           ci-setup: ${{ toJson(fromJson(needs.affected.outputs.ci-setups)[matrix.path]) }}
