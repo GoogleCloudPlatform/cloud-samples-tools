@@ -77,10 +77,14 @@ jobs:
         run: |
           if [[ -n "$PATHS" ]]; then
             # If paths are explicitly provided, use them.
-            echo "$PATHS" | sed 's/ *, */\n/g' | tee diffs.txt
+            echo "$PATHS" \
+              | sed 's/ *, */\n/g' \
+              | sed 's/$/\/diff/' \
+              | tee diffs.txt
           else
             # Otherwise, use git diff.
-            git --no-pager diff --name-only HEAD origin/main | tee diffs.txt
+            git --no-pager diff --name-only HEAD origin/main \
+              | tee diffs.txt
           fi
         env:
           PATHS: ${{ inputs.paths }}
