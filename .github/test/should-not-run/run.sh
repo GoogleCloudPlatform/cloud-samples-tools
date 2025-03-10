@@ -12,4 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-echo "✅ Success"
+echo "❌ This should not run."
+echo "test-workflows.yaml runs only on .github/test/pkg1."
+echo "Something went wrong and all packages were run."
+exit 1
