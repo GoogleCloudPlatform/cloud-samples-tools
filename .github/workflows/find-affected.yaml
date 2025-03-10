@@ -72,15 +72,15 @@ jobs:
           fetch-depth: 0 # fetch the entire branch history to find diffs
       - name: Get diffs from main and the PR
         run: |
-          if [[ $(jq length <<< "${{ env.diffs }}") -eq 0 ]]; then
+          if [[ $(jq length <<< "$DIFFS") -eq 0 ]]; then
             # If diffs are explicitly provided, use them.
-            jq -r '.[]' <<< "${{ env.diffs }}" | tee diffs.txt
+            jq -r '.[]' <<< "$DIFFS" | tee diffs.txt
           else
             # Otherwise, use git diff.
             git --no-pager diff --name-only HEAD origin/main | tee diffs.txt
           fi
         env:
-          diffs: ${{ inputs.diffs }}
+          DIFFS: ${{ inputs.diffs }}
       - name: Find affected packages
         id: custard
         run: |

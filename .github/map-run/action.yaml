@@ -31,8 +31,8 @@ runs:
       with:
         script: |
           const { execSync } = await import("node:child_process");
-          const cmd = ${{ toJson(inputs.command) }};
-          const paths = ${{ needs.affected.outputs.nodejs-paths }};
+          const cmd = "${{ inputs.command }}";
+          const paths = ${{ inputs.paths }};
           if (paths.length === 0) {
             console.log("Nothing to do.")
           }
