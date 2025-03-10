@@ -38,14 +38,13 @@ on:
     outputs:
       paths:
         description: The affected paths as a JSON list.
-        value: ${{ jobs.affected.outputs.paths }}
+        value: ${{ jobs.find-affected.outputs.paths }}
       ci-setups:
         description: The CI setup configurations for the affected packages.
-        value: ${{ jobs.affected.outputs.ci-setups }}
+        value: ${{ jobs.find-affected.outputs.ci-setups }}
 
 jobs:
-  affected:
-    name: Finding affected tests
+  find-affected:
     runs-on: ubuntu-latest
     timeout-minutes: ${{ inputs.timeout-minutes }}
     outputs:
