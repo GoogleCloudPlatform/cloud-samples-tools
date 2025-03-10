@@ -18,7 +18,13 @@ on:
   push:
     branches:
       - main
+    paths:
+      - .github/**
+      - custard/**
   pull_request:
+    paths:
+      - .github/**
+      - custard/**
 
 jobs:
   affected:
