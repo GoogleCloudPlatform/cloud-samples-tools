@@ -26,7 +26,7 @@ jobs:
     uses: ./.github/workflows/find-affected.yaml
     with:
       config-file: .github/test/config.jsonc
-      diffs: '[".github/test/pkg1/run.sh"]'
+      paths: .github/test/pkg1
 
   custard-setup:
     needs: affected
