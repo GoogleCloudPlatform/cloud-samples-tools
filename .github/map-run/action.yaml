@@ -45,21 +45,23 @@ runs:
 
           let failed = [];
           for (const path of paths) {
-            let p;
+            let stdout = "";
+            let stderr = "";
             try {
-              p = execSync(cmd, {cwd: path});
+              stdout = execSync(cmd, {cwd: path});
               console.log(`✅ [${path}]: ${cmd}`);
             } catch (e) {
-              p = e;
               failed.push(path);
               console.log(`❌ [${path}]: ${cmd} (exit code ${e.status})`);
               core.error(e.message);
+              stdout = e.stdout.toString("utf8");
+              stderr = e.stderr.toString("utf8");
             }
             if (outputsAlways || failed.includes(path)) {
               console.log('---- stdout ----');
-              console.log(p.stdout.toString("utf8"));
+              console.log(stdout);
               console.log('---- stderr ----');
-              console.log(p.stderr.toString("utf8"));
+              console.log(stderr);
             }
           }
           console.log("=== Summary ===")
