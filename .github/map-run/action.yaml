@@ -45,10 +45,12 @@ runs:
 
           let failed = [];
           for (const path of paths) {
+            let p;
             try {
-              const p = execSync(cmd, {cwd: path});
+              p = execSync(cmd, {cwd: path});
               console.log(`✅ [${path}]: ${cmd}`);
             } catch (e) {
+              p = e;
               failed.push(path);
               console.log(`❌ [${path}]: ${cmd} (exit code ${e.status})`);
               core.error(e.message);
