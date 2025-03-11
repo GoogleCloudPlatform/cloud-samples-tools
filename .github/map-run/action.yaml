@@ -41,6 +41,7 @@ runs:
           if (paths.length === 0) {
             console.log("Nothing to do.")
           }
+          const outputsAlways = ${{ inputs.outputs-always }};
 
           let failed = [];
           for (const path of paths) {
@@ -52,7 +53,7 @@ runs:
               console.log(`❌ [${path}]: ${cmd} (exit code ${e.status})`);
               core.error(e.message);
             }
-            if (${{ inputs.outputs-always }} || failed.includes(path)) {
+            if (outputsAlways || failed.includes(path)) {
               console.log('---- stdout ----');
               console.log(p.stdout.toString("utf8"));
               console.log('---- stderr ----');
