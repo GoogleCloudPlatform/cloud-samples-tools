@@ -34,7 +34,7 @@ runs:
       uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
       with:
         script: |
-          const { execSync } = await import("node:child_process");
+          const { spawnSync } = await import("node:child_process");
 
           const cmd = "${{ inputs.command }}";
           const paths = ${{ inputs.paths }};
@@ -48,8 +48,10 @@ runs:
             let stdout = "";
             let stderr = "";
             try {
-              stdout = execSync(cmd, {cwd: path});
+              const p = spawnSync("bash", ["-c", cmd], {cwd: path});
               console.log(`✅ [${path}]: ${cmd}`);
+              stdout = p.stdout.toString("utf8");
+              stderr = p.stderr.toString("utf8");
             } catch (e) {
               failed.push(path);
               console.log(`❌ [${path}]: ${cmd} (exit code ${e.status})`);
