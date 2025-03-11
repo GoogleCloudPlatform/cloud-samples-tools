@@ -45,7 +45,7 @@ runs:
           let failed = [];
           for (const path of paths) {
             try {
-              execSync(cmd, {cwd: path});
+              const p = execSync(cmd, {cwd: path});
               console.log(`✅ [${path}]: ${cmd}`);
             } catch (e) {
               failed.push(path);
@@ -54,9 +54,9 @@ runs:
             }
             if (${{ inputs.outputs-always }} || failed.includes(path)) {
               console.log('---- stdout ----');
-              console.log(e.stdout.toString("utf8"));
+              console.log(p.stdout.toString("utf8"));
               console.log('---- stderr ----');
-              console.log(e.stderr.toString("utf8"));
+              console.log(p.stderr.toString("utf8"));
             }
           }
           console.log("=== Summary ===")
