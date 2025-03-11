@@ -52,7 +52,7 @@ runs:
               console.log(`❌ [${path}]: ${cmd} (exit code ${e.status})`);
               core.error(e.message);
             }
-            if (${inputs.outputsAlways} || failed.includes(path)) {
+            if (${{ inputs.outputs-always }} || failed.includes(path)) {
               console.log('---- stdout ----');
               console.log(e.stdout.toString("utf8"));
               console.log('---- stderr ----');
