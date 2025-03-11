@@ -22,6 +22,10 @@ inputs:
   paths:
     description: A JSON list of paths to run the command on.
     required: true
+  outputs-always:
+    description: Show command outputs whether or not it fails.
+    required: false
+    default: "false"
 
 runs:
   using: composite
@@ -47,6 +51,8 @@ runs:
               failed.push(path);
               console.log(`❌ [${path}]: ${cmd} (exit code ${e.status})`);
               core.error(e.message);
+            }
+            if (${inputs.outputsAlways} || failed.includes(path)) {
               console.log('---- stdout ----');
               console.log(e.stdout.toString("utf8"));
               console.log('---- stderr ----');
