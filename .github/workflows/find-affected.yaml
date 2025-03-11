@@ -26,6 +26,10 @@ on:
         description: Returns all packages instead of git diff.
         type: boolean
         default: false
+      custard-version:
+        description: Custard version to install.
+        type: string
+        default: v0.2.1
       go-version:
         description: Go version to build the custard tools.
         type: string
@@ -60,7 +64,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           repository: GoogleCloudPlatform/cloud-samples-tools
-          ref: v0.2.1
+          ref: ${{ inputs.custard-version }}
           path: cloud-samples-tools
       - name: Install Custard
         run: go install ./cmd/custard
