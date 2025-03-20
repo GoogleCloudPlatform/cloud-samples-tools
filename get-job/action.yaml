@@ -1,0 +1,66 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Get job
+description: Gets the action job ID and URL.
+
+inputs:
+  job-name:
+    description: The name of the job.
+    default: ${{ github.job }}
+  repository-owner:
+    description: The owner of the repository.
+    default: ${{ github.repository_owner }}
+  repository-name:
+    description: The name of the repository.
+    default: ${{ github.event.repository.name }}
+  run-id:
+    description: The ID of the workflow run.
+    default: ${{ github.run_id }}
+
+outputs:
+  id:
+    description: The action job ID, undefined if not found.
+    value: ${{ fromJson(steps.job.outputs.result).id }}
+  url:
+    description: The action job URL, undefined if not found.
+    value: ${{ fromJson(steps.job.outputs.result).url }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/github-script@v7
+      id: job
+      with:
+        script: |
+          // https://docs.github.com/en/rest/actions/workflow-jobs?apiVersion=2022-11-28#list-jobs-for-a-workflow-run
+          // https://octokit.github.io/rest.js/v21/#actions-list-jobs-for-workflow-run
+          const jobs = await github.rest.actions.listJobsForWorkflowRun({
+            owner: "${{ inputs.repository-owner }}",
+            repo: "${{ inputs.repository-name }}",
+            run_id: "${{ inputs.run-id }}",
+          });
+          for (const job of jobs.data.jobs) {
+            if (job.name == "${{ inputs.job-name }}") {
+              const output = {
+                id: job.id,
+                url: job.html_url,
+              };
+              console.log(`id: ${output.id}`)
+              console.log(`url: ${output.url}`)
+              return output;
+            }
+          }
+          console.log(`Job '${{ inputs.job-name }}' not found.`);
+          return {};
