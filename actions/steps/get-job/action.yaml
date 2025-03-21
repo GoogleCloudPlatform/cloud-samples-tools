@@ -51,6 +51,7 @@ runs:
             repo: "${{ inputs.repository-name }}",
             run_id: "${{ inputs.run-id }}",
           });
+          console.log(`jobs: ${JSON.stringify(jobs.data.jobs.map(job => job.name))}`);
           for (const job of jobs.data.jobs) {
             if (job.name == "${{ inputs.job-name }}") {
               const output = {
