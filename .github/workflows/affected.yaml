@@ -1,0 +1,96 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+on:
+  workflow_call:
+    inputs:
+      config-file:
+        description: Path to the custard config file.
+        required: true
+        type: string
+      head-sha:
+        description: The commit sha of the head of the PR.
+        default: HEAD
+        type: string
+      main-sha:
+        description: The commit sha of the main branch.
+        default: origin/main
+        type: string
+      paths:
+        description: Comma-separated package paths instead of git diff.
+        type: string
+      all:
+        description: Returns all packages instead of git diff.
+        type: boolean
+        default: false
+      custard-version:
+        description: Custard version to install.
+        type: string
+        default: v0.2.1
+      go-version:
+        description: Go version to build the custard tools.
+        type: string
+        default: ^1.22.0
+      timeout-minutes:
+        description: Timeout to find affected packages.
+        type: number
+        default: 2
+
+    outputs:
+      paths:
+        description: The affected paths as a JSON list.
+        value: ${{ jobs.affected.outputs.paths }}
+      ci-setups:
+        description: The CI setup configurations for the affected packages.
+        value: ${{ jobs.affected.outputs.ci-setups }}
+      check-run-id:
+        description: The ID of the summary check created by this workflow.
+        value: ${{ jobs.affected.outputs.check-run-id }}
+
+jobs:
+  affected:
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write # for create-check and update-check
+    outputs:
+      paths: ${{ steps.custard.outputs.paths }}
+      ci-setups: ${{ steps.custard.outputs.ci-setups }}
+      check-run-id: ${{ steps.check.outputs.run-id }}
+    timeout-minutes: ${{ inputs.timeout-minutes }}
+    steps:
+      - name: Create check queued
+        uses: ./actions/steps/create-check
+        id: check
+        with:
+          commit-sha: ${{ inputs.head-sha }}
+          name: summary
+          status: queued
+          title: Finding affected packages
+      - name: Find affected packages
+        uses: ./actions/steps/affected
+        id: custard
+        with:
+          config-file: .github/config.jsonc
+          head-sha: ${{ inputs.head-sha }}
+          main-sha: ${{ inputs.main-sha }}
+          paths: ${{ inputs.paths }}
+          all: ${{ inputs.all }}
+          custard-version: ${{ inputs.custard-version }}
+          go-version: ${{ inputs.go-version }}
+      - name: Update check in_progress
+        uses: ./actions/steps/update-check
+        with:
+          check-run-id: ${{ steps.check.outputs.run-id }}
+          status: in_progress
+          title: Running ${{ steps.custard.outputs.num-paths }} package(s)
