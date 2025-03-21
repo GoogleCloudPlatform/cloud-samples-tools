@@ -109,3 +109,16 @@ jobs:
           title: Running ${{ steps.custard.outputs.num-paths }} package(s)
           summary: |
             [View logs](${{ steps.job.outputs.url }})
+      - name: Update check failed
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
+        if: failure()
+        with:
+          check-run-id: ${{ steps.check.outputs.run-id }}
+          status: completed
+          conclusion: failure
+          title: Failed
+          summary: |
+            Something went wrong when finding the affected packages.
+            For more information, look at the job logs.
+
+            [View logs](${{ steps.job.outputs.url }})
