@@ -81,7 +81,7 @@ jobs:
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/affected@reusable-workflows
         id: custard
         with:
-          config-file: .github/config.jsonc
+          config-file: ${{ inputs.config-file }}
           head-sha: ${{ inputs.head-sha }}
           main-sha: ${{ inputs.main-sha }}
           paths: ${{ inputs.paths }}
