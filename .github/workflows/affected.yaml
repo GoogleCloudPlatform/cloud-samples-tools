@@ -41,7 +41,7 @@ on:
       job-name:
         description: Name of the parent job using this step.
         type: string
-        default: ${{ github.job }}
+        required: true
       custard-version:
         description: Custard version to install.
         type: string
