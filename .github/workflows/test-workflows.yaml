@@ -33,6 +33,8 @@ on:
 jobs:
   affected:
     uses: ./.github/workflows/affected.yaml
+    permissions:
+      checks: write
     with:
       head-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       config-file: .github/test/config.jsonc
@@ -40,6 +42,8 @@ jobs:
 
   affected-failure:
     uses: ./.github/workflows/affected.yaml
+    permissions:
+      checks: write
     with:
       config-file: config-does-not-exist.jsonc
 
