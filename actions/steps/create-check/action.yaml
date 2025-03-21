@@ -31,8 +31,10 @@ inputs:
     description: The URL to the details of the check.
   title:
     description: The title of the check, this appears in the "progress" of the check UI.
+    required: true
   summary:
     description: The summary of the check.
+    required: true
   text:
     description: The text of the check.
   repository-owner:
@@ -60,7 +62,7 @@ runs:
           if (detailsUrl) {
             core.warning(`details-url is not supported unless in a GitHub app.`);
           }
-          const title = `${{ inputs.title }}` || undefined;
+          const title = `${{ inputs.title }}`;
           const summary = `${{ inputs.summary }}`;
           const text = `${{ inputs.text }}` || undefined;
           let output = undefined;

@@ -47,6 +47,7 @@ jobs:
       head-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       config-file: .github/test/config.jsonc
       paths: .github/test/pkg1
+      check-name: summary affected
 
   affected-failure:
     uses: ./.github/workflows/affected.yaml
@@ -65,6 +66,8 @@ jobs:
   update-check:
     needs: affected
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
     steps:
       - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
         with:
