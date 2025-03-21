@@ -34,6 +34,7 @@ jobs:
   github-context:
     runs-on: ubuntu-latest
     steps:
+      # For debugging information.
       - run: echo "$GITHUB_CONTEXT"
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
@@ -54,6 +55,23 @@ jobs:
     with:
       head-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       config-file: config-does-not-exist.jsonc
+
+  needs-affected-failure:
+    needs: affected-failure
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "This should not run" && exit 1
+
+  update-check:
+    needs: affected
+    runs-on: ubuntu-latest
+    steps:
+      - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
+        with:
+          check-run-id: ${{ needs.affected.outputs.check-run-id }}
+          status: completed
+          conclusion: success
+          title: Done
 
   setup-custard:
     needs: affected

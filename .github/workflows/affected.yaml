@@ -20,11 +20,11 @@ on:
         type: string
         required: true
       head-sha:
-        description: The commit sha of the head of the PR.
+        description: The commit sha of the head where the changes live.
         type: string
         required: true
       main-sha:
-        description: The commit sha of the main branch.
+        description: The commit sha of the main branch to be compared to.
         default: origin/main
         type: string
       paths:
@@ -34,6 +34,10 @@ on:
         description: Returns all packages instead of git diff.
         type: boolean
         default: false
+      check-name:
+        description: Name of the check created by this workflow.
+        type: string
+        default: summary
       custard-version:
         description: Custard version to install.
         type: string
@@ -74,7 +78,7 @@ jobs:
         id: check
         with:
           commit-sha: ${{ inputs.head-sha }}
-          name: summary
+          name: ${{ inputs.check-name }}
           status: queued
           title: Finding affected packages
       - name: Find affected packages

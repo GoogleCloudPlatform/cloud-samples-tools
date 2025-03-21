@@ -20,10 +20,10 @@ inputs:
     description: Path to the custard config file.
     required: true
   head-sha:
-    description: The commit sha of the head of the PR.
+    description: The commit sha of the head where the changes live.
     default: HEAD
   main-sha:
-    description: The commit sha of the main branch.
+    description: The commit sha of the main branch to be compared to.
     default: origin/main
   paths:
     description: Comma-separated package paths instead of git diff.
