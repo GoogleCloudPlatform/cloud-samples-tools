@@ -48,7 +48,7 @@ jobs:
       config-file: .github/test/config.jsonc
       paths: .github/test/pkg1
       job-name: affected
-      check-name: summary affected
+      check-name: workflows / summary affected
 
   affected-failure:
     uses: ./.github/workflows/affected.yaml
