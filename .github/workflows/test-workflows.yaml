@@ -46,6 +46,7 @@ jobs:
       head-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       config-file: .github/test/config.jsonc
       paths: .github/test/pkg1
+      custard-version: ${{ github.event.pull_request.head.sha || github.sha }}
 
   affected-failure:
     uses: ./.github/workflows/affected.yaml
@@ -53,6 +54,7 @@ jobs:
       checks: write
     with:
       config-file: config-does-not-exist.jsonc
+      custard-version: ${{ github.event.pull_request.head.sha || github.sha }}
 
   setup-custard:
     needs: affected
