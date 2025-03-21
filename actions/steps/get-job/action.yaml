@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: Get job
-description: Gets the action job ID and URL.
+description: Gets the action job ID and URL, it fails if not found.
 
 inputs:
   job-name:
@@ -31,10 +31,10 @@ inputs:
 
 outputs:
   id:
-    description: The action job ID, undefined if not found.
+    description: The action job ID.
     value: ${{ fromJson(steps.job.outputs.result).id }}
   url:
-    description: The action job URL, undefined if not found.
+    description: The action job URL.
     value: ${{ fromJson(steps.job.outputs.result).url }}
 
 runs:
@@ -60,5 +60,4 @@ runs:
               return {id: job.id, url: job.html_url};
             }
           }
-          console.log(`Job not found: ${{ inputs.job-name }}`);
-          return {};
+          core.setFailed(`Job not found: ${{ inputs.job-name }}`);

@@ -58,11 +58,11 @@ jobs:
       config-file: config-does-not-exist.jsonc
       check-name: summary affected-failure
 
-  needs-affected-failure:
+  needs-affected-failure-skip:
     needs: affected-failure
     runs-on: ubuntu-latest
     steps:
-      - run: echo "This should not run" && exit 1
+      - run: echo "This should be skipped" && exit 1
 
   update-check:
     needs: affected
