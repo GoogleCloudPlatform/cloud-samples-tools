@@ -54,14 +54,11 @@ runs:
           console.log(`jobs: ${JSON.stringify(jobs.data.jobs.map(job => job.name))}`);
           for (const job of jobs.data.jobs) {
             if (job.name == "${{ inputs.job-name }}" || job.name.endsWith(` / ${{ inputs.job-name }}`)) {
-              const output = {
-                id: job.id,
-                url: job.html_url,
-              };
-              console.log(`id: ${output.id}`)
-              console.log(`url: ${output.url}`)
-              return output;
+              console.log(`Job found: ${job.name}`)
+              console.log(`id:  ${job.id}`)
+              console.log(`url: ${job.html_url}`)
+              return {id: job.id, url: job.html_url};
             }
           }
-          console.log(`Job '${{ inputs.job-name }}' not found.`);
+          console.log(`Job not found: ${{ inputs.job-name }}`);
           return {};

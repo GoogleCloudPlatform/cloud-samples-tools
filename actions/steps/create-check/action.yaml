@@ -62,13 +62,6 @@ runs:
           if (detailsUrl) {
             core.warning(`details-url is not supported unless in a GitHub app.`);
           }
-          const title = `${{ inputs.title }}`;
-          const summary = `${{ inputs.summary }}`;
-          const text = `${{ inputs.text }}` || undefined;
-          let output = undefined;
-          if (title || summary || text) {
-            output = {title: title, summary: summary, text: text};
-          }
           const check = await github.rest.checks.create({
             owner: "${{ inputs.repository-owner }}",
             repo: "${{ inputs.repository-name }}",
@@ -77,6 +70,10 @@ runs:
             status: "${{ inputs.status }}",
             conclusion: "${{ inputs.conclusion }}" || undefined,
             details_url: detailsUrl,
-            output: output,
+            output: {
+              title: `${{ inputs.title }}`,
+              summary: `${{ inputs.summary }}`,
+              text: `${{ inputs.text }}` || undefined,
+            },
           });
           return check.data;
