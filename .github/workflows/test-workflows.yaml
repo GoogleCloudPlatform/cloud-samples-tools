@@ -21,17 +21,65 @@ on:
     paths:
       - .github/**
       - custard/**
+      - "**/*.yaml"
+      - "**/*.yml"
   pull_request:
     paths:
       - .github/**
       - custard/**
+      - "**/*.yaml"
+      - "**/*.yml"
 
 jobs:
+  github-context:
+    runs-on: ubuntu-latest
+    steps:
+      # For debugging information.
+      - run: echo "$GITHUB_CONTEXT"
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+
   affected:
-    uses: ./.github/workflows/find-affected.yaml
+    uses: ./.github/workflows/affected.yaml
+    permissions:
+      checks: write
     with:
+      head-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       config-file: .github/test/config.jsonc
       paths: .github/test/pkg1
+      job-name: affected
+      check-name: summary affected
+
+  affected-failure:
+    uses: ./.github/workflows/affected.yaml
+    permissions:
+      checks: write
+    with:
+      head-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      config-file: config-does-not-exist.jsonc
+      job-name: affected-failure
+      check-name: summary affected-failure
+
+  needs-affected-failure-skip:
+    needs: affected-failure
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "This should be skipped" && exit 1
+
+  update-check:
+    needs: affected
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+    steps:
+      - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
+        with:
+          check-run-id: ${{ needs.affected.outputs.check-run-id }}
+          status: completed
+          conclusion: success
+          title: Done
+          summary: |
+            [View logs](${{ needs.affected.outputs.job-url }})
 
   setup-custard:
     needs: affected
@@ -45,7 +93,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Setup Custard
-        uses: ./.github/setup-custard
+        uses: ./actions/steps/setup-custard
         with:
           path: ${{ matrix.path }}
           ci-setup: ${{ toJson(fromJson(needs.affected.outputs.ci-setups)[matrix.path]) }}
@@ -61,7 +109,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Run command on affected paths
-        uses: ./.github/map-run
+        uses: ./actions/steps/map-run
         with:
           command: ls -lh
           paths: ${{ needs.affected.outputs.paths }}

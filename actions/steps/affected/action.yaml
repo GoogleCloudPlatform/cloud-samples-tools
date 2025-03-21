@@ -1,0 +1,104 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Find affected
+description: Finds the affected packages.
+
+inputs:
+  config-file:
+    description: Path to the custard config file.
+    required: true
+  head-sha:
+    description: The commit sha of the head where the changes live.
+    default: HEAD
+  main-sha:
+    description: The commit sha of the main branch to be compared to.
+    default: origin/main
+  paths:
+    description: Comma-separated package paths instead of git diff.
+  all:
+    description: Returns all packages instead of git diff.
+    default: "false"
+  custard-version:
+    description: Custard version to install.
+    default: v0.2.1
+  go-version:
+    description: Go version to build the custard tools.
+    default: ^1.22.0
+
+outputs:
+  paths:
+    description: The affected paths as a JSON list.
+    value: ${{ steps.custard.outputs.paths }}
+  num-paths:
+    description: The number of affected paths.
+    value: ${{ steps.custard.outputs.num-paths }}
+  ci-setups:
+    description: The CI setup configurations for the affected packages.
+    value: ${{ steps.custard.outputs.ci-setups }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Go
+      uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5
+      with:
+        go-version: ${{ inputs.go-version }}
+    - name: Checkout Custard
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      with:
+        repository: GoogleCloudPlatform/cloud-samples-tools
+        ref: ${{ inputs.custard-version }}
+        path: cloud-samples-tools
+    - name: Install Custard
+      shell: bash
+      run: go install ./cmd/custard
+      working-directory: cloud-samples-tools/custard
+    - name: Clean up the workspace
+      shell: bash
+      run: rm -rf cloud-samples-tools
+
+    # Find the affected packages.
+    - name: Checkout the commit history
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      with:
+        ref: ${{ inputs.head-sha }}
+        fetch-depth: 0 # fetch the entire branch history to find diffs
+    - name: Get diffs from main and the PR
+      shell: bash
+      run: |
+        if [[ -n "$PATHS" ]]; then
+          # If paths are explicitly provided, use them.
+          echo "$PATHS" \
+            | sed 's/ *, */\n/g' \
+            | sed 's/$/\/diff/' \
+            | tee diffs.txt
+        else
+          # Otherwise, use git diff.
+          git --no-pager diff --name-only $HEAD $MAIN \
+            | tee diffs.txt
+        fi
+      env:
+        HEAD: ${{ inputs.head-sha }}
+        MAIN: ${{ inputs.main-sha }}
+        PATHS: ${{ inputs.paths }}
+    - name: Find affected packages
+      id: custard
+      shell: bash
+      run: |
+        PATHS=$(custard affected ${{ inputs.config-file }} diffs.txt paths.txt)
+        echo "paths=$PATHS" >> $GITHUB_OUTPUT
+        echo "num-paths=$(echo $PATHS | jq length)" >> $GITHUB_OUTPUT
+        cat paths.txt
+        echo "ci-setups=$(custard setup-files ${{ inputs.config-file }} paths.txt)" >> $GITHUB_OUTPUT
