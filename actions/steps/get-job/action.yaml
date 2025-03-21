@@ -60,7 +60,7 @@ runs:
           }
           console.log(`jobs: ${JSON.stringify(jobs.data.jobs.map(job => job.name))}`);
           for (const job of jobs.data.jobs) {
-            if ((parent && job.name == `${parent} / ${name}`) || (!parent && job.name == name)) {
+            if ([name, `${parent} / ${name}`].includes(job.name)) {
               console.log(`Job found: ${job.name}`)
               console.log(`id:  ${job.id}`)
               console.log(`url: ${job.html_url}`)
