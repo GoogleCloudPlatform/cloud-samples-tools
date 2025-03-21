@@ -76,4 +76,5 @@ runs:
               text: `${{ inputs.text }}` || undefined,
             },
           });
+          console.log(`Check ID: ${check.data.id}`);
           return check.data;
