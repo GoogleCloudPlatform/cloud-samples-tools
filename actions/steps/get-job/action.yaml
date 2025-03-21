@@ -60,4 +60,4 @@ runs:
               return {id: job.id, url: job.html_url};
             }
           }
-          core.setFailed(`Job not found: ${{ JSON.stringify(inputs.job-name) }}`);
+          core.setFailed(`Job not found: '${{ inputs.job-name }}'`);
