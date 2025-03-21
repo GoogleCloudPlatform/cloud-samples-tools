@@ -53,7 +53,7 @@ runs:
           });
           console.log(`jobs: ${JSON.stringify(jobs.data.jobs.map(job => job.name))}`);
           for (const job of jobs.data.jobs) {
-            if (job.name == "${{ inputs.job-name }}" || job.name.endsWith(` / ${{ inputs.job-name }}`)) {
+            if (job.name == "${{ inputs.job-name }}") {
               console.log(`Job found: ${job.name}`)
               console.log(`id:  ${job.id}`)
               console.log(`url: ${job.html_url}`)

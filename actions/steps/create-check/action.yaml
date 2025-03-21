@@ -27,8 +27,6 @@ inputs:
     default: queued
   conclusion:
     description: The conclusion of the check, one of "action_required", "cancelled", "failure", "neutral", "success", "skipped", "timed_out".
-  details-url:
-    description: The URL to the details of the check.
   title:
     description: The title of the check, this appears in the "progress" of the check UI.
     required: true
@@ -58,10 +56,6 @@ runs:
         script: |
           // https://docs.github.com/en/rest/checks/runs?apiVersion=2022-11-28#create-a-check-run
           // https://octokit.github.io/rest.js/v21/#checks-create
-          const detailsUrl = `${{ inputs.details-url }}` || undefined;
-          if (detailsUrl) {
-            core.warning(`details-url is not supported unless in a GitHub app.`);
-          }
           const check = await github.rest.checks.create({
             owner: "${{ inputs.repository-owner }}",
             repo: "${{ inputs.repository-name }}",
@@ -69,7 +63,6 @@ runs:
             name: `${{ inputs.name }}` || undefined,
             status: "${{ inputs.status }}",
             conclusion: "${{ inputs.conclusion }}" || undefined,
-            details_url: detailsUrl,
             output: {
               title: `${{ inputs.title }}`,
               summary: `${{ inputs.summary }}`,

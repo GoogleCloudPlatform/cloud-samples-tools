@@ -38,6 +38,10 @@ on:
         description: Name of the check created by this workflow.
         type: string
         default: summary
+      job-name:
+        description: Name of the parent job using this step.
+        type: string
+        default: ${{ github.job }}
       custard-version:
         description: Custard version to install.
         type: string
@@ -80,6 +84,8 @@ jobs:
       - name: Get job
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/get-job@reusable-workflows
         id: job
+        with:
+          job-name: ${{ inputs.job-name }} / ${{ github.job }}
       - name: Create check queued
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@reusable-workflows
         id: check
