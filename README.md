@@ -40,7 +40,7 @@ These are used as steps within your workflow job.
 
 ### Custard setup
 
-[`GoogleCloudPlatform/cloud-samples-tools/setup-custard`](setup-custard/action.yaml)
+[`GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard`](actions/steps/setup-custard/action.yaml)
 
 This checks out your source code, authenticates to Google Cloud, sets up the environment variables and secrets from the `ci-setup.json` file.
 
@@ -58,7 +58,7 @@ jobs:
         path: ${{ fromJson(needs.affected.outputs.paths) }}
     steps:
       - name: Setup Custard
-        uses: GoogleCloudPlatform/cloud-samples-tools/setup-custard
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard
         with:
           path: ${{ matrix.path }}
           ci-setup: ${{ toJson(fromJson(needs.affected.outputs.ci-setups)[matrix.path]) }}
@@ -74,7 +74,7 @@ jobs:
 
 ### Map run
 
-[`GoogleCloudPlatform/cloud-samples-tools/map-run`](map-run/action.yaml)
+[`GoogleCloudPlatform/cloud-samples-tools/actions/steps/map-run`](actions/steps/map-run/action.yaml)
 
 Used to run a command on multiple paths.
 
@@ -87,7 +87,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run linter
-        uses: GoogleCloudPlatform/cloud-samples-tools/map-run
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/map-run
         with:
           command: ./run-my-linter
           paths: ${{ needs.affected.outputs.paths }}
