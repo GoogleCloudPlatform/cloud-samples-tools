@@ -71,6 +71,7 @@ jobs:
       paths: ${{ steps.custard.outputs.paths }}
       ci-setups: ${{ steps.custard.outputs.ci-setups }}
       check-run-id: ${{ steps.check.outputs.run-id }}
+      job-url: ${{ steps.job.outputs.url }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
       - name: Get job

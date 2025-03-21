@@ -56,6 +56,7 @@ jobs:
     with:
       head-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       config-file: config-does-not-exist.jsonc
+      check-name: summary affected-failure
 
   needs-affected-failure:
     needs: affected-failure
