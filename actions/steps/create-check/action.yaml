@@ -60,7 +60,7 @@ runs:
             owner: "${{ inputs.repository-owner }}",
             repo: "${{ inputs.repository-name }}",
             head_sha: "${{ inputs.commit-sha }}",
-            name: `${{ inputs.name }}` || undefined,
+            name: `${{ inputs.name }}`,
             status: "${{ inputs.status }}",
             conclusion: "${{ inputs.conclusion }}" || undefined,
             output: {

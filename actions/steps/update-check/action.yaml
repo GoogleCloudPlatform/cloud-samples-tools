@@ -54,7 +54,7 @@ runs:
             repo: "${{ inputs.repository-name }}",
             check_run_id: "${{ inputs.check-run-id }}",
             name: `${{ inputs.name }}` || undefined,
-            status: "${{ inputs.status }}",
+            status: "${{ inputs.status }}" || undefined,
             conclusion: "${{ inputs.conclusion }}" || undefined,
             output: {
               title: `${{ inputs.title }}`,
