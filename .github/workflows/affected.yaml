@@ -85,7 +85,7 @@ jobs:
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/get-job@reusable-workflows
         id: job
         with:
-          job-name: ${{ inputs.job-name || github.job }}
+          job-parent: ${{ inputs.job-name }}
       - name: Create check queued
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@reusable-workflows
         id: check

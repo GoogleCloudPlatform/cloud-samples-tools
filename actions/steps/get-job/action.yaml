@@ -19,6 +19,8 @@ inputs:
   job-name:
     description: The name of the job.
     default: ${{ github.job }}
+  job-parent:
+    description: The name of the parent job.
   repository-owner:
     description: The owner of the repository.
     default: ${{ github.repository_owner }}
@@ -51,13 +53,18 @@ runs:
             repo: "${{ inputs.repository-name }}",
             run_id: "${{ inputs.run-id }}",
           });
+          var parent = "${{ inputs.job-parent }}";
+          var name = "${{ inputs.job-name }}";
+          if (parent != "") {
+            name = `${parent} / ${name}`;
+          }
           console.log(`jobs: ${JSON.stringify(jobs.data.jobs.map(job => job.name))}`);
           for (const job of jobs.data.jobs) {
-            if (job.name == "${{ inputs.job-name }}") {
+            if (job.name == name) {
               console.log(`Job found: ${job.name}`)
               console.log(`id:  ${job.id}`)
               console.log(`url: ${job.html_url}`)
               return {id: job.id, url: job.html_url};
             }
           }
-          core.setFailed(`Job not found: '${{ inputs.job-name }}'`);
+          core.setFailed(`Job not found: '${name}'`);
