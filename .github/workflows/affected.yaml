@@ -58,19 +58,19 @@ on:
     outputs:
       paths:
         description: The affected paths as a JSON list.
-        value: ${{ jobs.affected.outputs.paths }}
+        value: ${{ jobs.find.outputs.paths }}
       ci-setups:
         description: The CI setup configurations for the affected packages.
-        value: ${{ jobs.affected.outputs.ci-setups }}
+        value: ${{ jobs.find.outputs.ci-setups }}
       check-run-id:
         description: The ID of the summary check created by this workflow.
-        value: ${{ jobs.affected.outputs.check-run-id }}
+        value: ${{ jobs.find.outputs.check-run-id }}
       job-url:
         description: The logs URL for this job.
-        value: ${{ jobs.affected.outputs.job-url }}
+        value: ${{ jobs.find.outputs.job-url }}
 
 jobs:
-  affected:
+  find:
     runs-on: ubuntu-latest
     permissions:
       checks: write # for create-check and update-check
