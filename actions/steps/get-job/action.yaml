@@ -62,9 +62,9 @@ runs:
           for (const job of jobs.data.jobs) {
             for (const pattern of patterns) {
               if (job.name.match(pattern)) {
-                console.log(`Job found: ${job.name} (matched=${pattern})`)
-                console.log(`id:  ${job.id}`)
-                console.log(`url: ${job.html_url}`)
+                console.log(`Job found: ${job.name} (matched=${pattern})`);
+                console.log(`id:  ${job.id}`);
+                console.log(`url: ${job.html_url}`);
                 return {id: job.id, url: job.html_url};
               }
           }
