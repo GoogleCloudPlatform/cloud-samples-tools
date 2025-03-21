@@ -17,12 +17,12 @@ on:
     inputs:
       config-file:
         description: Path to the custard config file.
-        required: true
         type: string
+        required: true
       head-sha:
         description: The commit sha of the head of the PR.
-        default: HEAD
         type: string
+        required: true
       main-sha:
         description: The commit sha of the main branch.
         default: origin/main
