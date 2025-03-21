@@ -76,6 +76,8 @@ jobs:
           status: completed
           conclusion: success
           title: Done
+          summary: |
+            [View logs](${{ needs.affected.outputs.job-url }})
 
   setup-custard:
     needs: affected

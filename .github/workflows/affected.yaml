@@ -61,6 +61,9 @@ on:
       check-run-id:
         description: The ID of the summary check created by this workflow.
         value: ${{ jobs.affected.outputs.check-run-id }}
+      job-url:
+        description: The logs URL for this job.
+        value: ${{ jobs.affected.outputs.job-url }}
 
 jobs:
   affected:
