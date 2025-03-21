@@ -47,7 +47,6 @@ jobs:
       head-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       config-file: .github/test/config.jsonc
       paths: .github/test/pkg1
-      job-name: affected-success
       check-name: summary affected
 
   affected-failure:
