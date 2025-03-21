@@ -39,7 +39,7 @@ jobs:
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
 
-  affected:
+  affected-success:
     uses: ./.github/workflows/affected.yaml
     permissions:
       checks: write
@@ -65,7 +65,7 @@ jobs:
       - run: echo "This should be skipped" && exit 1
 
   update-check:
-    needs: affected
+    needs: affected-success
     runs-on: ubuntu-latest
     permissions:
       checks: write
@@ -80,7 +80,7 @@ jobs:
             [View logs](${{ needs.affected.outputs.job-url }})
 
   setup-custard:
-    needs: affected
+    needs: affected-success
     runs-on: ubuntu-latest
     timeout-minutes: 1
     strategy:
@@ -100,7 +100,7 @@ jobs:
         working-directory: ${{ matrix.path }}
 
   map-run:
-    needs: affected
+    needs: affected-success
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:
