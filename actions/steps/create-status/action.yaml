@@ -47,6 +47,8 @@ runs:
             let page = 1;
             let statuses = [];
             do {
+              // https://docs.github.com/en/rest/commits/statuses?apiVersion=2022-11-28#create-a-commit-status
+              // https://octokit.github.io/rest.js/v18/#repos-list-commit-statuses-for-ref
               const response = await github.rest.repos.listCommitStatusesForRef({
                 owner: "${{ inputs.repository-owner }}",
                 repo: "${{ inputs.repository-name }}",

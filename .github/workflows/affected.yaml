@@ -53,6 +53,10 @@ on:
         description: Timeout to find affected packages.
         type: number
         default: 2
+      expect-error:
+        description: Succeeds only if it fails, useful for testing.
+        type: boolean
+        default: false
 
     outputs:
       paths:
@@ -102,6 +106,7 @@ jobs:
           details-url: ${{ steps.job.outputs.url }}
       - name: Find affected packages
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/affected@reusable-workflows
+        continue-on-error: ${{ inputs.expect-error }}
         id: custard
         with:
           config-file: ${{ inputs.config-file }}
@@ -121,7 +126,7 @@ jobs:
           details-url: ${{ steps.job.outputs.url }}
       - name: Update check failed
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
-        if: failure()
+        if: failure() && !inputs.expect-error
         with:
           commit-sha: ${{ inputs.head-sha }}
           name: ${{ inputs.check-name }}
