@@ -38,6 +38,9 @@ inputs:
     default: ${{ github.event.repository.name }}
 
 outputs:
+  check:
+    description: The whole check in JSON.
+    value: ${{ steps.check.outputs.check }}
   sha:
     description: The commit SHA the check was created on.
     value: ${{ steps.check.outputs.sha }}

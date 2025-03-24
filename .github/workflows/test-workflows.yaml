@@ -48,19 +48,16 @@ jobs:
       config-file: .github/test/config.jsonc
       paths: .github/test/pkg1
 
-  create-status:
+  update-check:
     needs: affected
     runs-on: ubuntu-latest
     permissions:
       statuses: write
     steps:
-      - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
+      - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
         with:
-          sha: ${{ needs.affected.outputs.check-sha }}
-          name: ${{ needs.affected.outputs.check-name }}
+          check: ${{ needs.affected.outputs.check  }}
           status: success
-          title: Finished ${{ needs.affected.outputs.num-paths }} test(s)
-          url: ${{ needs.affected.outputs.url }}
 
   setup-custard:
     needs: affected
