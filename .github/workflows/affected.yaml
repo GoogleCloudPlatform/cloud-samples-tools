@@ -37,7 +37,7 @@ on:
       check-name:
         description: Name of the check created by this workflow.
         type: string
-        default: affected
+        default: custard CI
       job-name:
         description: Name of the parent job using this step.
         type: string
