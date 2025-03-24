@@ -23,8 +23,8 @@ inputs:
     description: The name of the check.
     required: true
   status:
-    description: The status of the check, one of "error", "failure", "pending", "success".
-    default: pending
+    description: One of "queued", "in_progress", "success", or "failure"
+    default: queued
   title:
     description: The title of the check, this appears in the "progress" of the check UI.
   url:
@@ -44,7 +44,7 @@ outputs:
     description: The name of the check created.
     value: ${{ fromJson(steps.check.outputs.result).name }}
   status:
-    description: The status of the check, one of "error", "failure", "pending", "success".
+    description: One of "queued", "in_progress", "success", or "failure"
     value: ${{ fromJson(steps.check.outputs.result).status }}
   title:
     description: The title of the check, this appears in the "progress" of the check UI.
@@ -66,10 +66,10 @@ runs:
       id: check
       with:
         script: |
-          async function* listStatuses({owner, repo, sha}) {
+          async function* listChecks({owner, repo, sha}) {
             let page = 1;
-            let statuses = [];
-            console.log(`Listing statuses for ${sha}`);
+            let checks = [];
+            console.log(`Listing checks for ${sha}`);
             do {
               // https://docs.github.com/en/rest/commits/statuses?apiVersion=2022-11-28#create-a-commit-status
               // https://octokit.github.io/rest.js/v18/#repos-list-commit-statuses-for-ref
@@ -79,36 +79,59 @@ runs:
                 ref: sha,
                 page: page++,
               });
-              statuses = response.data;
-              for (const status of statuses) {
-                console.log(`- [${status.state}] ${status.context} -- ${status.description}`);
-                yield status;
+              checks = response.data;
+              for (const check of checks) {
+                console.log(`- [${check.state}] ${check.context} -- ${check.description}`);
+                yield check;
               }
-            } while (statuses.length > 0 && page < 100);
+            } while (checks.length > 0 && page < 100);
           }
 
-          async function findStatus({owner, repo, sha, name}) {
-            const statuses = listStatuses({owner: owner, repo: repo, sha: sha});
-            for await (const status of statuses) {
-              if (status.context === name) {
-                console.log(`Found status: [${status.state}] ${status.context} -- ${status.description}`);
-                return status;
+          async function findCheck({owner, repo, sha, name}) {
+            const checks = listChecks({owner: owner, repo: repo, sha: sha});
+            for await (const check of checks) {
+              if (check.context === name) {
+                console.log(`Found check: [${check.state}] ${check.context} -- ${check.description}`);
+                return check;
               }
             }
             return null;
           }
 
+          // Convert to what the Status API needs.
+          let state = null;
+          let title = `${{ inputs.title }}`;
+          switch (${{ inputs.status }}) {
+            case "queued":
+              state = "pending";
+              title = title || "Queued";
+              break;
+            case "in_progress":
+              state = "pending";
+              title = title || "In progress";
+              break;
+            case "success":
+              state = "success";
+              title = title || "Successful";
+              break;
+            case "failure":
+              state = "failure";
+              title = title || "Failed";
+              break;
+            default:
+              throw new Error('Unknown status "${{ inputs.status }}", must be one of "queued", "in_progress", "success", or "failure"');
+          }
+
           // If set to a terminal state, append the elapsed time.
-          let title = `${{ inputs.title }}` || "${{ inputs.status }}";
-          if (["success", "failure", "error"].includes("${{ inputs.status }}")) {
-            const status = await findStatus({
+          if (["success", "failure"].includes("${{ inputs.status }}")) {
+            const check = await findCheck({
               owner: "${{ inputs.repository-owner }}",
               repo: "${{ inputs.repository-name }}",
               sha: "${{ inputs.sha }}",
               name: "${{ inputs.name }}",
             });
-            if (status) {
-              const start = Date.parse(status.updated_at);
+            if (check) {
+              const start = Date.parse(check.updated_at);
               const end = Date.now();
               const elapsed = Math.round((Date.now() - start) / 1000);
               title = `${title} in ${elapsed}s`;
@@ -118,12 +141,12 @@ runs:
           // https://docs.github.com/en/rest/commits/statuses?apiVersion=2022-11-28#create-a-commit-status
           // https://octokit.github.io/rest.js/v18/#repos-create-commit-status
           // https://stackoverflow.com/a/72312617
-          console.log(`Create status: [${{ inputs.status }}] ${{ inputs.name }} -- ${title}`);
+          console.log(`Create check: [${{ inputs.status }}] ${{ inputs.name }} -- ${title}`);
           github.rest.repos.createCommitStatus({
             owner: "${{ inputs.repository-owner }}",
             repo: "${{ inputs.repository-name }}",
             sha: "${{ inputs.sha }}",
-            state: "${{ inputs.status }}",
+            state: state,
             context: `${{ inputs.name }}`,
             description: title,
             target_url: `${{ inputs.url }}` || undefined,
