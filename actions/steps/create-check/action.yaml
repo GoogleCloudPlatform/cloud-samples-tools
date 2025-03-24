@@ -1,0 +1,81 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Create check
+description: Creates a check visible on a commit SHA for a pull request.
+
+inputs:
+  sha:
+    description: The commit SHA to create the check for.
+    required: true
+  name:
+    description: Name of the check created by this workflow.
+    required: true
+  status:
+    description: The status of the check, one of "error", "failure", "pending", "success".
+    default: pending
+  title:
+    description: The title of the check, this appears in the "progress" of the check UI.
+  job-name:
+    description: Name of the parent job using this step.
+    default: ${{ github.job }}
+  repository-owner:
+    description: The owner of the repository.
+    default: ${{ github.repository_owner }}
+  repository-name:
+    description: The name of the repository.
+    default: ${{ github.event.repository.name }}
+
+outputs:
+  sha:
+    description: The commit SHA the check was created on.
+    value: ${{ steps.check.outputs.sha }}
+  name:
+    description: The name of the check created.
+    value: ${{ steps.check.outputs.name }}
+  status:
+    description: The status of the check, one of "error", "failure", "pending", "success".
+    value: ${{ steps.check.outputs.status }}
+  title:
+    description: The title of the check, this appears in the "progress" of the check UI.
+    value: ${{ steps.check.outputs.title }}
+  url:
+    description: The logs URL for this job.
+    value: ${{ steps.check.outputs.url }}
+  repository-owner:
+    description: The owner of the repository.
+    value: ${{ steps.check.outputs.repository-owner }}
+  repository-name:
+    description: The name of the repository.
+    value: ${{ steps.check.outputs.repository-name }}
+
+runs:
+  using: composite
+  steps:
+    - name: Get job
+      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/get-job@reusable-workflows
+      id: job
+      with:
+        job-parent: ${{ inputs.job-name }}
+    - name: Create check ${{ inputs.check-status }}
+      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
+      id: check
+      with:
+        sha: ${{ inputs.sha }}
+        name: ${{ inputs.name }}
+        status: ${{ inputs.status }}
+        title: ${{ inputs.title }}
+        url: ${{ steps.job.outputs.url }}
+        repository-name: ${{ inputs.repository-name }}
+        repository-owner: ${{ inputs.repository-owner }}
