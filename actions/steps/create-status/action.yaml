@@ -56,13 +56,13 @@ runs:
                 page: page++,
               });
               statuses = response.data;
-              console.log(statuses.length, statuses === [], statuses !== []);
+              console.log(statuses.length, statuses.length > 0);
               for (const status of statuses) {
                 if (status.context === "${{ inputs.name }}") {
                   yield status;
                 }
               }
-            } while (page < 10);
+            } while (statuses.length > 0 && page < 10);
           }
 
           const statuses = listStatuses({
