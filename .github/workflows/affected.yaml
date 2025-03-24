@@ -62,6 +62,9 @@ on:
       paths:
         description: The affected paths as a JSON list.
         value: ${{ jobs.affected.outputs.paths }}
+      num-paths:
+        description: The number of affected paths.
+        value: ${{ jobs.affected.outputs.num-paths }}
       ci-setups:
         description: The CI setup configurations for the affected packages.
         value: ${{ jobs.affected.outputs.ci-setups }}
@@ -85,6 +88,7 @@ jobs:
       statuses: write # for create-status
     outputs:
       paths: ${{ steps.custard.outputs.paths }}
+      num-paths: ${{ steps.custard.outputs.num-paths }}
       ci-setups: ${{ steps.custard.outputs.ci-setups }}
       check-run-id: ${{ steps.check.outputs.run-id }}
       job-url: ${{ steps.job.outputs.url }}
@@ -117,7 +121,6 @@ jobs:
           go-version: ${{ inputs.go-version }}
       - name: Update check running
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
-        if: success()
         with:
           commit-sha: ${{ inputs.head-sha }}
           name: ${{ inputs.check-name }}
