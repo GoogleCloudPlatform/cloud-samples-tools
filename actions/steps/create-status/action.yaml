@@ -179,7 +179,7 @@ runs:
             sha: "${{ inputs.sha }}",
             name: "${{ inputs.name }}",
             status: "${{ inputs.status }}",
-            title: "",  // allow to override on status changes.
+            title: "${{ inputs.title }}",
             url: "${{ inputs.url }}",
             "repository-name": "${{ inputs.repository-name }}",
             "repository-owner": "${{ inputs.repository-owner }}",
