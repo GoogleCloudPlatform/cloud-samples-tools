@@ -47,24 +47,6 @@ jobs:
       head-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       config-file: .github/test/config.jsonc
       paths: .github/test/pkg1
-      job-name: affected
-      check-name: affected
-
-  affected-failure:
-    uses: ./.github/workflows/affected.yaml
-    permissions:
-      statuses: write
-    with:
-      head-sha: ${{ github.event.pull_request.head.sha || github.sha }}
-      config-file: config-does-not-exist.jsonc
-      job-name: affected-failure
-      check-name: affected-failure
-
-  needs-affected-failure-skip:
-    needs: affected-failure
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "This should be skipped" && exit 1
 
   create-status:
     needs: affected

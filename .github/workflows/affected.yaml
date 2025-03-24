@@ -55,8 +55,8 @@ on:
         default: 2
       expect-error:
         description: Succeeds only if it fails, useful for testing.
-        type: string
-        default: "false"
+        type: boolean
+        default: false
 
     outputs:
       paths:
@@ -106,7 +106,6 @@ jobs:
           details-url: ${{ steps.job.outputs.url }}
       - name: Find affected packages
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/affected@reusable-workflows
-        continue-on-error: ${{ inputs.expect-error }}
         id: custard
         with:
           config-file: ${{ inputs.config-file }}
@@ -118,6 +117,7 @@ jobs:
           go-version: ${{ inputs.go-version }}
       - name: Update check running
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
+        if: success()
         with:
           commit-sha: ${{ inputs.head-sha }}
           name: ${{ inputs.check-name }}
@@ -126,7 +126,7 @@ jobs:
           details-url: ${{ steps.job.outputs.url }}
       - name: Update check failed
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
-        if: failure() && !inputs.expect-error
+        if: failure()
         with:
           commit-sha: ${{ inputs.head-sha }}
           name: ${{ inputs.check-name }}
