@@ -62,7 +62,7 @@ runs:
                   yield status;
                 }
               }
-            } while (statuses !== []);
+            } while (page < 10);
           }
 
           const statuses = listStatuses({
