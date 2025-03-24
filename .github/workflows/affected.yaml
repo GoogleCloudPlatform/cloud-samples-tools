@@ -78,7 +78,7 @@ jobs:
   affected:
     runs-on: ubuntu-latest
     permissions:
-      statuses: write # for create-status
+      statuses: write
     outputs:
       paths: ${{ steps.custard.outputs.paths }}
       num-paths: ${{ steps.custard.outputs.num-paths }}
@@ -86,13 +86,12 @@ jobs:
       url: ${{ steps.check.outputs.url }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
-      - name: Check setup
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/check-setup@reusable-workflows
+      - name: Create check
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@reusable-workflows
         id: check
         with:
           sha: ${{ inputs.head-sha }}
           name: ${{ inputs.check-name }}
-          status: pending
           title: Finding affected packages
       - name: Find affected packages
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/affected@reusable-workflows
@@ -106,18 +105,14 @@ jobs:
           custard-version: ${{ inputs.custard-version }}
           go-version: ${{ inputs.go-version }}
       - name: Check running
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
         with:
-          sha: ${{ steps.check.outputs.sha }}
-          name: ${{ steps.check.outputs.name }}
-          status: pending
+          check: ${{ steps.check.outputs }}
           title: Running ${{ steps.custard.outputs.num-paths }} package(s)
-          url: ${{ steps.check.outputs.url }}
       - name: Check failed
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
         if: failure()
         with:
-          sha: ${{ steps.check.outputs.sha }}
-          name: ${{ steps.check.outputs.name }}
+          check: ${{ steps.check.outputs }}
           status: failure
-          url: ${{ steps.check.outputs.url }}
+          title: Failed

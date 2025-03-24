@@ -36,6 +36,29 @@ inputs:
     description: The name of the repository.
     default: ${{ github.event.repository.name }}
 
+outputs:
+  sha:
+    description: The commit SHA the check was created on.
+    value: ${{ steps.check.outputs.sha }}
+  name:
+    description: The name of the check created.
+    value: ${{ steps.check.outputs.name }}
+  status:
+    description: The status of the check, one of "error", "failure", "pending", "success".
+    value: ${{ steps.check.outputs.status }}
+  title:
+    description: The title of the check, this appears in the "progress" of the check UI.
+    value: ${{ steps.check.outputs.title }}
+  url:
+    description: The logs URL for this job.
+    value: ${{ steps.check.outputs.url }}
+  repository-owner:
+    description: The owner of the repository.
+    value: ${{ steps.check.outputs.repository-owner }}
+  repository-name:
+    description: The name of the repository.
+    value: ${{ steps.check.outputs.repository-name }}
+
 runs:
   using: composite
   steps:
@@ -105,3 +128,12 @@ runs:
             description: title,
             target_url: `${{ inputs.url }}` || undefined,
           });
+          return {
+            sha: "${{ inputs.sha }}",
+            name: "${{ inputs.name }}",
+            status: "${{ inputs.status }}",
+            title: title,
+            url: "${{ inputs.url }}",
+            "repository-name": "${{ inputs.repository-name }}",
+            "repository-owner": "${{ inputs.repository-owner }}",
+          };
