@@ -107,12 +107,12 @@ jobs:
       - name: Check running
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
         with:
-          check: ${{ steps.check.outputs }}
+          check: ${{ toJson(steps.check.outputs) }}
           title: Running ${{ steps.custard.outputs.num-paths }} package(s)
       - name: Check failed
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
         if: failure()
         with:
-          check: ${{ steps.check.outputs }}
+          check: ${{ toJson(steps.check.outputs) }}
           status: failure
           title: Failed

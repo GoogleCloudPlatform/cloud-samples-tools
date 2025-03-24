@@ -58,10 +58,10 @@ runs:
       uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
       id: check
       with:
-        sha: ${{ inputs.check.sha }}
-        name: ${{ inputs.name || inputs.check.name }}
-        status: ${{ inputs.status || inputs.check.status }}
-        title: ${{ inputs.title || inputs.check.title }}
-        url: ${{ inputs.url || inputs.check.url }}
-        repository-name: ${{ inputs.check.repository-name }}
-        repository-owner: ${{ inputs.check.repository-owner }}
+        sha: ${{ fromJson(inputs.check).sha }}
+        name: ${{ inputs.name || fromJson(inputs.check).name }}
+        status: ${{ inputs.status || fromJson(inputs.check).status }}
+        title: ${{ inputs.title || fromJson(inputs.check).title }}
+        url: ${{ inputs.url || fromJson(inputs.check).url }}
+        repository-name: ${{ fromJson(inputs.check).repository-name }}
+        repository-owner: ${{ fromJson(inputs.check).repository-owner }}
