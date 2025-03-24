@@ -70,9 +70,9 @@ on:
       check-sha:
         description: The commit SHA the check was created on.
         value: ${{ inputs.head-sha }}
-      job-url:
+      url:
         description: The logs URL for this job.
-        value: ${{ jobs.affected.outputs.job-url }}
+        value: ${{ jobs.affected.outputs.url }}
 
 jobs:
   affected:
@@ -83,14 +83,14 @@ jobs:
       paths: ${{ steps.custard.outputs.paths }}
       num-paths: ${{ steps.custard.outputs.num-paths }}
       ci-setups: ${{ steps.custard.outputs.ci-setups }}
-      job-url: ${{ steps.check.outputs.job-url }}
+      url: ${{ steps.check.outputs.url }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
       - name: Check setup
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/check-setup@reusable-workflows
         id: check
         with:
-          commit-sha: ${{ inputs.head-sha }}
+          sha: ${{ inputs.head-sha }}
           name: ${{ inputs.check-name }}
           status: pending
           title: Finding affected packages
@@ -105,19 +105,11 @@ jobs:
           all: ${{ inputs.all }}
           custard-version: ${{ inputs.custard-version }}
           go-version: ${{ inputs.go-version }}
-      - name: Update check running
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
+      - name: Check done
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/check-done@reusable-workflows
         with:
-          commit-sha: ${{ inputs.head-sha }}
+          sha: ${{ inputs.head-sha }}
           name: ${{ inputs.check-name }}
           status: pending
           title: Running ${{ steps.custard.outputs.num-paths }} package(s)
-          details-url: ${{ steps.check.outputs.job-url }}
-      - name: Update check failed
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
-        if: failure()
-        with:
-          commit-sha: ${{ inputs.head-sha }}
-          name: ${{ inputs.check-name }}
-          status: failure
-          details-url: ${{ steps.check.outputs.job-url }}
+          url: ${{ steps.check.outputs.url }}

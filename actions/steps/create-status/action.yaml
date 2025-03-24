@@ -16,7 +16,7 @@ name: Create status
 description: Creates a check on a commit.
 
 inputs:
-  commit-sha:
+  sha:
     description: The commit SHA to create the check for.
     required: true
   name:
@@ -27,7 +27,7 @@ inputs:
     default: pending
   title:
     description: The title of the check, this appears in the "progress" of the check UI.
-  details-url:
+  url:
     description: The URL to the details of the check.
   repository-owner:
     description: The owner of the repository.
@@ -81,7 +81,7 @@ runs:
             const status = await findStatus({
               owner: "${{ inputs.repository-owner }}",
               repo: "${{ inputs.repository-name }}",
-              sha: "${{ inputs.commit-sha }}",
+              sha: "${{ inputs.sha }}",
               name: "${{ inputs.name }}",
             });
             if (status) {
@@ -99,9 +99,9 @@ runs:
           github.rest.repos.createCommitStatus({
             owner: "${{ inputs.repository-owner }}",
             repo: "${{ inputs.repository-name }}",
-            sha: "${{ inputs.commit-sha }}",
+            sha: "${{ inputs.sha }}",
             state: "${{ inputs.status }}",
             context: `${{ inputs.name }}`,
             description: title,
-            target_url: `${{ inputs.details-url }}` || undefined,
+            target_url: `${{ inputs.url }}` || undefined,
           });

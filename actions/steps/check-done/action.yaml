@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Check setup
-description: Reports a check on a PR.
+name: Check done
+description: Reports a check on a PR with error handling.
 
 inputs:
   sha:
@@ -27,35 +27,25 @@ inputs:
     default: pending
   title:
     description: The title of the check, this appears in the "progress" of the check UI.
-  job-name:
-    description: Name of the parent job using this step.
-    default: ${{ github.job }}
-
-outputs:
-  sha:
-    description: The commit SHA the check was created on.
-    value: ${{ inputs.sha }}
-  name:
-    description: The name of the check created.
-    value: ${{ inputs.name }}
   url:
     description: The logs URL for this job.
-    value: ${{ steps.job.outputs.url }}
 
 runs:
   using: composite
   steps:
-    - name: Get job
-      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/get-job@reusable-workflows
-      id: job
-      with:
-        job-parent: ${{ inputs.job-name }}
-    - name: Create check ${{ inputs.check-status }}
+    - name: Update check ${{ inputs.status }}
       uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
-      id: check
       with:
-        commit-sha: ${{ inputs.commit-sha }}
-        name: ${{ inputs.check-name }}
-        status: ${{ inputs.check-status }}
-        title: ${{ inputs.check-title }}
-        details-url: ${{ steps.job.outputs.url }}
+        sha: ${{ inputs.sha }}
+        name: ${{ inputs.name }}
+        status: ${{ inputs.status }}
+        title: ${{ inputs.title }}
+        url: ${{ inputs.url }}
+    - name: Update check failed
+      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
+      if: failure()
+      with:
+        sha: ${{ inputs.sha }}
+        name: ${{ inputs.name }}
+        status: failure
+        url: ${{ inputs.url }}

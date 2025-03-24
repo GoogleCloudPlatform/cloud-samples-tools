@@ -56,11 +56,11 @@ jobs:
     steps:
       - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
         with:
-          commit-sha: ${{ needs.affected.outputs.check-sha }}
+          sha: ${{ needs.affected.outputs.check-sha }}
           name: ${{ needs.affected.outputs.check-name }}
           status: success
           title: Finished ${{ needs.affected.outputs.num-paths }} test(s)
-          details-url: ${{ needs.affected.outputs.job-url }}
+          url: ${{ needs.affected.outputs.url }}
 
   setup-custard:
     needs: affected
