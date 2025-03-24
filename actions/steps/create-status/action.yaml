@@ -46,6 +46,7 @@ runs:
           async function* listStatuses({owner, repo, sha}) {
             let page = 1;
             let statuses = [];
+            console.log(`Listing statuses for ${sha}`);
             do {
               // https://docs.github.com/en/rest/commits/statuses?apiVersion=2022-11-28#create-a-commit-status
               // https://octokit.github.io/rest.js/v18/#repos-list-commit-statuses-for-ref
@@ -57,7 +58,7 @@ runs:
               });
               statuses = response.data;
               for (const status of statuses) {
-                console.log(`- [${status.state}] ${status.context}`);
+                console.log(`- [${status.state}] ${status.context} -- ${status.description}`);
                 yield status;
               }
             } while (statuses.length > 0 && page < 100);
@@ -67,7 +68,7 @@ runs:
             const statuses = listStatuses({owner: owner, repo: repo, sha: sha});
             for await (const status of statuses) {
               if (status.context === name) {
-                console.log(`Found status: [${status.state}] ${status.context}`);
+                console.log(`Found status: [${status.state}] ${status.context} -- ${status.description}`);
                 return status;
               }
             }
@@ -93,6 +94,7 @@ runs:
           // https://docs.github.com/en/rest/commits/statuses?apiVersion=2022-11-28#create-a-commit-status
           // https://octokit.github.io/rest.js/v18/#repos-create-commit-status
           // https://stackoverflow.com/a/72312617
+          console.log(`Create status: [${inputs.status}] ${inputs.name} -- ${title}`);
           github.rest.repos.createCommitStatus({
             owner: "${{ inputs.repository-owner }}",
             repo: "${{ inputs.repository-name }}",
