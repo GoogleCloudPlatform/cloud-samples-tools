@@ -56,8 +56,8 @@ runs:
                 page: page++,
               });
               statuses = response.data;
-              console.log(`Found ${statuses.length} statuses (page=${page})`);
               for (const status of statuses) {
+                console.log(`- [${status.state}] ${status.context}`);
                 yield status;
               }
             } while (statuses.length > 0 && page < 100);
@@ -67,6 +67,7 @@ runs:
             const statuses = listStatuses({owner: owner, repo: repo, sha: sha});
             for await (const status of statuses) {
               if (status.context === name) {
+                console.log(`Found status: [${status.state}] ${status.context}`);
                 return status;
               }
             }

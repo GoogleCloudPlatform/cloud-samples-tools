@@ -55,8 +55,8 @@ on:
         default: 2
       expect-error:
         description: Succeeds only if it fails, useful for testing.
-        type: boolean
-        default: false
+        type: string
+        default: "false"
 
     outputs:
       paths:
@@ -106,7 +106,7 @@ jobs:
           details-url: ${{ steps.job.outputs.url }}
       - name: Find affected packages
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/affected@reusable-workflows
-        continue-on-error: "${{ inputs.expect-error }}"
+        continue-on-error: ${{ inputs.expect-error }}
         id: custard
         with:
           config-file: ${{ inputs.config-file }}
