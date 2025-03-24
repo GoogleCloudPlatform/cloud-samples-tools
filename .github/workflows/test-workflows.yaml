@@ -33,6 +33,7 @@ on:
 jobs:
   github-context:
     runs-on: ubuntu-latest
+    timeout-minutes: 1
     steps:
       # For debugging information.
       - run: echo "$GITHUB_CONTEXT"
@@ -47,10 +48,12 @@ jobs:
       head-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       config-file: .github/test/config.jsonc
       paths: .github/test/pkg1
+      timeout-minutes: 1
 
   update-check:
     needs: affected
     runs-on: ubuntu-latest
+    timeout-minutes: 1
     permissions:
       statuses: write
     steps:
