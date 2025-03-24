@@ -90,7 +90,7 @@ jobs:
       job-url: ${{ steps.job.outputs.url }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
-      - name: Setup check
+      - name: Check setup
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/check-setup@reusable-workflows
         with:
           commit-sha: ${{ inputs.head-sha }}
