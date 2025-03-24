@@ -77,7 +77,7 @@ jobs:
       paths: ${{ steps.custard.outputs.paths }}
       num-paths: ${{ steps.custard.outputs.num-paths }}
       ci-setups: ${{ steps.custard.outputs.ci-setups }}
-      check: ${{ toJson(steps.check-latest.outputs) }}
+      check: ${{ steps.check-latest.outputs.check }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
       - name: Create check
