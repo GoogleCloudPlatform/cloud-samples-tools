@@ -105,11 +105,19 @@ jobs:
           all: ${{ inputs.all }}
           custard-version: ${{ inputs.custard-version }}
           go-version: ${{ inputs.go-version }}
-      - name: Check done
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/check-done@reusable-workflows
+      - name: Check running
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
         with:
-          sha: ${{ inputs.head-sha }}
-          name: ${{ inputs.check-name }}
+          sha: ${{ steps.check.outputs.sha }}
+          name: ${{ steps.check.outputs.name }}
           status: pending
           title: Running ${{ steps.custard.outputs.num-paths }} package(s)
+          url: ${{ steps.check.outputs.url }}
+      - name: Check failed
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
+        if: failure()
+        with:
+          sha: ${{ steps.check.outputs.sha }}
+          name: ${{ steps.check.outputs.name }}
+          status: failure
           url: ${{ steps.check.outputs.url }}
