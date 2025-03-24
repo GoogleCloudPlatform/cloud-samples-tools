@@ -40,27 +40,6 @@ outputs:
   check:
     description: The whole check in JSON.
     value: ${{ steps.check.outputs.result }}
-  sha:
-    description: The commit SHA the check was created on.
-    value: ${{ fromJson(steps.check.outputs.result).sha }}
-  name:
-    description: The name of the check created.
-    value: ${{ fromJson(steps.check.outputs.result).name }}
-  status:
-    description: One of "queued", "in_progress", "success", "failure", "action_required", "cancelled", "neutral", "success", "skipped", or "timed_out".
-    value: ${{ fromJson(steps.check.outputs.result).status }}
-  title:
-    description: The title of the check, this appears in the "progress" of the check UI.
-    value: ${{ fromJson(steps.check.outputs.result).title }}
-  url:
-    description: The logs URL for this job.
-    value: ${{ fromJson(steps.check.outputs.result).url }}
-  repository-owner:
-    description: The owner of the repository.
-    value: ${{ fromJson(steps.check.outputs.result).repository-owner }}
-  repository-name:
-    description: The name of the repository.
-    value: ${{ fromJson(steps.check.outputs.result).repository-name }}
 
 runs:
   using: composite
