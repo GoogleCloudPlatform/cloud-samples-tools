@@ -48,7 +48,7 @@ jobs:
       config-file: .github/test/config.jsonc
       paths: .github/test/pkg1
       job-name: affected
-      check-name: summary affected
+      check-name: affected
 
   affected-failure:
     uses: ./.github/workflows/affected.yaml
@@ -58,7 +58,7 @@ jobs:
       head-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       config-file: config-does-not-exist.jsonc
       job-name: affected-failure
-      check-name: summary affected-failure
+      check-name: affected-failure
 
   needs-affected-failure-skip:
     needs: affected-failure

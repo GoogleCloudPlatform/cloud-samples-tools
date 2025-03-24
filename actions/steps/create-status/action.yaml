@@ -43,6 +43,18 @@ runs:
       id: check
       with:
         script: |
+          function* listStatuses({owner, repo, sha, name}) {
+          }
+
+          for (const page of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+          const response = await github.rest.repos.listCommitStatusesForRef({
+            owner: "${{ inputs.repository-owner }}",
+            repo: "${{ inputs.repository-name }}",
+            ref: "${{ inputs.commit-sha }}",
+            page: page,
+          })
+          console.log(`${page}: ${response.data.length} ${response.data}`)
+
           // https://docs.github.com/en/rest/commits/statuses?apiVersion=2022-11-28#create-a-commit-status
           // https://octokit.github.io/rest.js/v18/#repos-create-commit-status
           // https://stackoverflow.com/a/72312617
