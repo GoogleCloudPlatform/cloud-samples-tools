@@ -55,8 +55,8 @@ runs:
                 ref: "${{ inputs.commit-sha }}",
                 page: page++,
               });
+              console.log(JSON.stringify(response.data));
               statuses = response.data;
-              console.log(JSON.stringify(statuses));
               for (const status of statuses) {
                 if (status.context === "${{ inputs.name }}") {
                   yield status;
