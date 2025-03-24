@@ -54,8 +54,8 @@ runs:
       uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
       id: check
       with:
-        commit-sha: ${{ inputs.commit-sha }}
-        name: ${{ inputs.check-name }}
-        status: ${{ inputs.check-status }}
-        title: ${{ inputs.check-title }}
-        details-url: ${{ steps.job.outputs.url }}
+        sha: ${{ inputs.sha }}
+        name: ${{ inputs.name }}
+        status: ${{ inputs.status }}
+        title: ${{ inputs.title }}
+        url: ${{ steps.job.outputs.url }}
