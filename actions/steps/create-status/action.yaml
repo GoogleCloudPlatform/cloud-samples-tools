@@ -86,7 +86,8 @@ runs:
             });
             if (status) {
               const start = Date.parse(status.updated_at);
-              const elapsed = Date.now() - start;
+              const end = Date.now();
+              const elapsed = (Date.now() - start) / 1000;
               title = `${title} in ${elapsed}s`;
             }
           }
