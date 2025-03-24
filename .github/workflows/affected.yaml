@@ -91,7 +91,7 @@ jobs:
         id: job
         with:
           job-parent: ${{ inputs.job-name }}
-      - name: Create check -- finding affected
+      - name: Create check affected
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
         id: check
         with:
@@ -111,7 +111,7 @@ jobs:
           all: ${{ inputs.all }}
           custard-version: ${{ inputs.custard-version }}
           go-version: ${{ inputs.go-version }}
-      - name: Update check -- running
+      - name: Update check running
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
         with:
           commit-sha: ${{ inputs.head-sha }}
@@ -119,7 +119,7 @@ jobs:
           status: pending
           title: Running ${{ steps.custard.outputs.num-paths }} package(s)
           details-url: ${{ steps.job.outputs.url }}
-      - name: Update check -- failed
+      - name: Update check failed
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
         if: failure()
         with:
