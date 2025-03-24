@@ -65,13 +65,13 @@ runs:
             } while (statuses !== []);
           }
 
-          const statuses = await listStatuses({
+          const statuses = listStatuses({
             owner: "${{ inputs.repository-owner }}",
             repo: "${{ inputs.repository-name }}",
             sha: "${{ inputs.commit-sha }}",
             name: "${{ inputs.name }}",
           });
-          for (const status of statuses) {
+          for await (const status of statuses) {
             console.log(status.updated_at);
           }
 
