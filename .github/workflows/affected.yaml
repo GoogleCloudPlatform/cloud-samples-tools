@@ -106,7 +106,7 @@ jobs:
           details-url: ${{ steps.job.outputs.url }}
       - name: Find affected packages
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/affected@reusable-workflows
-        continue-on-error: ${{ inputs.expect-error }}
+        continue-on-error: "${{ inputs.expect-error }}"
         id: custard
         with:
           config-file: ${{ inputs.config-file }}

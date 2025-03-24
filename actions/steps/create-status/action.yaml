@@ -43,7 +43,7 @@ runs:
       id: check
       with:
         script: |
-          async function* listStatuses({owner, repo, sha, name}) {
+          async function* listStatuses({owner, repo, sha}) {
             let page = 1;
             let statuses = [];
             do {
@@ -56,23 +56,37 @@ runs:
                 page: page++,
               });
               statuses = response.data;
-              console.log(statuses.length, statuses.length > 0);
+              console.log(`Found ${statuses.length} statuses (page=${page})`);
               for (const status of statuses) {
-                if (status.context === "${{ inputs.name }}") {
-                  yield status;
-                }
+                yield status;
               }
-            } while (statuses.length > 0 && page < 10);
+            } while (statuses.length > 0 && page < 100);
           }
 
-          const statuses = listStatuses({
-            owner: "${{ inputs.repository-owner }}",
-            repo: "${{ inputs.repository-name }}",
-            sha: "${{ inputs.commit-sha }}",
-            name: "${{ inputs.name }}",
-          });
-          for await (const status of statuses) {
-            console.log(status.updated_at);
+          async function findStatus({owner, repo, sha, name}) {
+            const statuses = listStatuses({owner: owner, repo: repo, sha: sha});
+            for await (const status of statuses) {
+              if (status.context === name) {
+                return status;
+              }
+            }
+            return null;
+          }
+
+          // If set to a terminal state, append the elapsed time.
+          let title = `${{ inputs.title }}` || "${{ inputs.status }}";
+          if (["success", "failure", "error"].includes("${{ inputs.status }}")) {
+            const status = await findStatus({
+              owner: "${{ inputs.repository-owner }}",
+              repo: "${{ inputs.repository-name }}",
+              sha: "${{ inputs.commit-sha }}",
+              name: "${{ inputs.name }}",
+            });
+            if (status) {
+              const start = Date.parse(status.updated_at);
+              const elapsed = Date.now() - start;
+              title = `${title} in ${elapsed}s`;
+            }
           }
 
           // https://docs.github.com/en/rest/commits/statuses?apiVersion=2022-11-28#create-a-commit-status
@@ -84,6 +98,6 @@ runs:
             sha: "${{ inputs.commit-sha }}",
             state: "${{ inputs.status }}",
             context: `${{ inputs.name }}`,
-            description: `${{ inputs.title }}` || undefined,
+            description: title,
             target_url: `${{ inputs.details-url }}` || undefined,
           });
