@@ -23,7 +23,7 @@ inputs:
     description: The name of the check.
     required: true
   status:
-    description: One of "queued", "in_progress", "success", or "failure"
+    description: One of "queued", "in_progress", "success", "failure", "action_required", "cancelled", "neutral", "success", "skipped", or "timed_out".
     default: queued
   title:
     description: The title of the check, this appears in the "progress" of the check UI.
@@ -44,7 +44,7 @@ outputs:
     description: The name of the check created.
     value: ${{ fromJson(steps.check.outputs.result).name }}
   status:
-    description: One of "queued", "in_progress", "success", or "failure"
+    description: One of "queued", "in_progress", "success", "failure", "action_required", "cancelled", "neutral", "success", "skipped", or "timed_out".
     value: ${{ fromJson(steps.check.outputs.result).status }}
   title:
     description: The title of the check, this appears in the "progress" of the check UI.
@@ -99,6 +99,7 @@ runs:
           }
 
           // Convert to what the Status API needs.
+          // We use this conversion to be able to migrate to Checks API in the future.
           let state = null;
           let title = `${{ inputs.title }}`;
           switch ("${{ inputs.status }}") {
@@ -118,12 +119,32 @@ runs:
               state = "failure";
               title = title || "Failed";
               break;
+            case "action_required":
+              state = "failure";
+              title = title || "Action required";
+              break;
+            case "cancelled":
+              state = "success";
+              title = title || "Cancelled";
+              break;
+            case "neutral":
+              state = "success";
+              title = title || "Neutral";
+              break;
+            case "skipped":
+              state = "success";
+              title = title || "Skipped";
+              break;
+            case "timed_out":
+              state = "failure";
+              title = title || "Timed out";
+              break;
             default:
-              throw new Error('Unknown status "${{ inputs.status }}", must be one of "queued", "in_progress", "success", or "failure"');
+              throw new Error('Unknown status "${{ inputs.status }}", must be one of "queued", "in_progress", "success", "failure", "action_required", "cancelled", "neutral", "success", "skipped", or "timed_out".');
           }
 
           // If set to a terminal state, append the elapsed time.
-          if (["success", "failure"].includes("${{ inputs.status }}")) {
+          if (["success", "failure", "timed_out"].includes("${{ inputs.status }}")) {
             const check = await findCheck({
               owner: "${{ inputs.repository-owner }}",
               repo: "${{ inputs.repository-name }}",

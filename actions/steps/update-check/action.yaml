@@ -22,7 +22,7 @@ inputs:
   name:
     description: Name of the check created by this workflow.
   status:
-    description: One of "queued", "in_progress", "success", or "failure"
+    description: One of "queued", "in_progress", "success", "failure", "action_required", "cancelled", "neutral", "success", "skipped", or "timed_out".
   title:
     description: The title of the check, this appears in the "progress" of the check UI.
   url:
@@ -36,7 +36,7 @@ outputs:
     description: The name of the check created.
     value: ${{ steps.check.outputs.name }}
   status:
-    description: One of "queued", "in_progress", "success", or "failure"
+    description: One of "queued", "in_progress", "success", "failure", "action_required", "cancelled", "neutral", "success", "skipped", or "timed_out".
     value: ${{ steps.check.outputs.status }}
   title:
     description: The title of the check, this appears in the "progress" of the check UI.
