@@ -43,7 +43,7 @@ runs:
       id: check
       with:
         script: |
-          function* listStatuses({owner, repo, sha, name}) {
+          async function* listStatuses({owner, repo, sha, name}) {
             let page = 1;
             let statuses = [];
             do {
