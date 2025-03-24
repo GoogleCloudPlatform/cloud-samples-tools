@@ -56,7 +56,7 @@ jobs:
     steps:
       - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
         with:
-          check: ${{ needs.affected.outputs.check  }}
+          check: ${{ needs.affected.outputs.check }}
           status: success
 
   setup-custard:
