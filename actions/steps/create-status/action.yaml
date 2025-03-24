@@ -94,7 +94,7 @@ runs:
           // https://docs.github.com/en/rest/commits/statuses?apiVersion=2022-11-28#create-a-commit-status
           // https://octokit.github.io/rest.js/v18/#repos-create-commit-status
           // https://stackoverflow.com/a/72312617
-          console.log(`Create status: [${inputs.status}] ${inputs.name} -- ${title}`);
+          console.log(`Create status: [${{ inputs.status }}] ${{ inputs.name }} -- ${title}`);
           github.rest.repos.createCommitStatus({
             owner: "${{ inputs.repository-owner }}",
             repo: "${{ inputs.repository-name }}",
