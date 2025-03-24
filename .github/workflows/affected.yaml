@@ -64,9 +64,6 @@ on:
       ci-setups:
         description: The CI setup configurations for the affected packages.
         value: ${{ jobs.affected.outputs.ci-setups }}
-      check-run-id:
-        description: The ID of the summary check created by this workflow.
-        value: ${{ jobs.affected.outputs.check-run-id }}
       check-name:
         description: The name of the check created.
         value: ${{ inputs.check-name }}
@@ -86,12 +83,12 @@ jobs:
       paths: ${{ steps.custard.outputs.paths }}
       num-paths: ${{ steps.custard.outputs.num-paths }}
       ci-setups: ${{ steps.custard.outputs.ci-setups }}
-      check-run-id: ${{ steps.check.outputs.run-id }}
-      job-url: ${{ steps.job.outputs.url }}
+      job-url: ${{ steps.check.outputs.job-url }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
       - name: Check setup
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/check-setup@reusable-workflows
+        id: check
         with:
           commit-sha: ${{ inputs.head-sha }}
           name: ${{ inputs.check-name }}
@@ -115,7 +112,7 @@ jobs:
           name: ${{ inputs.check-name }}
           status: pending
           title: Running ${{ steps.custard.outputs.num-paths }} package(s)
-          details-url: ${{ steps.job.outputs.url }}
+          details-url: ${{ steps.check.outputs.job-url }}
       - name: Update check failed
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
         if: failure()
@@ -123,4 +120,4 @@ jobs:
           commit-sha: ${{ inputs.head-sha }}
           name: ${{ inputs.check-name }}
           status: failure
-          details-url: ${{ steps.job.outputs.url }}
+          details-url: ${{ steps.check.outputs.job-url }}
