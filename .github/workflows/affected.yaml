@@ -53,10 +53,6 @@ on:
         description: Timeout to find affected packages.
         type: number
         default: 2
-      expect-error:
-        description: Succeeds only if it fails, useful for testing.
-        type: boolean
-        default: false
 
     outputs:
       paths:
@@ -94,20 +90,13 @@ jobs:
       job-url: ${{ steps.job.outputs.url }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
-      - name: Get job
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/get-job@reusable-workflows
-        id: job
-        with:
-          job-parent: ${{ inputs.job-name }}
-      - name: Create check affected
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
-        id: check
+      - name: Setup check
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/check-setup@reusable-workflows
         with:
           commit-sha: ${{ inputs.head-sha }}
           name: ${{ inputs.check-name }}
           status: pending
           title: Finding affected packages
-          details-url: ${{ steps.job.outputs.url }}
       - name: Find affected packages
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/affected@reusable-workflows
         id: custard
