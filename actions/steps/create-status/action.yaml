@@ -101,7 +101,7 @@ runs:
           // Convert to what the Status API needs.
           let state = null;
           let title = `${{ inputs.title }}`;
-          switch (${{ inputs.status }}) {
+          switch ("${{ inputs.status }}") {
             case "queued":
               state = "pending";
               title = title || "Queued";
