@@ -59,7 +59,7 @@ jobs:
           commit-sha: ${{ needs.affected.outputs.check-sha }}
           name: ${{ needs.affected.outputs.check-name }}
           status: success
-          title: Successful
+          title: Finished ${{ needs.affected.outputs.num-paths }} test(s)
           details-url: ${{ needs.affected.outputs.job-url }}
 
   setup-custard:
