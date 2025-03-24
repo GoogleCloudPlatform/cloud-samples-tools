@@ -42,7 +42,7 @@ jobs:
   affected:
     uses: ./.github/workflows/affected.yaml
     permissions:
-      checks: write
+      statuses: write
     with:
       head-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       config-file: .github/test/config.jsonc
@@ -53,7 +53,7 @@ jobs:
   affected-failure:
     uses: ./.github/workflows/affected.yaml
     permissions:
-      checks: write
+      statuses: write
     with:
       head-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       config-file: config-does-not-exist.jsonc
@@ -66,20 +66,19 @@ jobs:
     steps:
       - run: echo "This should be skipped" && exit 1
 
-  update-check:
+  create-status:
     needs: affected
     runs-on: ubuntu-latest
     permissions:
-      checks: write
+      statuses: write
     steps:
-      - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
+      - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
         with:
-          check-run-id: ${{ needs.affected.outputs.check-run-id }}
-          status: completed
-          conclusion: success
+          commit-sha: ${{ needs.affected.outputs.check-sha }}
+          name: ${{ needs.affected.outputs.check-name }}
+          status: success
           title: Done
-          summary: |
-            [View logs](${{ needs.affected.outputs.job-url }})
+          details-url: ${{ needs.affected.outputs.job-url }}
 
   setup-custard:
     needs: affected

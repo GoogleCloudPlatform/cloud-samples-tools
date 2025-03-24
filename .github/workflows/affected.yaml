@@ -72,11 +72,13 @@ jobs:
   affected:
     runs-on: ubuntu-latest
     permissions:
-      checks: write # for create-check and update-check
+      statuses: write # for create-status
     outputs:
       paths: ${{ steps.custard.outputs.paths }}
       ci-setups: ${{ steps.custard.outputs.ci-setups }}
       check-run-id: ${{ steps.check.outputs.run-id }}
+      check-name: ${{ inputs.job-name }}
+      check-sha: ${{ inputs.head-sha }}
       job-url: ${{ steps.job.outputs.url }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
@@ -85,16 +87,15 @@ jobs:
         id: job
         with:
           job-parent: ${{ inputs.job-name }}
-      - name: Create check queued
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@reusable-workflows
+      - name: Create check pending
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
         id: check
         with:
           commit-sha: ${{ inputs.head-sha }}
           name: ${{ inputs.check-name }}
-          status: queued
+          status: pending
           title: Finding affected packages
-          summary: |
-            [View logs](${{ steps.job.outputs.url }})
+          details-url: ${{ steps.job.outputs.url }}
       - name: Find affected packages
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/affected@reusable-workflows
         id: custard
@@ -107,13 +108,13 @@ jobs:
           custard-version: ${{ inputs.custard-version }}
           go-version: ${{ inputs.go-version }}
       - name: Update check in_progress
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
         with:
-          check-run-id: ${{ steps.check.outputs.run-id }}
-          status: in_progress
+          commit-sha: ${{ inputs.head-sha }}
+          name: ${{ inputs.check-name }}
+          status: pending
           title: Running ${{ steps.custard.outputs.num-paths }} package(s)
-          summary: |
-            [View logs](${{ steps.job.outputs.url }})
+          details-url: ${{ steps.job.outputs.url }}
       - name: Update check failed
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
         if: failure()

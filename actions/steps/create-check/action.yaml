@@ -56,6 +56,7 @@ runs:
         script: |
           // https://docs.github.com/en/rest/checks/runs?apiVersion=2022-11-28#create-a-check-run
           // https://octokit.github.io/rest.js/v21/#checks-create
+          // https://stackoverflow.com/a/72312617
           const check = await github.rest.checks.create({
             owner: "${{ inputs.repository-owner }}",
             repo: "${{ inputs.repository-name }}",
