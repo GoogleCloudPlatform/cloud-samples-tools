@@ -55,8 +55,8 @@ runs:
                 ref: sha,
                 page: page++,
               });
-              console.log(JSON.stringify(response.data));
               statuses = response.data;
+              console.log(statuses.length, statuses === [], statuses !== []);
               for (const status of statuses) {
                 if (status.context === "${{ inputs.name }}") {
                   yield status;
