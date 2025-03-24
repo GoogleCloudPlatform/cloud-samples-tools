@@ -39,25 +39,25 @@ inputs:
 outputs:
   sha:
     description: The commit SHA the check was created on.
-    value: ${{ steps.check.outputs.result.sha }}
+    value: ${{ fromJson(steps.check.outputs.result).sha }}
   name:
     description: The name of the check created.
-    value: ${{ steps.check.outputs.result.name }}
+    value: ${{ fromJson(steps.check.outputs.result).name }}
   status:
     description: The status of the check, one of "error", "failure", "pending", "success".
-    value: ${{ steps.check.outputs.result.status }}
+    value: ${{ fromJson(steps.check.outputs.result).status }}
   title:
     description: The title of the check, this appears in the "progress" of the check UI.
-    value: ${{ steps.check.outputs.result.title }}
+    value: ${{ fromJson(steps.check.outputs.result).title }}
   url:
     description: The logs URL for this job.
-    value: ${{ steps.check.outputs.result.url }}
+    value: ${{ fromJson(steps.check.outputs.result).url }}
   repository-owner:
     description: The owner of the repository.
-    value: ${{ steps.check.outputs.result.repository-owner }}
+    value: ${{ fromJson(steps.check.outputs.result).repository-owner }}
   repository-name:
     description: The name of the repository.
-    value: ${{ steps.check.outputs.result.repository-name }}
+    value: ${{ fromJson(steps.check.outputs.result).repository-name }}
 
 runs:
   using: composite
