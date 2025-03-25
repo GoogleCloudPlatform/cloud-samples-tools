@@ -73,11 +73,13 @@ jobs:
         path: ${{ fromJson(needs.affected.outputs.paths) }}
     timeout-minutes: 1
     steps:
-      - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@reusable-workflows
+      - name: Check queued
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@reusable-workflows
         id: queued
         with:
           sha: ${{ github.event.pull_request.head.sha || github.sha }}
           name: test (${{ matrix.path }})
+          job-name: test (${{ matrix.path }})
       - name: Setup Custard
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@reusable-workflows
         with:
