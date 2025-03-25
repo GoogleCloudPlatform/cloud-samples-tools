@@ -50,8 +50,8 @@ runs:
             try {
               const p = spawnSync("bash", ["-c", cmd], {cwd: path});
               console.log(`✅ [${path}]: ${cmd}`);
-              stdout = p.stdout.toString("utf8");
-              stderr = p.stderr.toString("utf8");
+              stdout = p.stdout && p.stdout.toString("utf8");
+              stderr = p.stderr && p.stderr.toString("utf8");
             } catch (e) {
               failed.push(path);
               console.log(`❌ [${path}]: ${cmd} (exit code ${e.status})`);
@@ -61,9 +61,9 @@ runs:
             }
             if (outputsAlways || failed.includes(path)) {
               console.log('---- stdout ----');
-              console.log(stdout);
+              console.log(stdout || "");
               console.log('---- stderr ----');
-              console.log(stderr);
+              console.log(stderr || "");
             }
           }
           console.log("=== Summary ===");
