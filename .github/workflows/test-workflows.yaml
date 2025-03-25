@@ -62,7 +62,7 @@ jobs:
           check: ${{ needs.affected.outputs.check }}
           status: success
 
-  setup-custard:
+  test:
     needs: affected
     runs-on: ubuntu-latest
     timeout-minutes: 1
@@ -71,6 +71,12 @@ jobs:
       matrix:
         path: ${{ fromJson(needs.affected.outputs.paths) }}
     steps:
+      - name: Create check
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@reusable-workflows
+        id: check1
+        with:
+          sha: ${{ github.event.pull_request.head.sha || github.sha }}
+          name: test (${{ matrix.path }})
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Setup Custard
@@ -79,8 +85,25 @@ jobs:
           path: ${{ matrix.path }}
           ci-setup: ${{ toJson(fromJson(needs.affected.outputs.ci-setups)[matrix.path]) }}
           project-id: my-project
+      - name: Check in_progress
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
+        id: check2
+        with:
+          check: ${{ steps.check1.outputs.check }}
+          status: in_progress
       - run: bash run.sh
         working-directory: ${{ matrix.path }}
+      - name: Check success
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
+        with:
+          check: ${{ steps.check2.outputs.check }}
+          status: success
+      - name: Check failure
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
+        if: failure()
+        with:
+          check: ${{ steps.check2.outputs.check }}
+          status: failure
 
   map-run:
     needs: affected
