@@ -37,7 +37,7 @@ runs:
   using: composite
   steps:
     - name: Update check
-      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
+      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@v0.2.2
       id: check
       with:
         sha: ${{ fromJson(inputs.check).sha }}

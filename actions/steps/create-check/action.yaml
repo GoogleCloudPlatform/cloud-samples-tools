@@ -45,12 +45,12 @@ runs:
   using: composite
   steps:
     - name: Get job
-      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/get-job@reusable-workflows
+      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/get-job@v0.2.2
       id: job
       with:
         job-name: ${{ inputs.job-name || inputs.name }}
     - name: Create check ${{ inputs.check-status }}
-      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
+      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@v0.2.2
       id: check
       with:
         sha: ${{ inputs.sha }}

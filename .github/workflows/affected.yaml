@@ -81,7 +81,7 @@ jobs:
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
       - name: Create check
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@reusable-workflows
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@v0.2.2
         id: queued
         with:
           sha: ${{ inputs.head-sha }}
@@ -89,7 +89,7 @@ jobs:
           title: Finding affected packages
           job-name: affected
       - name: Find affected packages
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/affected@reusable-workflows
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/affected@v0.2.2
         id: custard
         with:
           config-file: ${{ inputs.config-file }}
@@ -100,14 +100,14 @@ jobs:
           custard-version: ${{ inputs.custard-version }}
           go-version: ${{ inputs.go-version }}
       - name: Check in_progress
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.2
         id: in_progress
         with:
           check: ${{ steps.queued.outputs.check }}
           status: in_progress
           title: Running ${{ steps.custard.outputs.num-paths }} package(s)
       - name: Check failure
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.2
         if: failure()
         with:
           check: ${{ steps.queued.outputs.check }}
