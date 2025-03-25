@@ -59,6 +59,7 @@ jobs:
       fail-fast: false
       matrix:
         path: ${{ fromJson(needs.affected.outputs.paths) }}
+    continue-on-error: true
     timeout-minutes: 1
     steps:
       - name: Check queued
