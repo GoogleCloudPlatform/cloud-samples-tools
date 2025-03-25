@@ -50,18 +50,6 @@ jobs:
       paths: .github/test/pkg1
       timeout-minutes: 1
 
-  update-check:
-    needs: affected
-    runs-on: ubuntu-latest
-    permissions:
-      statuses: write
-    timeout-minutes: 1
-    steps:
-      - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
-        with:
-          check: ${{ needs.affected.outputs.check }}
-          status: success
-
   test:
     needs: affected
     runs-on: ubuntu-latest
@@ -104,6 +92,18 @@ jobs:
         with:
           check: ${{ steps.in_progress.outputs.check }}
           status: failure
+
+  done:
+    needs: [affected, test]
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    timeout-minutes: 1
+    steps:
+      - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
+        with:
+          check: ${{ needs.affected.outputs.check }}
+          status: success
 
   map-run:
     needs: affected
