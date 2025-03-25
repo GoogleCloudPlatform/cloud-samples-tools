@@ -56,8 +56,8 @@ runs:
           console.log(`jobs: ${JSON.stringify(jobs.data.jobs.map(job => job.name))}`);
 
           const patterns = [
-            /^${{ inputs.job-name }}$/,
-            /\b${{ inputs.job-parent }} \/ ${{ inputs.job-name }}$/,
+            new RegExp("^${{ inputs.job-name }}$"),
+            new RegExp("\b${{ inputs.job-parent }} \/ ${{ inputs.job-name }}$"),
           ];
           for (const job of jobs.data.jobs) {
             for (const pattern of patterns) {
