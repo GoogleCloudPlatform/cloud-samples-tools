@@ -56,8 +56,10 @@ runs:
               failed.push(path);
               console.log(`❌ [${path}]: ${cmd} (exit code ${e.status})`);
               core.error(e.message);
-              stdout = e.stdout.toString("utf8");
-              stderr = e.stderr.toString("utf8");
+              if (e) {
+                stdout = e.stdout.toString("utf8");
+                stderr = e.stderr.toString("utf8");
+              }
             }
             if (outputsAlways || failed.includes(path)) {
               console.log('---- stdout ----');
