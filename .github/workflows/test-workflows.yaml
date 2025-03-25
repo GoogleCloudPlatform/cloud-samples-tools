@@ -119,6 +119,8 @@ jobs:
         with:
           sha: ${{ github.event.pull_request.head.sha || github.sha }}
           status: in_progress
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Run command on affected paths
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/map-run@reusable-workflows
         with:
