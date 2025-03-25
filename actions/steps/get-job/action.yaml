@@ -55,8 +55,12 @@ runs:
           });
           console.log(`jobs: ${JSON.stringify(jobs.data.jobs.map(job => job.name))}`);
 
+          const validNames = [
+            "${{ inputs.job-name }}",
+            "${{ inputs.job-parent }} \/ ${{ inputs.job-name }}",
+          ]
           for (const job of jobs.data.jobs) {
-            if (job.name === ${{ inputs.job-name }} || job.name === "${{ inputs.job-parent }} \/ ${{ inputs.job-name }}")
+            if (validNames.includes(job.name)) {
                 console.log(`Job found: ${job.name} (matched=${pattern})`);
                 console.log(`id:  ${job.id}`);
                 console.log(`url: ${job.html_url}`);
