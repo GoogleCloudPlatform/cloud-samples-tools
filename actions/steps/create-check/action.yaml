@@ -49,7 +49,7 @@ runs:
       uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/get-job@reusable-workflows
       id: job
       with:
-        job-parent: ${{ inputs.job-name }}
+        job-name: ${{ inputs.job-name }}
     - name: Create check ${{ inputs.check-status }}
       uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
       id: check
