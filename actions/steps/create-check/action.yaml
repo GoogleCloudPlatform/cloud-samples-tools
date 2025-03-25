@@ -21,6 +21,7 @@ inputs:
     required: true
   name:
     description: Name of the check created by this workflow.
+    default: ${{ github.job }}
   status:
     description: One of "queued", "in_progress", "success", "failure", "action_required", "cancelled", "neutral", "success", "skipped", or "timed_out".
     default: queued
@@ -28,7 +29,6 @@ inputs:
     description: The title of the check, this appears in the "progress" of the check UI.
   job-name:
     description: Name of the job to redirect by the check.
-    default: ${{ github.job }}
   repository-owner:
     description: The owner of the repository.
     default: ${{ github.repository_owner }}
@@ -48,13 +48,13 @@ runs:
       uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/get-job@reusable-workflows
       id: job
       with:
-        job-name: ${{ inputs.job-name }}
+        job-name: ${{ inputs.job-name || inputs.name }}
     - name: Create check ${{ inputs.check-status }}
       uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@reusable-workflows
       id: check
       with:
         sha: ${{ inputs.sha }}
-        name: ${{ inputs.name || inputs.job-name }}
+        name: ${{ inputs.name }}
         status: ${{ inputs.status }}
         title: ${{ inputs.title }}
         url: ${{ steps.job.outputs.url }}

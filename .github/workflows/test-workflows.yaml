@@ -78,7 +78,7 @@ jobs:
         id: queued
         with:
           sha: ${{ github.event.pull_request.head.sha || github.sha }}
-          job-name: test (${{ matrix.path }})
+          name: test (${{ matrix.path }})
       - name: Setup Custard
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@reusable-workflows
         with:
