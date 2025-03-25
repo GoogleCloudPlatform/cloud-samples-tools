@@ -61,7 +61,7 @@ runs:
           ];
           for (const job of jobs.data.jobs) {
             if (validNames.includes(job.name)) {
-              console.log(`Job found: ${job.name} (matched=${pattern})`);
+              console.log(`Job found: ${job.name}`);
               console.log(`id:  ${job.id}`);
               console.log(`url: ${job.html_url}`);
               return {id: job.id, url: job.html_url};
