@@ -47,7 +47,7 @@ jobs:
     with:
       head-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       config-file: .github/test/config.jsonc
-      paths: .github/test/pkg1
+      paths: . # .github/test/pkg1
       timeout-minutes: 1
 
   test:
