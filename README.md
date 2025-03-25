@@ -12,24 +12,52 @@ Here are some resources to learn more:
 These are used as a full job on its own.
 You cannot customize or add new steps.
 
+Open the workflow files to see all the available options.
+
 ### Find affected packages
 
-[`GoogleCloudPlatform/cloud-samples-tools/.github/workflows/find-affected.yaml`](.github/workflows/find-affected.yaml)
+[`GoogleCloudPlatform/cloud-samples-tools/.github/workflows/affected.yaml`](.github/workflows/affected.yaml)
+
+**Requires `statuses: write` permissions.**
+
+> **Note**: This is meant to be used with `workflow_run` or `push` triggers.
+> Using this with `pull_request` will cause a duplicated status check.
+> See the `affected` _reusable step_ to learn how to use it with different triggers.
 
 Finds the affected packages as defined by the config file.
 By default, it uses `git diff` to find the files that were changed compared to the `main` branch.
 
+This creates a status check on a pull request to manage the overall state of everything.
+Once this job finishes running, the check is set to status `in_progress`.
+
+The check is meant to be set to `success` by a different job, only after everything finishes running.
+This way, the check will block a PR until everything finishes.
+
 ```yaml
 jobs:
   affected:
-    name: Find affected packages
-    uses: GoogleCloudPlatform/cloud-samples-tools/.github/workflows/find-affected.yaml
+    uses: GoogleCloudPlatform/cloud-samples-tools/.github/workflows/affected.yaml
+    permissions:
+      statuses: write
     with:
+      head-sha: ${{ github.event.workflow_run.head_sha || github.sha }}
       config-file: path/to/my/config.jsonc
+      # paths: my/package, other/package
 
-      # You can pass comma-separated packages to use instead of git diff.
-      # paths: my/package
-      # paths: my/package1, my/package2, my/package3
+  lint: ...
+
+  test: ...
+
+  done:
+    needs: [affected, lint, test]
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    steps:
+      - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check
+        with:
+          check: ${{ needs.affected.outputs.check }}
+          status: success
 ```
 
 > **Tip**: Pass `paths: .` to return all packages.
@@ -38,9 +66,11 @@ jobs:
 
 These are used as steps within your workflow job.
 
+Open the workflow files to see all the available options.
+
 ### Custard setup
 
-[`GoogleCloudPlatform/cloud-samples-tools/.github/setup-custard`](.github/setup-custard/action.yaml)
+[`GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard`](actions/steps/setup-custard/action.yaml)
 
 This checks out your source code, authenticates to Google Cloud, sets up the environment variables and secrets from the `ci-setup.json` file.
 
@@ -58,23 +88,23 @@ jobs:
         path: ${{ fromJson(needs.affected.outputs.paths) }}
     steps:
       - name: Setup Custard
-        uses: GoogleCloudPlatform/cloud-samples-tools/.github/setup-custard
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard
         with:
           path: ${{ matrix.path }}
           ci-setup: ${{ toJson(fromJson(needs.affected.outputs.ci-setups)[matrix.path]) }}
-
-          # For auth, if any is missing auth is skipped.
-          project-id: my-project-id
-          workload-identity-provider: projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider
-          service-account: my-service-account@my-project-id.iam.gserviceaccount.com
+          # project-id: my-project-id
+          # workload-identity-provider: projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider
+          # service-account: my-service-account@my-project-id.iam.gserviceaccount.com
 
       - run: ./run-my-tests
         working-directory: ${{ matrix.path }}
 ```
 
+> **Note**: If any of `project-id`, `workload-identity-provider` or `service-account` is missing, the authentication step is skipped.
+
 ### Map run
 
-[`GoogleCloudPlatform/cloud-samples-tools/.github/map-run`](.github/map-run/action.yaml)
+[`GoogleCloudPlatform/cloud-samples-tools/actions/steps/map-run`](actions/steps/map-run/action.yaml)
 
 Used to run a command on multiple paths.
 
@@ -87,8 +117,90 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run linter
-        uses: GoogleCloudPlatform/cloud-samples-tools/.github/map-run
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/map-run
         with:
           command: ./run-my-linter
           paths: ${{ needs.affected.outputs.paths }}
 ```
+
+### Create and update checks
+
+[`GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check`](actions/steps/create-check/action.yaml)
+
+[`GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check`](actions/steps/update-check/action.yaml)
+
+**Requires `statuses: write` permissions.**
+
+Creates and updates checks on a commit, it shows up on the pull request UI.
+
+> **Tip**: You can use `if: failure()` to surface a failure in the check if something goes wrong.
+
+```yaml
+jobs:
+  my-job:
+    permissions:
+      statuses: write
+    steps:
+      - name: Check queued
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check
+        id: queued
+        with:
+          sha: ${{ github.event.workflow_run.head_sha || github.sha }}
+          # status: queued | in_progress | success | failure | action_required | cancelled | neutral | success | skipped | timed_out
+          # name: Check name as shown in the UI
+          # title: Label shown as "progress" in the UI
+          # job-name: Job name to link to.
+
+      # Checkout code, setup language and the environment.
+
+      - name: Check in_progress
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check
+        id: in_progress
+        with:
+          check: ${{ steps.queued.outputs.check }}
+          status: in_progress
+
+      # Run something.
+
+      - name: Check success
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check
+        with:
+          check: ${{ steps.in_progress.outputs.check }}
+          status: success
+      - name: Check failure
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check
+        if: failure()
+        with:
+          check: ${{ steps.in_progress.outputs.check }}
+          status: failure
+```
+
+> **Tip**: For strategy matrix jobs, specify the full job name with either `name` or `job-name` (`job-name` takes precedence). For example `name: test ${{ matrix.path }}`.
+
+### Create status
+
+[`GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status`](actions/steps/create-status/action.yaml)
+
+This is a low level wrapper to create a check using the Status API.
+
+Using this directly is discouraged, we recommend using `create-check` and `create-status`.
+
+### Get job
+
+[`GoogleCloudPlatform/cloud-samples-tools/actions/steps/get-job`](actions/steps/get-job/action.yaml)
+
+Returns the job ID and job URL of the given job.
+It defaults to the current job on the current workflow run.
+
+```yaml
+jobs:
+  my-job:
+    steps:
+      - name: Get job
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/get-job
+        id: job
+        # with:
+        #   job-name: my-job
+```
+
+> **Tip**: For strategy matrix jobs, specify the full job name with `job-name`. For example `job-name: test (${{ matrix.path }})`.

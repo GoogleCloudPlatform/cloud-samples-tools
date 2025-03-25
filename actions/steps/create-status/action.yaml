@@ -1,0 +1,165 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Create status
+description: Creates a check on a commit.
+
+inputs:
+  sha:
+    description: The commit SHA to create the check for.
+    required: true
+  name:
+    description: The name of the check.
+    required: true
+  status:
+    description: One of "queued", "in_progress", "success", "failure", "action_required", "cancelled", "neutral", "success", "skipped", or "timed_out".
+    default: queued
+  title:
+    description: The title of the check, this appears in the "progress" of the check UI.
+  url:
+    description: The URL to the details of the check.
+  repository-owner:
+    description: The owner of the repository.
+    default: ${{ github.repository_owner }}
+  repository-name:
+    description: The name of the repository.
+    default: ${{ github.event.repository.name }}
+
+outputs:
+  check:
+    description: The whole check in JSON.
+    value: ${{ steps.check.outputs.result }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/github-script@v7
+      id: check
+      with:
+        script: |
+          async function* listChecks({owner, repo, sha}) {
+            let page = 1;
+            let checks = [];
+            console.log(`Listing checks for ${sha}`);
+            do {
+              // https://docs.github.com/en/rest/commits/statuses?apiVersion=2022-11-28#create-a-commit-status
+              // https://octokit.github.io/rest.js/v18/#repos-list-commit-statuses-for-ref
+              const response = await github.rest.repos.listCommitStatusesForRef({
+                owner: owner,
+                repo: repo,
+                ref: sha,
+                page: page++,
+              });
+              checks = response.data;
+              for (const check of checks) {
+                console.log(`- [${check.state}] ${check.context} -- ${check.description}`);
+                yield check;
+              }
+            } while (checks.length > 0 && page < 100);
+          }
+
+          async function findCheck({owner, repo, sha, name}) {
+            const checks = listChecks({owner: owner, repo: repo, sha: sha});
+            for await (const check of checks) {
+              if (check.context === name) {
+                console.log(`Found check: [${check.state}] ${check.context} -- ${check.description}`);
+                return check;
+              }
+            }
+            return null;
+          }
+
+          // Convert to what the Status API needs.
+          // We use this conversion to be able to migrate to Checks API in the future.
+          let state = null;
+          let title = `${{ inputs.title }}`;
+          switch ("${{ inputs.status }}") {
+            case "queued":
+              state = "pending";
+              title = title || "Queued";
+              break;
+            case "in_progress":
+              state = "pending";
+              title = title || "In progress";
+              break;
+            case "success":
+              state = "success";
+              title = title || "Successful";
+              break;
+            case "failure":
+              state = "failure";
+              title = title || "Failed";
+              break;
+            case "action_required":
+              state = "failure";
+              title = title || "Action required";
+              break;
+            case "cancelled":
+              state = "success";
+              title = title || "Cancelled";
+              break;
+            case "neutral":
+              state = "success";
+              title = title || "Neutral";
+              break;
+            case "skipped":
+              state = "success";
+              title = title || "Skipped";
+              break;
+            case "timed_out":
+              state = "failure";
+              title = title || "Timed out";
+              break;
+            default:
+              throw new Error('Unknown status "${{ inputs.status }}", must be one of "queued", "in_progress", "success", "failure", "action_required", "cancelled", "neutral", "success", "skipped", or "timed_out".');
+          }
+
+          // If set to a terminal state, append the elapsed time.
+          if (["success", "failure", "timed_out"].includes("${{ inputs.status }}")) {
+            const check = await findCheck({
+              owner: "${{ inputs.repository-owner }}",
+              repo: "${{ inputs.repository-name }}",
+              sha: "${{ inputs.sha }}",
+              name: "${{ inputs.name }}",
+            });
+            if (check) {
+              const start = Date.parse(check.updated_at);
+              const end = Date.now();
+              const elapsed = Math.round((Date.now() - start) / 1000);
+              title = `${title} in ${elapsed}s`;
+            }
+          }
+
+          // https://docs.github.com/en/rest/commits/statuses?apiVersion=2022-11-28#create-a-commit-status
+          // https://octokit.github.io/rest.js/v18/#repos-create-commit-status
+          // https://stackoverflow.com/a/72312617
+          console.log(`Create check: [${{ inputs.status }}] ${{ inputs.name }} -- ${title}`);
+          github.rest.repos.createCommitStatus({
+            owner: "${{ inputs.repository-owner }}",
+            repo: "${{ inputs.repository-name }}",
+            sha: "${{ inputs.sha }}",
+            state: state,
+            context: `${{ inputs.name }}`,
+            description: title,
+            target_url: `${{ inputs.url }}` || undefined,
+          });
+          return {
+            sha: "${{ inputs.sha }}",
+            name: "${{ inputs.name }}",
+            status: "${{ inputs.status }}",
+            title: "${{ inputs.title }}",
+            url: "${{ inputs.url }}",
+            "repository-name": "${{ inputs.repository-name }}",
+            "repository-owner": "${{ inputs.repository-owner }}",
+          };

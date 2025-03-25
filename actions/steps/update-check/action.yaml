@@ -1,0 +1,49 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Update check
+description: Updates a check.
+
+inputs:
+  check:
+    description: Outputs from create-check.
+    required: true
+  name:
+    description: Name of the check created by this workflow.
+  status:
+    description: One of "queued", "in_progress", "success", "failure", "action_required", "cancelled", "neutral", "success", "skipped", or "timed_out".
+  title:
+    description: The title of the check, this appears in the "progress" of the check UI.
+  url:
+    description: The logs URL for this job.
+
+outputs:
+  check:
+    description: The whole check in JSON.
+    value: ${{ steps.check.outputs.check }}
+
+runs:
+  using: composite
+  steps:
+    - name: Update check
+      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@v0.2.2
+      id: check
+      with:
+        sha: ${{ fromJson(inputs.check).sha }}
+        name: ${{ inputs.name || fromJson(inputs.check).name }}
+        status: ${{ inputs.status || fromJson(inputs.check).status }}
+        title: ${{ inputs.title }}
+        url: ${{ inputs.url || fromJson(inputs.check).url }}
+        repository-name: ${{ fromJson(inputs.check).repository-name }}
+        repository-owner: ${{ fromJson(inputs.check).repository-owner }}

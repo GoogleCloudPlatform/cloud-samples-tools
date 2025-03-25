@@ -21,48 +21,120 @@ on:
     paths:
       - .github/**
       - custard/**
+      - "**/*.yaml"
+      - "**/*.yml"
   pull_request:
     paths:
       - .github/**
       - custard/**
+      - "**/*.yaml"
+      - "**/*.yml"
 
 jobs:
-  affected:
-    uses: ./.github/workflows/find-affected.yaml
-    with:
-      config-file: .github/test/config.jsonc
-      paths: .github/test/pkg1
-
-  setup-custard:
-    needs: affected
+  github-context:
     runs-on: ubuntu-latest
     timeout-minutes: 1
+    steps:
+      # For debugging information.
+      - run: echo "$GITHUB_CONTEXT"
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+
+  affected:
+    uses: ./.github/workflows/affected.yaml
+    permissions:
+      statuses: write
+    with:
+      head-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      config-file: .github/test/config.jsonc
+      paths: .github/test/pkg1
+      timeout-minutes: 1
+
+  test:
+    needs: affected
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
     strategy:
       fail-fast: false
       matrix:
         path: ${{ fromJson(needs.affected.outputs.paths) }}
+    continue-on-error: true
+    timeout-minutes: 1
     steps:
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Check queued
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@main
+        id: queued
+        with:
+          sha: ${{ github.event.pull_request.head.sha || github.sha }}
+          name: test (${{ matrix.path }})
       - name: Setup Custard
-        uses: ./.github/setup-custard
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@main
         with:
           path: ${{ matrix.path }}
           ci-setup: ${{ toJson(fromJson(needs.affected.outputs.ci-setups)[matrix.path]) }}
           project-id: my-project
+      - name: Check in_progress
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@main
+        id: in_progress
+        with:
+          check: ${{ steps.queued.outputs.check }}
+          status: in_progress
       - run: bash run.sh
         working-directory: ${{ matrix.path }}
+      - name: Check success
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@main
+        with:
+          check: ${{ steps.in_progress.outputs.check }}
+          status: success
+      - name: Check failure
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@main
+        if: failure()
+        with:
+          check: ${{ steps.in_progress.outputs.check }}
+          status: failure
+
+  done:
+    needs: [affected, test]
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    timeout-minutes: 1
+    steps:
+      - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@main
+        with:
+          check: ${{ needs.affected.outputs.check }}
+          status: success
 
   map-run:
     needs: affected
     runs-on: ubuntu-latest
+    permissions:
+      statuses: write
     timeout-minutes: 1
     steps:
+      - name: Check in_progress
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@main
+        id: in_progress
+        with:
+          sha: ${{ github.event.pull_request.head.sha || github.sha }}
+          status: in_progress
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Run command on affected paths
-        uses: ./.github/map-run
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/map-run@main
         with:
           command: ls -lh
           paths: ${{ needs.affected.outputs.paths }}
           outputs-always: true
+      - name: Check success
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@main
+        with:
+          check: ${{ steps.in_progress.outputs.check }}
+          status: success
+      - name: Check failure
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@main
+        if: failure()
+        with:
+          check: ${{ steps.in_progress.outputs.check }}
+          status: failure
