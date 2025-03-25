@@ -109,6 +109,8 @@ jobs:
   map-run:
     needs: affected
     runs-on: ubuntu-latest
+    permissions:
+      statuses: write
     timeout-minutes: 1
     steps:
       - name: Check in_progress
