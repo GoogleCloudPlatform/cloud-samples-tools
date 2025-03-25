@@ -53,9 +53,9 @@ jobs:
   update-check:
     needs: affected
     runs-on: ubuntu-latest
-    timeout-minutes: 1
     permissions:
       statuses: write
+    timeout-minutes: 1
     steps:
       - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
         with:
@@ -65,20 +65,21 @@ jobs:
   test:
     needs: affected
     runs-on: ubuntu-latest
-    timeout-minutes: 1
+    permissions:
+      statuses: write
     strategy:
       fail-fast: false
       matrix:
         path: ${{ fromJson(needs.affected.outputs.paths) }}
+    timeout-minutes: 1
     steps:
-      - name: Create check
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@reusable-workflows
-        id: check1
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: ./actions/steps/create-check
+        id: queued
         with:
           sha: ${{ github.event.pull_request.head.sha || github.sha }}
           name: test (${{ matrix.path }})
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Setup Custard
         uses: ./actions/steps/setup-custard
         with:
@@ -86,23 +87,23 @@ jobs:
           ci-setup: ${{ toJson(fromJson(needs.affected.outputs.ci-setups)[matrix.path]) }}
           project-id: my-project
       - name: Check in_progress
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
-        id: check2
+        uses: ./actions/steps/update-check
+        id: in_progress
         with:
-          check: ${{ steps.check1.outputs.check }}
+          check: ${{ steps.queued.outputs.check }}
           status: in_progress
       - run: bash run.sh
         working-directory: ${{ matrix.path }}
       - name: Check success
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
+        uses: ./actions/steps/update-check
         with:
-          check: ${{ steps.check2.outputs.check }}
+          check: ${{ steps.in_progress.outputs.check }}
           status: success
       - name: Check failure
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@reusable-workflows
+        uses: ./actions/steps/update-check
         if: failure()
         with:
-          check: ${{ steps.check2.outputs.check }}
+          check: ${{ steps.in_progress.outputs.check }}
           status: failure
 
   map-run:
