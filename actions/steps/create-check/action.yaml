@@ -21,14 +21,13 @@ inputs:
     required: true
   name:
     description: Name of the check created by this workflow.
-    required: true
   status:
     description: One of "queued", "in_progress", "success", "failure", "action_required", "cancelled", "neutral", "success", "skipped", or "timed_out".
     default: queued
   title:
     description: The title of the check, this appears in the "progress" of the check UI.
   job-name:
-    description: Name of the parent job using this step.
+    description: Name of the job to redirect by the check.
     default: ${{ github.job }}
   repository-owner:
     description: The owner of the repository.
@@ -55,7 +54,7 @@ runs:
       id: check
       with:
         sha: ${{ inputs.sha }}
-        name: ${{ inputs.name }}
+        name: ${{ inputs.name || inputs.job-name }}
         status: ${{ inputs.status }}
         title: ${{ inputs.title }}
         url: ${{ steps.job.outputs.url }}

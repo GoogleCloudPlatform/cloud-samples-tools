@@ -39,7 +39,7 @@ on:
         type: string
         default: Custard CI
       job-name:
-        description: Name of the parent job using this step.
+        description: Name of the job to redirect by the check.
         type: string
       custard-version:
         description: Custard version to install.
