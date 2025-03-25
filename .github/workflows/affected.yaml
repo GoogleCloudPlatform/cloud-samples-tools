@@ -87,6 +87,7 @@ jobs:
           sha: ${{ inputs.head-sha }}
           name: ${{ inputs.check-name }}
           title: Finding affected packages
+          job-name: affected
       - name: Find affected packages
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/affected@reusable-workflows
         id: custard
