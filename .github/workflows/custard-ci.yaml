@@ -22,6 +22,8 @@ on:
       - custard/**
 
 jobs:
+  # Although this job doesn't do anything, running this workflow
+  # triggers test-workflows.yaml via workflow_run.
   submit-job:
     name: submit job
     runs-on: ubuntu-latest
