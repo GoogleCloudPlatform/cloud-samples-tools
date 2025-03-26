@@ -62,9 +62,9 @@ jobs:
     permissions:
       statuses: write
     with:
-      head-sha: ${{ github.event.workflow_run.head_sha || github.sha }}
+      head-sha: ${{ github.event.workflow_run.head_sha || inputs.commit-sha || github.sha }}
       config-file: .github/test/config.jsonc
-      paths: .github/test/pkg1
+      paths: ${{ (inputs.run-all && '.') || inputs.paths || '.github/test/pkg1' }}
       timeout-minutes: 1
 
   test:
@@ -83,7 +83,7 @@ jobs:
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@main
         id: queued
         with:
-          sha: ${{ github.event.workflow_run.head_sha || github.sha }}
+          sha: ${{ github.event.workflow_run.head_sha || inputs.commit-sha || github.sha }}
           name: test (${{ matrix.path }})
       - name: Setup Custard
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@main
@@ -134,7 +134,7 @@ jobs:
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@main
         id: in_progress
         with:
-          sha: ${{ github.event.workflow_run.head_sha || github.sha }}
+          sha: ${{ github.event.workflow_run.head_sha || inputs.commit-sha || github.sha }}
           status: in_progress
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
