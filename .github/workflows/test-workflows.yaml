@@ -27,8 +27,8 @@ on:
       - Custard CI
     types:
       # There's no need to wait for the "submit job" to finish.
-      # As long as it's "requested", it means it has been approved.
-      - requested
+      # As long as it's "in_progress", it means it has been approved.
+      - in_progress
   workflow_dispatch:
     inputs:
       run-all:
