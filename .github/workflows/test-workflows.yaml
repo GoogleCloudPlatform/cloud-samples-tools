@@ -24,7 +24,7 @@ on:
       - custard/**
   workflow_run:
     workflows:
-      - submit job
+      - Custard CI
     types:
       # There's no need to wait for the "submit job" to finish.
       # As long as it's "requested", it means it has been approved.
