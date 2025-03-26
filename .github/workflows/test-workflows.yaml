@@ -42,6 +42,7 @@ on:
         description: Commit SHA to run tests on
         type: string
         default: origin/main
+  pull_request:
 
 jobs:
   github-context:
