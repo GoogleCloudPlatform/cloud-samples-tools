@@ -20,15 +20,28 @@ on:
       - main
     paths:
       - .github/**
+      - actions/**
       - custard/**
-      - "**/*.yaml"
-      - "**/*.yml"
-  pull_request:
-    paths:
-      - .github/**
-      - custard/**
-      - "**/*.yaml"
-      - "**/*.yml"
+  workflow_run:
+    workflows:
+      - Custard CI
+    types:
+      # There's no need to wait for the "submit job" to finish.
+      # As long as it's "requested", it means it has been approved.
+      - requested
+  workflow_dispatch:
+    inputs:
+      run-all:
+        description: Run all tests
+        type: boolean
+        default: false
+      paths:
+        description: Comma separated packages to test
+        type: string
+      commit-sha:
+        description: Commit SHA to run tests on
+        type: string
+        default: origin/main
 
 jobs:
   github-context:
@@ -39,15 +52,18 @@ jobs:
       - run: echo "$GITHUB_CONTEXT"
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
+      - run: echo "$INPUTS"
+        env:
+          INPUTS: ${{ toJson(inputs) }}
 
   affected:
     uses: ./.github/workflows/affected.yaml
     permissions:
       statuses: write
     with:
-      head-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      head-sha: ${{ github.event.workflow_run.head_sha || inputs.commit-sha || github.sha }}
       config-file: .github/test/config.jsonc
-      paths: .github/test/pkg1
+      paths: ${{ (inputs.run-all && '.') || inputs.paths || '.github/test/pkg1' }}
       timeout-minutes: 1
 
   test:
@@ -66,7 +82,7 @@ jobs:
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@main
         id: queued
         with:
-          sha: ${{ github.event.pull_request.head.sha || github.sha }}
+          sha: ${{ github.event.workflow_run.head_sha || inputs.commit-sha || github.sha }}
           name: test (${{ matrix.path }})
       - name: Setup Custard
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@main
@@ -117,7 +133,7 @@ jobs:
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@main
         id: in_progress
         with:
-          sha: ${{ github.event.pull_request.head.sha || github.sha }}
+          sha: ${{ github.event.workflow_run.head_sha || inputs.commit-sha || github.sha }}
           status: in_progress
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
