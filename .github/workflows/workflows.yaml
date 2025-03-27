@@ -79,8 +79,12 @@ jobs:
     continue-on-error: true
     timeout-minutes: 1
     steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || inputs.ref || github.sha }}
       - name: Check queued
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@main
+        uses: ./actions/steps/create-check
         id: queued
         with:
           sha: ${{ github.event.workflow_run.head_sha || github.sha }}
@@ -88,13 +92,13 @@ jobs:
           job-name: test (${{ matrix.path }})
           if: ${{ !!github.event.workflow_run }}
       - name: Setup Custard
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@main
+        uses: ./actions/steps/setup-custard
         with:
           path: ${{ matrix.path }}
           ci-setup: ${{ toJson(fromJson(needs.affected.outputs.ci-setups)[matrix.path]) }}
           project-id: my-project
       - name: Check in_progress
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@main
+        uses: ./steps/update-check
         id: in_progress
         with:
           check: ${{ steps.queued.outputs.check }}
@@ -102,12 +106,12 @@ jobs:
       - run: bash run.sh
         working-directory: ${{ matrix.path }}
       - name: Check success
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@main
+        uses: ./actions/steps/update-check
         with:
           check: ${{ steps.in_progress.outputs.check }}
           status: success
       - name: Check failure
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@main
+        uses: ./actions/steps/update-check
         if: failure()
         with:
           check: ${{ steps.in_progress.outputs.check }}
@@ -120,7 +124,11 @@ jobs:
       statuses: write
     timeout-minutes: 1
     steps:
-      - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@main
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || inputs.ref || github.sha }}
+      - uses: ./actions/steps/update-check
         with:
           check: ${{ needs.affected.outputs.check }}
           status: success
@@ -132,29 +140,31 @@ jobs:
       statuses: write
     timeout-minutes: 1
     steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || inputs.ref || github.sha }}
       - name: Check in_progress
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@main
+        uses: ./actions/steps/create-check
         id: in_progress
         with:
           sha: ${{ github.event.workflow_run.head_sha || github.sha }}
           status: in_progress
           name: Custard CI / actions/steps/map-run
           if: ${{ !!github.event.workflow_run }}
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Run command on affected paths
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/map-run@main
+        uses: ./actions/steps/map-run
         with:
           command: ls -lh
           paths: ${{ needs.affected.outputs.paths }}
           outputs-always: true
       - name: Check success
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@main
+        uses: ./actions/steps/update-check
         with:
           check: ${{ steps.in_progress.outputs.check }}
           status: success
       - name: Check failure
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@main
+        uses: ./actions/steps/update-check
         if: failure()
         with:
           check: ${{ steps.in_progress.outputs.check }}
