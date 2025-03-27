@@ -16,10 +16,6 @@ name: tooling lint
 
 runs:
   using: composite
-  defaults:
-    run:
-      shell: bash
-      working-directory: custard/
   steps:
     - name: Check in_progress
       uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@v0.2.3
@@ -36,8 +32,12 @@ runs:
 
     - name: Go vet
       run: go vet ./...
+      shell: bash
+      working-directory: custard/
     - name: Check format
       run: test -z $(gofmt -l .)
+      shell: bash
+      working-directory: custard/
 
     - name: Check success
       uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3

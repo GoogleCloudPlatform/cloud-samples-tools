@@ -36,6 +36,8 @@ runs:
 
     - name: Run tests
       run: go test -v ./...
+      shell: bash
+      working-directory: custard/
 
     - name: Check success
       uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3

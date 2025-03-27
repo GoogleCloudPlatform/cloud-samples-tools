@@ -44,6 +44,7 @@ runs:
         check: ${{ steps.queued.outputs.check }}
         status: in_progress
     - run: bash run.sh
+      shell: bash
       working-directory: ${{ inputs.path }}
     - name: Check success
       uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
