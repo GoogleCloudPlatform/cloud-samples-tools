@@ -27,15 +27,21 @@ inputs:
     default: origin/main
   paths:
     description: Comma-separated package paths instead of git diff.
-  all:
-    description: Returns all packages instead of git diff.
-    default: "false"
   custard-version:
     description: Custard version to install.
     default: v0.2.1
   go-version:
     description: Go version to build the custard tools.
     default: ^1.22.0
+  create-check-if:
+    description: Creates a check if true, otherwise no check is created.
+    default: "true"
+  check-name:
+    description: Name of the check created by this workflow.
+    default: Custard CI
+  job-name:
+    description: Name of the job to redirect by the check.
+    default: ${{ github.job }}
 
 outputs:
   paths:
@@ -47,6 +53,9 @@ outputs:
   ci-setups:
     description: The CI setup configurations for the affected packages.
     value: ${{ steps.custard.outputs.ci-setups }}
+  check:
+    description: The check that was created by this job.
+    value: ${{ steps.in_progress.outputs.check }}
 
 runs:
   using: composite

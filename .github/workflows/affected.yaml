@@ -30,21 +30,6 @@ on:
       paths:
         description: Comma-separated package paths instead of git diff.
         type: string
-      all:
-        description: Returns all packages instead of git diff.
-        type: boolean
-        default: false
-      create-check-if:
-        description: Creates a check if true, otherwise no check is created.
-        type: boolean
-        default: true
-      check-name:
-        description: Name of the check created by this workflow.
-        type: string
-        default: Custard CI
-      job-name:
-        description: Name of the job to redirect by the check.
-        type: string
       custard-version:
         description: Custard version to install.
         type: string
@@ -53,6 +38,14 @@ on:
         description: Go version to build the custard tools.
         type: string
         default: ^1.22.0
+      create-check-if:
+        description: Creates a check if true, otherwise no check is created.
+        type: boolean
+        default: true
+      check-name:
+        description: Name of the check created by this workflow.
+        type: string
+        default: Custard CI
       timeout-minutes:
         description: Timeout to find affected packages.
         type: number
@@ -78,42 +71,21 @@ jobs:
     permissions:
       statuses: write
     outputs:
-      paths: ${{ steps.custard.outputs.paths }}
-      num-paths: ${{ steps.custard.outputs.num-paths }}
-      ci-setups: ${{ steps.custard.outputs.ci-setups }}
-      check: ${{ steps.in_progress.outputs.check }}
+      paths: ${{ steps.affected.outputs.paths }}
+      num-paths: ${{ steps.affected.outputs.num-paths }}
+      ci-setups: ${{ steps.affected.outputs.ci-setups }}
+      check: ${{ steps.affected.outputs.check }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
-      - name: Create check
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@v0.2.3
-        id: queued
-        with:
-          sha: ${{ inputs.head-sha }}
-          name: ${{ inputs.check-name }}
-          title: Finding affected packages
-          job-name: affected
-          if: ${{ inputs.create-check-if }}
-      - name: Find affected packages
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/affected@v0.2.3
-        id: custard
+      - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/affected@v0.2.3
+        id: affected
         with:
           config-file: ${{ inputs.config-file }}
           head-sha: ${{ inputs.head-sha }}
           main-sha: ${{ inputs.main-sha }}
           paths: ${{ inputs.paths }}
-          all: ${{ inputs.all }}
           custard-version: ${{ inputs.custard-version }}
           go-version: ${{ inputs.go-version }}
-      - name: Check in_progress
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
-        id: in_progress
-        with:
-          check: ${{ steps.queued.outputs.check }}
-          status: in_progress
-          title: Running ${{ steps.custard.outputs.num-paths }} package(s)
-      - name: Check failure
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
-        if: failure()
-        with:
-          check: ${{ steps.queued.outputs.check }}
-          status: failure
+          create-check-if: ${{ inputs.create-check-if }}
+          check-name: ${{ inputs.check-name }}
+          job-name: ${{ github.job }}

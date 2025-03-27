@@ -48,7 +48,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           ref: ${{ github.event.workflow_run.head_sha || inputs.ref || github.sha }}
-      - uses: ./.github/workflows/tooling/lint
+      - uses: ./.github/workflows/steps/tooling-lint
 
   test:
     runs-on: ubuntu-latest
@@ -58,4 +58,4 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           ref: ${{ github.event.workflow_run.head_sha || inputs.ref || github.sha }}
-      - uses: ./.github/workflows/tooling/test
+      - uses: ./.github/workflows/steps/tooling-test

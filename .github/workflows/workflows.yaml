@@ -57,17 +57,32 @@ jobs:
           INPUTS: ${{ toJson(inputs) }}
 
   affected:
-    uses: ./.github/workflows/affected.yaml
+    # Instead of using the reusable worfklow ./github/workflows/affected.yaml
+    # We use the reusable step to checkout the version we want.
+    # This allows us to test changes on PRs, otherwise it would run from main.
+    runs-on: ubuntu-latest
     permissions:
       statuses: write
-    with:
-      head-sha: ${{ github.event.workflow_run.head_sha || inputs.ref || github.sha }}
-      config-file: .github/test/config.jsonc
-      paths: ${{ (inputs.run-all && '.') || inputs.paths || '.github/test/pkg1' }}
-      create-check-if: ${{ !!github.event.workflow_run }}
-      timeout-minutes: 1
+    outputs:
+      paths: ${{ steps.affected.outputs.paths }}
+      num-paths: ${{ steps.affected.outputs.num-paths }}
+      ci-setups: ${{ steps.affected.outputs.ci-setups }}
+      check: ${{ steps.affected.outputs.check }}
+    timeout-minutes: 1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || inputs.ref || github.sha }}
+      - uses: ./.github/workflows/steps/affected
+        id: affected
+        with:
+          head-sha: ${{ github.event.workflow_run.head_sha || inputs.ref || github.sha }}
+          config-file: .github/test/config.jsonc
+          paths: ${{ (inputs.run-all && '.') || inputs.paths || '.github/test/pkg1' }}
+          create-check-if: ${{ !!github.event.workflow_run }}
 
-  test:
+  setup-custard:
     needs: affected
     runs-on: ubuntu-latest
     permissions:
@@ -83,42 +98,13 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           ref: ${{ github.event.workflow_run.head_sha || inputs.ref || github.sha }}
-      - name: Check queued
-        uses: ./actions/steps/create-check
-        id: queued
-        with:
-          sha: ${{ github.event.workflow_run.head_sha || github.sha }}
-          name: Custard CI / actions/steps/setup-custard (${{ matrix.path }})
-          job-name: test (${{ matrix.path }})
-          if: ${{ !!github.event.workflow_run }}
-      - name: Setup Custard
-        uses: ./actions/steps/setup-custard
+      - uses: ./.github/workflows/steps/setup-custard
         with:
           path: ${{ matrix.path }}
-          ci-setup: ${{ toJson(fromJson(needs.affected.outputs.ci-setups)[matrix.path]) }}
-          project-id: my-project
-      - name: Check in_progress
-        uses: ./steps/update-check
-        id: in_progress
-        with:
-          check: ${{ steps.queued.outputs.check }}
-          status: in_progress
-      - run: bash run.sh
-        working-directory: ${{ matrix.path }}
-      - name: Check success
-        uses: ./actions/steps/update-check
-        with:
-          check: ${{ steps.in_progress.outputs.check }}
-          status: success
-      - name: Check failure
-        uses: ./actions/steps/update-check
-        if: failure()
-        with:
-          check: ${{ steps.in_progress.outputs.check }}
-          status: failure
+          ci-setups: ${{ needs.affected.outputs.ci-setups }}
 
   done:
-    needs: [affected, test]
+    needs: [affected, setup-custard]
     runs-on: ubuntu-latest
     permissions:
       statuses: write
@@ -144,28 +130,6 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           ref: ${{ github.event.workflow_run.head_sha || inputs.ref || github.sha }}
-      - name: Check in_progress
-        uses: ./actions/steps/create-check
-        id: in_progress
+      - uses: ./.github/workflows/steps/map-run
         with:
-          sha: ${{ github.event.workflow_run.head_sha || github.sha }}
-          status: in_progress
-          name: Custard CI / actions/steps/map-run
-          if: ${{ !!github.event.workflow_run }}
-      - name: Run command on affected paths
-        uses: ./actions/steps/map-run
-        with:
-          command: ls -lh
           paths: ${{ needs.affected.outputs.paths }}
-          outputs-always: true
-      - name: Check success
-        uses: ./actions/steps/update-check
-        with:
-          check: ${{ steps.in_progress.outputs.check }}
-          status: success
-      - name: Check failure
-        uses: ./actions/steps/update-check
-        if: failure()
-        with:
-          check: ${{ steps.in_progress.outputs.check }}
-          status: failure
