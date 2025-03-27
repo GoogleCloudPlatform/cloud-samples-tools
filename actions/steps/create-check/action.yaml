@@ -29,12 +29,16 @@ inputs:
     description: The title of the check, this appears in the "progress" of the check UI.
   job-name:
     description: Name of the job to redirect by the check.
+    default: ${{ github.job }}
   repository-owner:
     description: The owner of the repository.
     default: ${{ github.repository_owner }}
   repository-name:
     description: The name of the repository.
     default: ${{ github.event.repository.name }}
+  if:
+    description: If true the check is created, otherwise it is skipped.
+    default: "true"
 
 outputs:
   check:
@@ -46,9 +50,10 @@ runs:
   steps:
     - name: Get job
       uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/get-job@v0.2.2
+      if: inputs.if
       id: job
       with:
-        job-name: ${{ inputs.job-name || inputs.name }}
+        job-name: ${{ inputs.job-name }}
     - name: Create check ${{ inputs.check-status }}
       uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@v0.2.2
       id: check
@@ -60,3 +65,4 @@ runs:
         url: ${{ steps.job.outputs.url }}
         repository-name: ${{ inputs.repository-name }}
         repository-owner: ${{ inputs.repository-owner }}
+        if: ${{ inputs.if }}

@@ -34,6 +34,10 @@ on:
         description: Returns all packages instead of git diff.
         type: boolean
         default: false
+      create-check-if:
+        description: Creates a check if true, otherwise no check is created.
+        type: boolean
+        default: true
       check-name:
         description: Name of the check created by this workflow.
         type: string
@@ -88,6 +92,7 @@ jobs:
           name: ${{ inputs.check-name }}
           title: Finding affected packages
           job-name: affected
+          if: ${{ inputs.create-check-if }}
       - name: Find affected packages
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/affected@v0.2.2
         id: custard

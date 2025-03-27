@@ -12,15 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: workflows
+name: tooling
 
 on:
   push:
     branches:
       - main
     paths:
-      - .github/**
-      - actions/**
+      - .github/workflows/test-tooling.yaml
       - custard/**
   workflow_run:
     workflows:
@@ -31,76 +30,43 @@ on:
       - in_progress
   workflow_dispatch:
     inputs:
-      run-all:
-        description: Run all tests
-        type: boolean
-        default: false
-      paths:
-        description: Comma separated packages to test
+      go-version:
+        description: Go version
         type: string
+        default: ^1.22.0
       ref:
         description: Branch, tag, or commit SHA to run tests on
         type: string
-        default: origin/main
+        default: main
 
 jobs:
-  github-context:
+  lint:
     runs-on: ubuntu-latest
-    timeout-minutes: 1
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: custard/
     steps:
-      # For debugging information.
-      - run: echo "$GITHUB_CONTEXT"
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-      - run: echo "$INPUTS"
-        env:
-          INPUTS: ${{ toJson(inputs) }}
-
-  affected:
-    uses: ./.github/workflows/affected.yaml
-    permissions:
-      statuses: write
-    with:
-      head-sha: ${{ github.event.workflow_run.head_sha || inputs.ref || github.sha }}
-      config-file: .github/test/config.jsonc
-      paths: ${{ (inputs.run-all && '.') || inputs.paths || '.github/test/pkg1' }}
-      create-check-if: ${{ !!github.event.workflow_run }}
-      timeout-minutes: 1
-
-  test:
-    needs: affected
-    runs-on: ubuntu-latest
-    permissions:
-      statuses: write
-    strategy:
-      fail-fast: false
-      matrix:
-        path: ${{ fromJson(needs.affected.outputs.paths) }}
-    continue-on-error: true
-    timeout-minutes: 1
-    steps:
-      - name: Check queued
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@main
-        id: queued
-        with:
-          sha: ${{ github.event.workflow_run.head_sha || github.sha }}
-          name: Custard CI / actions/steps/setup-custard (${{ matrix.path }})
-          job-name: test (${{ matrix.path }})
-          if: ${{ !!github.event.workflow_run }}
-      - name: Setup Custard
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@main
-        with:
-          path: ${{ matrix.path }}
-          ci-setup: ${{ toJson(fromJson(needs.affected.outputs.ci-setups)[matrix.path]) }}
-          project-id: my-project
       - name: Check in_progress
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@main
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@main
         id: in_progress
         with:
-          check: ${{ steps.queued.outputs.check }}
+          sha: ${{ github.event.workflow_run.head_sha || github.sha }}
+          name: tooling / lint
           status: in_progress
-      - run: bash run.sh
-        working-directory: ${{ matrix.path }}
+          if: ${{ !!github.event.workflow_run }}
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || inputs.ref || 'main' }}
+      - name: Setup Go
+        uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5
+        with:
+          go-version: ${{ inputs.go-version || '^1.22.0' }}
+      - name: Go vet
+        run: go vet ./...
+      - name: Check format
+        run: test -z $(gofmt -l .)
       - name: Check success
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@main
         with:
@@ -113,41 +79,31 @@ jobs:
           check: ${{ steps.in_progress.outputs.check }}
           status: failure
 
-  done:
-    needs: [affected, test]
+  test:
     runs-on: ubuntu-latest
-    permissions:
-      statuses: write
-    timeout-minutes: 1
-    steps:
-      - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@main
-        with:
-          check: ${{ needs.affected.outputs.check }}
-          status: success
-
-  map-run:
-    needs: affected
-    runs-on: ubuntu-latest
-    permissions:
-      statuses: write
-    timeout-minutes: 1
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: custard/
     steps:
       - name: Check in_progress
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@main
         id: in_progress
         with:
           sha: ${{ github.event.workflow_run.head_sha || github.sha }}
+          name: tooling / lint
           status: in_progress
-          name: Custard CI / actions/steps/map-run
           if: ${{ !!github.event.workflow_run }}
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - name: Run command on affected paths
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/map-run@main
         with:
-          command: ls -lh
-          paths: ${{ needs.affected.outputs.paths }}
-          outputs-always: true
+          ref: ${{ github.event.workflow_run.head_sha || inputs.ref || 'main' }}
+      - name: Setup Go
+        uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5
+        with:
+          go-version: ${{ inputs.go-version || '^1.22.0' }}
+      - name: Run tests
+        run: go test -v ./...
       - name: Check success
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@main
         with:
