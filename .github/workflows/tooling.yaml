@@ -38,6 +38,10 @@ on:
         description: Branch, tag, or commit SHA to run tests on
         type: string
         default: main
+  pull_request: # TODO: REMOVE THIS, FOR TESTING ONLY
+
+env:
+  HEAD_SHA: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
 
 jobs:
   lint:
@@ -47,7 +51,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha || inputs.ref || github.sha }}
+          ref: ${{ env.HEAD_SHA }}
       - uses: ./.github/workflows/steps/tooling-lint
 
   test:
@@ -57,5 +61,5 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha || inputs.ref || github.sha }}
+          ref: ${{ env.HEAD_SHA }}
       - uses: ./.github/workflows/steps/tooling-test
