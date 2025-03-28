@@ -38,7 +38,7 @@ runs:
         ci-setup: ${{ toJson(fromJson(inputs.ci-setups)[matrix.path]) }}
         project-id: my-project
     - name: Check in_progress
-      uses: GoogleCloudPlatform/cloud-samples-tools/steps/update-check@v0.2.3
+      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
       id: in_progress
       with:
         check: ${{ steps.queued.outputs.check }}
