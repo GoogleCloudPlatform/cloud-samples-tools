@@ -36,7 +36,7 @@ This way, the check will block a PR until everything finishes.
 ```yaml
 jobs:
   affected:
-    uses: GoogleCloudPlatform/cloud-samples-tools/.github/workflows/affected.yaml
+    uses: GoogleCloudPlatform/cloud-samples-tools/.github/workflows/affected.yaml@v0.2.3
     permissions:
       statuses: write
     with:
@@ -54,7 +54,7 @@ jobs:
     permissions:
       statuses: write
     steps:
-      - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check
+      - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
         with:
           check: ${{ needs.affected.outputs.check }}
           status: success
@@ -88,7 +88,7 @@ jobs:
         path: ${{ fromJson(needs.affected.outputs.paths) }}
     steps:
       - name: Setup Custard
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@v0.2.3
         with:
           path: ${{ matrix.path }}
           ci-setup: ${{ toJson(fromJson(needs.affected.outputs.ci-setups)[matrix.path]) }}
@@ -117,7 +117,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run linter
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/map-run
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/map-run@v0.2.3
         with:
           command: ./run-my-linter
           paths: ${{ needs.affected.outputs.paths }}
@@ -142,7 +142,7 @@ jobs:
       statuses: write
     steps:
       - name: Check queued
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@v0.2.3
         id: queued
         with:
           sha: ${{ github.event.workflow_run.head_sha || github.sha }}
@@ -154,7 +154,7 @@ jobs:
       # Checkout code, setup language and the environment.
 
       - name: Check in_progress
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
         id: in_progress
         with:
           check: ${{ steps.queued.outputs.check }}
@@ -163,19 +163,19 @@ jobs:
       # Run something.
 
       - name: Check success
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
         with:
           check: ${{ steps.in_progress.outputs.check }}
           status: success
       - name: Check failure
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
         if: failure()
         with:
           check: ${{ steps.in_progress.outputs.check }}
           status: failure
 ```
 
-> **Tip**: For strategy matrix jobs, specify the full job name with either `name` or `job-name` (`job-name` takes precedence). For example `name: test ${{ matrix.path }}`.
+> **Tip**: For strategy matrix jobs, specify the full job name with `job-name`. For example `job-name: ${{ github.job }} (${{ matrix.path }})`.
 
 ### Create status
 
@@ -197,10 +197,10 @@ jobs:
   my-job:
     steps:
       - name: Get job
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/get-job
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/get-job@v0.2.3
         id: job
         # with:
         #   job-name: my-job
 ```
 
-> **Tip**: For strategy matrix jobs, specify the full job name with `job-name`. For example `job-name: test (${{ matrix.path }})`.
+> **Tip**: For strategy matrix jobs, specify the full job name with `job-name`. For example `job-name: ${{ github.job }} (${{ matrix.path }})`.
