@@ -65,4 +65,4 @@ runs:
         url: ${{ steps.job.outputs.url }}
         repository-name: ${{ inputs.repository-name }}
         repository-owner: ${{ inputs.repository-owner }}
-        if: ${{ toJson(inputs.if) }}
+        if: ${{ inputs.if }}
