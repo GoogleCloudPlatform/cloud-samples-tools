@@ -45,6 +45,8 @@ env:
 
 jobs:
   lint:
+    # TODO: remove this, for experiment only
+    if: ${{ github.event.pull_request.head.repo.fork }}
     runs-on: ubuntu-latest
     permissions:
       statuses: write
