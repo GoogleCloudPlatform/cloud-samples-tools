@@ -29,7 +29,7 @@ runs:
       with:
         sha: ${{ github.event.workflow_run.head_sha || github.sha }}
         name: Custard CI / actions/steps/setup-custard (${{ inputs.path }})
-        job-name: test (${{ inputs.path }})
+        job-name: ${{ github.job }} (${{ inputs.path }})
         if: ${{ !!github.event.workflow_run }}
     - name: Setup Custard
       uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@v0.2.3

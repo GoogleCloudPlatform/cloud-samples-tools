@@ -175,7 +175,7 @@ jobs:
           status: failure
 ```
 
-> **Tip**: For strategy matrix jobs, specify the full job name with `job-name`. For example `job-name: test (${{ matrix.path }})`.
+> **Tip**: For strategy matrix jobs, specify the full job name with `job-name`. For example `job-name: ${{ github.job }} (${{ matrix.path }})`.
 
 ### Create status
 
@@ -203,4 +203,4 @@ jobs:
         #   job-name: my-job
 ```
 
-> **Tip**: For strategy matrix jobs, specify the full job name with `job-name`. For example `job-name: test (${{ matrix.path }})`.
+> **Tip**: For strategy matrix jobs, specify the full job name with `job-name`. For example `job-name: ${{ github.job }} (${{ matrix.path }})`.
