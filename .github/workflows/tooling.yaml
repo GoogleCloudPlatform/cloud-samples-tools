@@ -21,6 +21,13 @@ on:
     paths:
       - .github/workflows/test-tooling.yaml
       - custard/**
+  pull_request:
+    paths:
+      - .github/**
+      - actions/**
+      - custard/**
+    branches-ignore:
+      - renovate/**
   workflow_run:
     workflows:
       - Custard CI # .github/workflows/custard-ci.yaml
@@ -38,9 +45,6 @@ on:
         description: Branch, tag, or commit SHA to run tests on
         type: string
         default: main
-  pull_request:
-    branches:
-      - workflow-*
 
 env:
   HEAD_SHA: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
