@@ -16,10 +16,6 @@ name: tooling test
 
 runs:
   using: composite
-  defaults:
-    run:
-      shell: bash
-      working-directory: custard/
   steps:
     - name: Check in_progress
       uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@v0.2.3
