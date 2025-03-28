@@ -42,7 +42,9 @@ on:
         description: Branch, tag, or commit SHA to run tests on
         type: string
         default: origin/main
-  pull_request: # TODO: REMOVE THIS, FOR TESTING ONLY
+  pull_request:
+    branches:
+      - workflow-*
 
 env:
   HEAD_SHA: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
