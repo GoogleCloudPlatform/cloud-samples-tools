@@ -22,7 +22,7 @@ runs:
       id: in_progress
       with:
         sha: ${{ github.event.workflow_run.head_sha || github.sha }}
-        name: tooling / lint
+        name: tooling / ${{ github.job }}
         status: in_progress
         if: ${{ !!github.event.workflow_run }}
     - name: Setup Go

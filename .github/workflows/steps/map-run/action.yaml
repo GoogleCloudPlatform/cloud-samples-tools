@@ -27,7 +27,7 @@ runs:
       with:
         sha: ${{ github.event.workflow_run.head_sha || github.sha }}
         status: in_progress
-        name: workflows / actions/steps/map-run
+        name: workflows / ${{ github.job }}
         if: ${{ !!github.event.workflow_run }}
 
     - name: Run command on affected paths
