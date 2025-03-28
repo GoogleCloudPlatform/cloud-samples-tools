@@ -47,4 +47,4 @@ runs:
         url: ${{ inputs.url || fromJson(inputs.check).url }}
         repository-name: ${{ fromJson(inputs.check).repository-name }}
         repository-owner: ${{ fromJson(inputs.check).repository-owner }}
-        if: ${{ fromJson(inputs.check).inputs }}
+        if: ${{ fromJson(inputs.check).if }}
