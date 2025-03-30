@@ -26,6 +26,8 @@ on:
       - .github/**
       - actions/**
       - custard/**
+    branches-ignore:
+      - renovate/**
   workflow_run:
     workflows:
       - Custard CI # .github/workflows/custard-ci.yaml
