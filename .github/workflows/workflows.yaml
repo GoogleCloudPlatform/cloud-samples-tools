@@ -152,7 +152,7 @@ jobs:
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/map-run@v0.2.3
         with:
           command: ls -lh
-          paths: ${{ inputs.paths }}
+          paths: ${{ needs.affected.outputs.paths }}
           outputs-always: true
       - name: Check success
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
