@@ -69,6 +69,7 @@ jobs:
       head-sha: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
       config-file: .github/test/config.jsonc
       paths: ${{ (inputs.run-all && '.') || inputs.paths || '.github/test/pkg1' }}
+      create-check-if: ${{ !!github.event.workflow_run }}
       timeout-minutes: 1
 
   setup-custard:
