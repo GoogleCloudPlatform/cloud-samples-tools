@@ -27,9 +27,6 @@ inputs:
     default: origin/main
   paths:
     description: Comma-separated package paths instead of git diff.
-  all:
-    description: Returns all packages instead of git diff.
-    default: "false"
   custard-version:
     description: Custard version to install.
     default: v0.2.1

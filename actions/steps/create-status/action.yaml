@@ -35,6 +35,9 @@ inputs:
   repository-name:
     description: The name of the repository.
     default: ${{ github.event.repository.name }}
+  if:
+    description: If true the check is created, otherwise it is skipped.
+    default: "true"
 
 outputs:
   check:
@@ -125,35 +128,38 @@ runs:
               throw new Error('Unknown status "${{ inputs.status }}", must be one of "queued", "in_progress", "success", "failure", "action_required", "cancelled", "neutral", "success", "skipped", or "timed_out".');
           }
 
-          // If set to a terminal state, append the elapsed time.
-          if (["success", "failure", "timed_out"].includes("${{ inputs.status }}")) {
-            const check = await findCheck({
+          if (${{ inputs.if }}) {
+            // If set to a terminal state, append the elapsed time.
+            if (["success", "failure", "timed_out"].includes("${{ inputs.status }}")) {
+              const check = await findCheck({
+                owner: "${{ inputs.repository-owner }}",
+                repo: "${{ inputs.repository-name }}",
+                sha: "${{ inputs.sha }}",
+                name: "${{ inputs.name }}",
+              });
+              if (check) {
+                const start = Date.parse(check.updated_at);
+                const end = Date.now();
+                const elapsed = Math.round((Date.now() - start) / 1000);
+                title = `${title} in ${elapsed}s`;
+              }
+            }
+
+            // https://docs.github.com/en/rest/commits/statuses?apiVersion=2022-11-28#create-a-commit-status
+            // https://octokit.github.io/rest.js/v18/#repos-create-commit-status
+            // https://stackoverflow.com/a/72312617
+            console.log(`Create check: [${{ inputs.status }}] ${{ inputs.name }} -- ${title}`);
+            github.rest.repos.createCommitStatus({
               owner: "${{ inputs.repository-owner }}",
               repo: "${{ inputs.repository-name }}",
               sha: "${{ inputs.sha }}",
-              name: "${{ inputs.name }}",
+              state: state,
+              context: `${{ inputs.name }}`,
+              description: title,
+              target_url: `${{ inputs.url }}` || undefined,
             });
-            if (check) {
-              const start = Date.parse(check.updated_at);
-              const end = Date.now();
-              const elapsed = Math.round((Date.now() - start) / 1000);
-              title = `${title} in ${elapsed}s`;
-            }
           }
 
-          // https://docs.github.com/en/rest/commits/statuses?apiVersion=2022-11-28#create-a-commit-status
-          // https://octokit.github.io/rest.js/v18/#repos-create-commit-status
-          // https://stackoverflow.com/a/72312617
-          console.log(`Create check: [${{ inputs.status }}] ${{ inputs.name }} -- ${title}`);
-          github.rest.repos.createCommitStatus({
-            owner: "${{ inputs.repository-owner }}",
-            repo: "${{ inputs.repository-name }}",
-            sha: "${{ inputs.sha }}",
-            state: state,
-            context: `${{ inputs.name }}`,
-            description: title,
-            target_url: `${{ inputs.url }}` || undefined,
-          });
           return {
             sha: "${{ inputs.sha }}",
             name: "${{ inputs.name }}",
@@ -162,4 +168,5 @@ runs:
             url: "${{ inputs.url }}",
             "repository-name": "${{ inputs.repository-name }}",
             "repository-owner": "${{ inputs.repository-owner }}",
+            if: ${{ inputs.if }},
           };
