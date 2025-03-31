@@ -1,0 +1,122 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: tooling
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/test-tooling.yaml
+      - custard/**
+  pull_request:
+    paths:
+      - .github/**
+      - actions/**
+      - custard/**
+  workflow_run:
+    workflows:
+      - Custard CI # .github/workflows/custard-ci.yaml
+    types:
+      # There's no need to wait for the "submit job" to finish.
+      # As long as it's "in_progress", it means it has been approved.
+      - in_progress
+  workflow_dispatch:
+    inputs:
+      go-version:
+        description: Go version
+        type: string
+        default: ^1.22.0
+      ref:
+        description: Branch, tag, or commit SHA to run tests on
+        type: string
+        default: main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    timeout-minutes: 5
+    steps:
+      - name: Check in_progress
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@v0.2.3
+        id: in_progress
+        with:
+          sha: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
+          name: tooling / ${{ github.job }}
+          status: in_progress
+          if: ${{ !!github.event.workflow_run }}
+      - name: Checkout Custard
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Setup Go
+        uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5
+        with:
+          go-version: ${{ inputs.go-version || '^1.22.0' }}
+      - name: Go vet
+        run: go vet ./...
+        shell: bash
+        working-directory: custard/
+      - name: Check format
+        run: test -z $(gofmt -l .)
+        shell: bash
+        working-directory: custard/
+      - name: Check success
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
+        with:
+          check: ${{ steps.in_progress.outputs.check }}
+          status: success
+      - name: Check failure
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
+        if: failure()
+        with:
+          check: ${{ steps.in_progress.outputs.check }}
+          status: failure
+
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    timeout-minutes: 5
+    steps:
+      - name: Check in_progress
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@v0.2.3
+        id: in_progress
+        with:
+          sha: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
+          name: tooling / ${{ github.job }}
+          status: in_progress
+          if: ${{ !!github.event.workflow_run }}
+      - name: Checkout Custard
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Setup Go
+        uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5
+        with:
+          go-version: ${{ inputs.go-version || '^1.22.0' }}
+      - name: Run tests
+        run: go test -v ./...
+        shell: bash
+        working-directory: custard/
+      - name: Check success
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
+        with:
+          check: ${{ steps.in_progress.outputs.check }}
+          status: success
+      - name: Check failure
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
+        if: failure()
+        with:
+          check: ${{ steps.in_progress.outputs.check }}
+          status: failure
