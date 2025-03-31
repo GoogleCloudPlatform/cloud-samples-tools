@@ -30,17 +30,6 @@ on:
       paths:
         description: Comma-separated package paths instead of git diff.
         type: string
-      all:
-        description: Returns all packages instead of git diff.
-        type: boolean
-        default: false
-      check-name:
-        description: Name of the check created by this workflow.
-        type: string
-        default: Custard CI
-      job-name:
-        description: Name of the job to redirect by the check.
-        type: string
       custard-version:
         description: Custard version to install.
         type: string
@@ -49,6 +38,14 @@ on:
         description: Go version to build the custard tools.
         type: string
         default: ^1.22.0
+      create-check-if:
+        description: Creates a check if true, otherwise no check is created.
+        type: boolean
+        default: true
+      check-name:
+        description: Name of the check created by this workflow.
+        type: string
+        default: Custard CI
       timeout-minutes:
         description: Timeout to find affected packages.
         type: number
@@ -80,14 +77,16 @@ jobs:
       check: ${{ steps.in_progress.outputs.check }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
-      - name: Create check
+      - name: Check queued
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@v0.2.3
         id: queued
         with:
           sha: ${{ inputs.head-sha }}
           name: ${{ inputs.check-name }}
+          status: queued
           title: Finding affected packages
-          job-name: affected
+          job-name: ${{ github.job }}
+          if: ${{ inputs.create-check-if }}
       - name: Find affected packages
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/affected@v0.2.3
         id: custard
@@ -96,7 +95,6 @@ jobs:
           head-sha: ${{ inputs.head-sha }}
           main-sha: ${{ inputs.main-sha }}
           paths: ${{ inputs.paths }}
-          all: ${{ inputs.all }}
           custard-version: ${{ inputs.custard-version }}
           go-version: ${{ inputs.go-version }}
       - name: Check in_progress
