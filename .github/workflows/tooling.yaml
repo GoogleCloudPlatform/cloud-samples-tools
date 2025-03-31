@@ -26,8 +26,6 @@ on:
       - .github/**
       - actions/**
       - custard/**
-    branches-ignore:
-      - renovate/**
   workflow_run:
     workflows:
       - Custard CI # .github/workflows/custard-ci.yaml
@@ -46,9 +44,6 @@ on:
         type: string
         default: main
 
-env:
-  HEAD_SHA: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
-
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -56,11 +51,37 @@ jobs:
       statuses: write
     timeout-minutes: 5
     steps:
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Check in_progress
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@v0.2.3
+        id: in_progress
         with:
-          ref: ${{ env.HEAD_SHA }}
-      - uses: ./.github/workflows/steps/tooling-lint
+          sha: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
+          name: tooling / ${{ github.job }}
+          status: in_progress
+          if: ${{ !!github.event.workflow_run }}
+      - name: Setup Go
+        uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5
+        with:
+          go-version: ${{ inputs.go-version || '^1.22.0' }}
+      - name: Go vet
+        run: go vet ./...
+        shell: bash
+        working-directory: custard/
+      - name: Check format
+        run: test -z $(gofmt -l .)
+        shell: bash
+        working-directory: custard/
+      - name: Check success
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
+        with:
+          check: ${{ steps.in_progress.outputs.check }}
+          status: success
+      - name: Check failure
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
+        if: failure()
+        with:
+          check: ${{ steps.in_progress.outputs.check }}
+          status: failure
 
   test:
     runs-on: ubuntu-latest
@@ -68,8 +89,30 @@ jobs:
       statuses: write
     timeout-minutes: 5
     steps:
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Check in_progress
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@v0.2.3
+        id: in_progress
         with:
-          ref: ${{ env.HEAD_SHA }}
-      - uses: ./.github/workflows/steps/tooling-test
+          sha: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
+          name: tooling / ${{ github.job }}
+          status: in_progress
+          if: ${{ !!github.event.workflow_run }}
+      - name: Setup Go
+        uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5
+        with:
+          go-version: ${{ inputs.go-version || '^1.22.0' }}
+      - name: Run tests
+        run: go test -v ./...
+        shell: bash
+        working-directory: custard/
+      - name: Check success
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
+        with:
+          check: ${{ steps.in_progress.outputs.check }}
+          status: success
+      - name: Check failure
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
+        if: failure()
+        with:
+          check: ${{ steps.in_progress.outputs.check }}
+          status: failure

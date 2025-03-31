@@ -71,14 +71,25 @@ jobs:
     permissions:
       statuses: write
     outputs:
-      paths: ${{ steps.affected.outputs.paths }}
-      num-paths: ${{ steps.affected.outputs.num-paths }}
-      ci-setups: ${{ steps.affected.outputs.ci-setups }}
-      check: ${{ steps.affected.outputs.check }}
+      paths: ${{ steps.custard.outputs.paths }}
+      num-paths: ${{ steps.custard.outputs.num-paths }}
+      ci-setups: ${{ steps.custard.outputs.ci-setups }}
+      check: ${{ steps.in_progress.outputs.check }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
-      - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/affected@v0.2.3
-        id: affected
+      - name: Check queued
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@v0.2.3
+        id: queued
+        with:
+          sha: ${{ inputs.head-sha }}
+          name: ${{ inputs.check-name }}
+          status: queued
+          title: Finding affected packages
+          job-name: ${{ github.job }}
+          if: ${{ inputs.create-check-if }}
+      - name: Find affected packages
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/affected@v0.2.3
+        id: custard
         with:
           config-file: ${{ inputs.config-file }}
           head-sha: ${{ inputs.head-sha }}
@@ -86,6 +97,16 @@ jobs:
           paths: ${{ inputs.paths }}
           custard-version: ${{ inputs.custard-version }}
           go-version: ${{ inputs.go-version }}
-          create-check-if: ${{ inputs.create-check-if }}
-          check-name: ${{ inputs.check-name }}
-          job-name: ${{ github.job }}
+      - name: Check in_progress
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
+        id: in_progress
+        with:
+          check: ${{ steps.queued.outputs.check }}
+          status: in_progress
+          title: Running ${{ steps.custard.outputs.num-paths }} package(s)
+      - name: Check failure
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
+        if: failure()
+        with:
+          check: ${{ steps.queued.outputs.check }}
+          status: failure

@@ -33,15 +33,6 @@ inputs:
   go-version:
     description: Go version to build the custard tools.
     default: ^1.22.0
-  create-check-if:
-    description: Creates a check if true, otherwise no check is created.
-    default: "true"
-  check-name:
-    description: Name of the check created by this workflow.
-    default: Custard CI
-  job-name:
-    description: Name of the job to redirect by the check.
-    default: ${{ github.job }}
 
 outputs:
   paths:
@@ -53,22 +44,10 @@ outputs:
   ci-setups:
     description: The CI setup configurations for the affected packages.
     value: ${{ steps.custard.outputs.ci-setups }}
-  check:
-    description: The check that was created by this job.
-    value: ${{ steps.in_progress.outputs.check }}
 
 runs:
   using: composite
   steps:
-    - name: Check queued
-      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@v0.2.3
-      id: queued
-      with:
-        sha: ${{ inputs.head-sha }}
-        name: ${{ inputs.check-name }}
-        job-name: ${{ inputs.job-name }}
-        if: ${{ inputs.create-check-if }}
-
     - name: Setup Go
       uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5
       with:
@@ -88,12 +67,6 @@ runs:
       run: rm -rf cloud-samples-tools
 
     # Find the affected packages.
-    - name: Check in_progress
-      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
-      id: in_progress
-      with:
-        check: ${{ steps.queued.outputs.check }}
-        status: in_progress
     - name: Checkout the commit history
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       with:
@@ -126,15 +99,3 @@ runs:
         echo "num-paths=$(echo $PATHS | jq length)" >> $GITHUB_OUTPUT
         cat paths.txt
         echo "ci-setups=$(custard setup-files ${{ inputs.config-file }} paths.txt)" >> $GITHUB_OUTPUT
-
-    - name: Check success
-      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
-      with:
-        check: ${{ steps.in_progress.outputs.check }}
-        status: success
-    - name: Check failure
-      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.3
-      if: failure()
-      with:
-        check: ${{ steps.in_progress.outputs.check }}
-        status: failure
