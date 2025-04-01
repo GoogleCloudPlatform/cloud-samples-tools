@@ -26,11 +26,14 @@ import (
 	"strings"
 )
 
+const Version = "0.2.3" // x-release-please-version
+
 var usage = `usage: custard <command> ...
 
 commands:
   affected path/to/config.jsonc diffs.txt paths.txt
   setup-files path/to/config.jsonc paths.txt
+  version
 `
 
 // Entry point to validate command line arguments.
@@ -68,6 +71,9 @@ func main() {
 			log.Fatalln("❌ no paths file specified\n", usage)
 		}
 		setupFilesCmd(configFile, pathsFile)
+
+	case "version":
+		log.Println("custard version:", Version)
 
 	default:
 		log.Fatalln("❌ unknown command: ", command, "\n", usage)
