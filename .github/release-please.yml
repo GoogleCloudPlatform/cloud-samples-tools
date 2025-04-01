@@ -14,4 +14,4 @@
 
 handleGHRelease: true
 manifest: true
-manifestConfig: ./github/release-please-config.json
+manifestConfig: .github/release-please-config.json
