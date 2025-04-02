@@ -143,7 +143,6 @@ func setupFilesCmd(configFile string, pathsFile string) {
 	if len(errors) > 0 {
 		var sb strings.Builder
 		sb.WriteString("❌ could not load setup files.\n")
-		sb.WriteString(err.Error() + "\n")
 		for _, e := range errors {
 			sb.WriteString(e + "\n")
 		}
