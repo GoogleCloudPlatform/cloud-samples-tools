@@ -1,7 +1,0 @@
-{
-    "packages": {
-        "cmd/custard": {
-            "release-type": "go"
-        }
-    }
-}
