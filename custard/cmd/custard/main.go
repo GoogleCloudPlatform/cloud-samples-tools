@@ -26,7 +26,7 @@ import (
 	"strings"
 )
 
-const Version = "0.2.3" // x-release-please-version
+const Version = "0.2.4" // x-release-please-version
 
 var usage = `usage: custard <command> ...
 
