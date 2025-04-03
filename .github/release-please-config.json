@@ -8,8 +8,11 @@
         "draft": false,
         "prerelease": false,
         "extra-files": [
-          ".github/workflows/*",
-          "actions/steps/*",
+          ".github/workflows/affected.yaml",
+          ".github/workflows/tooling.yaml",
+          ".github/workflows/workflows.yaml",
+          "actions/steps/create-check/action.yaml",
+          "actions/steps/update-check/action.yaml",
           "custard/cmd/custard/main.go"
         ]
       }
