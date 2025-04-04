@@ -13,8 +13,8 @@
           {"type": "yaml", "jsonpath": "$.jobs.*.steps.*.uses", "path": ".github/workflows/affected.yaml" },
           {"type": "yaml", "jsonpath": "$.jobs.*.steps.*.uses", "path": ".github/workflows/tooling.yaml" },
           {"type": "yaml", "jsonpath": "$.jobs.*.steps.*.uses", "path": ".github/workflows/workflows.yaml" },
-          {"type": "yaml", "jsonpath": "$.jobs.*.steps.*.uses", "path":  "actions/steps/create-check/action.yaml" },
-          {"type": "yaml", "jsonpath": "$.jobs.*.steps.*.uses", "path":  "actions/steps/update-check/action.yaml" }
+          {"type": "yaml", "jsonpath": "$.runs.steps.*.uses", "path":  "actions/steps/create-check/action.yaml" },
+          {"type": "yaml", "jsonpath": "$.runs.steps.*.uses", "path":  "actions/steps/update-check/action.yaml" }
         ]
       }
     },
