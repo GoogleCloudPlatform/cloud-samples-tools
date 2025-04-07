@@ -44,16 +44,33 @@ runs:
       id: job
       with:
         script: |
-          // https://docs.github.com/en/rest/actions/workflow-jobs?apiVersion=2022-11-28#list-jobs-for-a-workflow-run
-          // https://octokit.github.io/rest.js/v21/#actions-list-jobs-for-workflow-run
-          const jobs = await github.rest.actions.listJobsForWorkflowRun({
+          async function* listJobs({owner, repo, run_id}) {
+            console.log(`Listing jobs for ${run_id}`);
+            for (let page = 1; page < 100; page++) {
+              // https://docs.github.com/en/rest/actions/workflow-jobs?apiVersion=2022-11-28#list-jobs-for-a-workflow-run
+              // https://octokit.github.io/rest.js/v21/#actions-list-jobs-for-workflow-run
+              const response = await github.rest.actions.listJobsForWorkflowRun({
+                owner: owner,
+                repo: repo,
+                run_id: run_id,
+                page: page;
+              });
+              if (response.data.jobs.length === 0) {
+                break;
+              }
+              for (const job of response.data.jobs) {
+                console.log(`- ${job.name}`);
+                yield job;
+              }
+            }
+          }
+
+          const jobs = listJobs({
             owner: "${{ inputs.repository-owner }}",
             repo: "${{ inputs.repository-name }}",
             run_id: "${{ inputs.run-id }}",
           });
-          console.log(`jobs: ${JSON.stringify(jobs.data.jobs.map(job => job.name))}`);
-
-          for (const job of jobs.data.jobs) {
+          for await (const job of jobs) {
             if (job.name === "${{ inputs.job-name }}" || job.name.endsWith(" / ${{ inputs.job-name }}")) {
               console.log(`Job found: ${job.name}`);
               console.log(`id:  ${job.id}`);
@@ -61,4 +78,4 @@ runs:
               return {id: job.id, url: job.html_url};
             }
           }
-          core.setFailed(`Job not found: '${{ inputs.job-name }}')`);
+          core.setFailed(`Job not found: '${{ inputs.job-name }}'`);
