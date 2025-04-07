@@ -45,10 +45,8 @@ runs:
       with:
         script: |
           async function* listJobs({owner, repo, run_id}) {
-            let page = 1;
-            let jobs = [];
             console.log(`Listing jobs for ${run_id}`);
-            do {
+            for (let page = 1; page < 100; page++) {
               // https://docs.github.com/en/rest/actions/workflow-jobs?apiVersion=2022-11-28#list-jobs-for-a-workflow-run
               // https://octokit.github.io/rest.js/v21/#actions-list-jobs-for-workflow-run
               const response = await github.rest.actions.listJobsForWorkflowRun({
@@ -58,11 +56,14 @@ runs:
                 page: page++;
               });
               jobs = response.data.jobs;
+              if (jobs.length === 0) {
+                break;
+              }
               for (const job of jobs) {
                 console.log(`- ${job.name}`);
                 yield job;
               }
-            } while (jobs.length > 0 && page < 100);
+            }
           }
 
           const jobs = listJobs({
