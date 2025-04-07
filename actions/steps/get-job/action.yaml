@@ -71,11 +71,11 @@ runs:
             run_id: "${{ inputs.run-id }}",
           });
           for await (const job of jobs) {
-              if (job.name === "${{ inputs.job-name }}" || job.name.endsWith(" / ${{ inputs.job-name }}")) {
-                console.log(`Job found: ${job.name}`);
-                console.log(`id:  ${job.id}`);
-                console.log(`url: ${job.html_url}`);
-                return {id: job.id, url: job.html_url};
-              }
+            if (job.name === "${{ inputs.job-name }}" || job.name.endsWith(" / ${{ inputs.job-name }}")) {
+              console.log(`Job found: ${job.name}`);
+              console.log(`id:  ${job.id}`);
+              console.log(`url: ${job.html_url}`);
+              return {id: job.id, url: job.html_url};
+            }
           }
           core.setFailed(`Job not found: '${{ inputs.job-name }}'`);
