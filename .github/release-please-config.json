@@ -1,0 +1,22 @@
+{
+    "packages": {
+      ".": {
+        "changelog-path": "CHANGELOG.md",
+        "release-type": "go",
+        "bump-minor-pre-major": false,
+        "bump-patch-for-minor-pre-major": false,
+        "draft": false,
+        "prerelease": false,
+        "extra-files": [
+          "README.md",
+          "custard/cmd/custard/main.go",
+          {"type": "yaml", "jsonpath": "$.jobs.*.steps.*.uses", "path": ".github/workflows/affected.yaml" },
+          {"type": "yaml", "jsonpath": "$.jobs.*.steps.*.uses", "path": ".github/workflows/tooling.yaml" },
+          {"type": "yaml", "jsonpath": "$.jobs.*.steps.*.uses", "path": ".github/workflows/workflows.yaml" },
+          {"type": "yaml", "jsonpath": "$.runs.steps.*.uses",   "path": "actions/steps/create-check/action.yaml" },
+          {"type": "yaml", "jsonpath": "$.runs.steps.*.uses",   "path": "actions/steps/update-check/action.yaml" }
+        ]
+      }
+    },
+    "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json"
+  }
