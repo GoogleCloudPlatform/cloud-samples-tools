@@ -15,6 +15,12 @@
 name: Custard CI
 
 on:
+  # To trigger workflow_run jobs when a PR is merged.
+  push:
+    branches:
+      - main
+
+  # To trigger workflow_run when a PR is created / updated.
   pull_request:
     paths:
       - .github/**
