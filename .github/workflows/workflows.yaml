@@ -92,10 +92,13 @@ jobs:
           name: workflows / ${{ github.job }} (${{ matrix.path }})
           job-name: ${{ github.job }} (${{ matrix.path }})
           if: ${{ !!github.event.workflow_run }}
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
       - name: Setup Custard
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@1188189def28cd32bd541d8fa5d6208c2f479515
         with:
-          sha: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
           path: ${{ matrix.path }}
           ci-setup: ${{ toJson(fromJson(needs.affected.outputs.ci-setups)[matrix.path]) }}
           project-id: my-project
