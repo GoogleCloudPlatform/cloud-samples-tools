@@ -97,7 +97,7 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
       - name: Setup Custard
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@f66f44799e860c45fdac831ac6447eb2b820c89c
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@57945e1e95917407558192c975ccc1e1f1e7a0e7
         with:
           path: ${{ matrix.path }}
           ci-setup: ${{ toJson(fromJson(needs.affected.outputs.ci-setups)[matrix.path]) }}
