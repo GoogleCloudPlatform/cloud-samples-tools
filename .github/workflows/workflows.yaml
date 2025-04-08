@@ -95,6 +95,7 @@ jobs:
       - name: Setup Custard
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@v0.2.4
         with:
+          sha: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
           path: ${{ matrix.path }}
           ci-setup: ${{ toJson(fromJson(needs.affected.outputs.ci-setups)[matrix.path]) }}
           project-id: my-project
