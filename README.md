@@ -33,6 +33,8 @@ Once this job finishes running, the check is set to status `in_progress`.
 The check is meant to be set to `success` by a different job, only after everything finishes running.
 This way, the check will block a PR until everything finishes.
 
+<!-- x-release-please-start-version -->
+
 ```yaml
 jobs:
   affected:
@@ -204,3 +206,5 @@ jobs:
 ```
 
 > **Tip**: For strategy matrix jobs, specify the full job name with `job-name`. For example `job-name: ${{ github.job }} (${{ matrix.path }})`.
+
+<!-- x-release-please-end-version -->
