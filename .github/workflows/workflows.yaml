@@ -93,7 +93,7 @@ jobs:
           job-name: ${{ github.job }} (${{ matrix.path }})
           if: ${{ !!github.event.workflow_run }}
       - name: Setup Custard
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@v0.2.4
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@1188189def28cd32bd541d8fa5d6208c2f479515
         with:
           sha: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
           path: ${{ matrix.path }}
