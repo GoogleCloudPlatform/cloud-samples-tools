@@ -69,7 +69,8 @@ jobs:
       head-sha: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
       config-file: .github/test/config.jsonc
       paths: ${{ (inputs.run-all && '.') || inputs.paths || '.github/test/pkg1' }}
-      create-check-if: ${{ !!github.event.workflow_run }}
+      create-check-if: ${{ !!github.event.workflow_run || (github.event.pull_request && !github.event.pull_request.head.repo.fork) }}
+      check-name: Custard CI (create-check)
       timeout-minutes: 1
 
   setup-custard:
@@ -89,9 +90,9 @@ jobs:
         id: queued
         with:
           sha: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
-          name: workflows / ${{ github.job }} (${{ matrix.path }})
+          name: workflows / ${{ github.job }} (${{ matrix.path }}) (create-check)
           job-name: ${{ github.job }} (${{ matrix.path }})
-          if: ${{ !!github.event.workflow_run }}
+          if: ${{ !!github.event.workflow_run || (github.event.pull_request && !github.event.pull_request.head.repo.fork) }}
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
@@ -149,8 +150,8 @@ jobs:
         with:
           sha: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
           status: in_progress
-          name: workflows / ${{ github.job }}
-          if: ${{ !!github.event.workflow_run }}
+          name: workflows / ${{ github.job }} (create-check)
+          if: ${{ !!github.event.workflow_run || (github.event.pull_request && !github.event.pull_request.head.repo.fork) }}
       - name: Checkout Custard
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Run command on affected paths
