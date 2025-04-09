@@ -50,9 +50,9 @@ config=$(load_jsonc $config_file)
 case "$command" in
   "lint") (
     set -x # Print commands as they are executed.
-    bash -x -c "$(jq -r '."lint-pre"' <<< $config)"
+    bash -x -c "$(jq -r '."lint-pre" // ""' <<< $config)"
     cd "$package_path"
-    bash -x -c "$(jq -r '.lint' <<< $config)"
+    bash -x -c "$(jq -r '.lint // ""' <<< $config)"
   );;
 
   "test") (
@@ -94,9 +94,9 @@ case "$command" in
     done
 
     set -x # Print commands as they are executed.
-    bash -x -c "$(jq -r '."test-pre"' <<< $config)"
+    bash -x -c "$(jq -r '."test-pre" // ""' <<< $config)"
     cd "$package_path"
-    # bash -x -c "$(jq -r '.test' <<< $config)"
+    bash -x -c "$(jq -r '.test // ""' <<< $config)"
   );;
 
   *)
