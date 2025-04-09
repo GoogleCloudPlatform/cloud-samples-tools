@@ -21,16 +21,20 @@
 #   sh -x run.sh test path/to/config.jsonc path/to/package
 
 set -e # Exit immediately if a command exits with a non-zero status.
+
+if [ -z "$PROJECT_ID"]; then
+  echo "The PROJECT_ID environment variable is required." >&2
+  exit 1
+fi
+
 set -o nounset # Exit immediately if a variable is used but not set.
+command="$1"
+config_file="$2"
+package_path="$3"
 
 # Print versions to make sure dependencies are installed.
 jq --version
 gcloud --version
-
-PROJECT_ID=nodejs-docs-samples-tests
-command="$1"
-config_file="$2"
-package_path="$3"
 
 load_jsonc() {
   if [ -f "$1" ]; then
