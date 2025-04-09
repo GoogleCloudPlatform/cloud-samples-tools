@@ -23,7 +23,9 @@
 set -e # Exit immediately if a command exits with a non-zero status.
 set -o nounset # Exit immediately if a variable is used but not set.
 
+# Print versions to make sure dependencies are installed.
 jq --version
+gcloud --version
 
 PROJECT_ID=nodejs-docs-samples-tests
 command="$1"
