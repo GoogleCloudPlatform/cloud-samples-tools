@@ -35,6 +35,10 @@ type Config = {
   "exclude-packages": string[];
 };
 
+function usage(flags: string): string {
+  return [`usage: node run.ts ${flags}`].join("\n");
+}
+
 // The Makefile use .ONESHELL, which requires make 3.82 or higher.
 //    https://stackoverflow.com/a/32153249
 let make = "";
@@ -212,10 +216,6 @@ function accessSecret(secretPath: string): string {
 function getIdToken(projectId: string): string {
   const cmd = `gcloud --project=${projectId} auth print-identity-token`;
   return execSync(cmd).toString().trim();
-}
-
-function usage(flags: string): string {
-  return [`usage: node run.ts ${flags}`].join("\n");
 }
 
 const command = process.argv[2];
