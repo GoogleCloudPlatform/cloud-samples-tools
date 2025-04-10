@@ -85,9 +85,7 @@ function test(configPath: string, packagePath: string) {
   setup(configPath, packagePath);
   const cmd = `${make} test dir=${packagePath}`;
   console.log(`>> ${cmd}`);
-  console.log("TODO: UNCOMMENT THE TEST COMMAND");
-  process.exit(1);
-  // execSync(cmd, { stdio: "inherit" });
+  execSync(cmd, { stdio: "inherit" });
 }
 
 function setup(
