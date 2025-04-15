@@ -118,10 +118,13 @@ func (c *Config) IsPackageDir(dir string) bool {
 }
 
 // FindPackage returns the most specific package path for the given filename.
-func (c *Config) FindPackage(path string) string {
+func (c *Config) FindPackage(path string) (string, error) {
 	dir := filepath.Dir(path)
+	if !fileExists(dir) {
+		return "", fmt.Errorf("directory %q does not exist", dir)
+	}
 	if dir == "." || c.IsPackageDir(dir) {
-		return dir
+		return dir, nil
 	}
 	return c.FindPackage(dir)
 }
@@ -161,7 +164,11 @@ func (c *Config) Changed(log io.Writer, diffs []string) []string {
 		if !c.Matches(diff) {
 			continue
 		}
-		path := c.FindPackage(diff)
+		path, err := c.FindPackage(diff)
+		if err != nil {
+			// The package directory doesn't exist, so it was removed.
+			continue
+		}
 		if path == "." {
 			fmt.Fprintf(log, "ℹ️ Global file changed: %q\n", diff)
 		}
