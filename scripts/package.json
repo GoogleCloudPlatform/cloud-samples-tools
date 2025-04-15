@@ -1,0 +1,28 @@
+{
+  "name": "custard",
+  "version": "0.2.4",
+  "description": "Cloud samples tools",
+  "homepage": "https://github.com/GoogleCloudPlatform/cloud-samples-tools#readme",
+  "bugs": {
+    "url": "https://github.com/GoogleCloudPlatform/cloud-samples-tools/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GoogleCloudPlatform/cloud-samples-tools.git"
+  },
+  "license": "Apache-2.0",
+  "author": "",
+  "type": "module",
+  "main": "custard.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "undici-types": "^6.21.0"
+  },
+  "devDependencies": {
+    "@tsconfig/node23": "^23.0.1",
+    "@types/node": "^22.14.1",
+    "typescript": "^5.8.3"
+  }
+}

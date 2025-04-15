@@ -14,8 +14,8 @@
  limitations under the License.
  */
 
-import fs from "node:fs";
-import path from "node:path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { execSync } from "node:child_process";
 
 type Vars = { [k: string]: string };
@@ -120,11 +120,15 @@ function setupEnv(locals: Vars, defaults: Vars) {
 }
 
 function setupSecrets(locals: Vars, defaults: Vars) {
+  const projectId = process.env.PROJECT_ID;
+  if (!projectId) {
+    throw new Error("PROJECT_ID is not set");
+  }
   const automatic = {
     // Set global secret for the Service Account identity token
     // Use in place of 'gcloud auth print-identity-token' or auth.getIdTokenClient
     // usage: curl -H 'Bearer: $ID_TOKEN' https://
-    ID_TOKEN: () => getIdToken(process.env.PROJECT_ID),
+    ID_TOKEN: () => getIdToken(projectId),
   };
   console.log("export secrets:");
   const secrets = [...listVars(automatic, locals, defaults, accessSecret)];
@@ -144,7 +148,7 @@ function* listVars(
   for (const key in { ...automatic, ...defaults, ...locals }) {
     if (key in process.env) {
       // 1) User defined via an environment variable.
-      const value = process.env[key];
+      const value = process.env[key] || "";
       yield [key, { value, source: "user-defined" }];
     } else if (key in locals) {
       // 2) From the local ci-setup.json file.
