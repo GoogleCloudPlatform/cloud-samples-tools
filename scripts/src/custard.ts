@@ -16,11 +16,12 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import {execSync} from 'node:child_process';
+import {execSync, spawnSync} from 'node:child_process';
 
 type Vars = {[k: string]: string};
 
 type CISetup = {
+  // Other fields can be here, but are not required.
   env: Vars;
   secrets: Vars;
 };
@@ -39,57 +40,26 @@ function usage(flags: string): string {
   return [`usage: node run.ts ${flags}`].join('\n');
 }
 
-// The Makefile use .ONESHELL, which requires make 3.82 or higher.
-//    https://stackoverflow.com/a/32153249
-let make = '';
-function checkVersion(cmd: string, major: number, minor: number): boolean {
-  try {
-    const output = execSync(cmd).toString();
-    process.stdout.write(`${cmd} ${output.split('\n')[0]} -- `);
-    // console.log(`${cmd} ${output.split("\n")[0]}`);
-    const match = /(\d+)\.(\d+)/.exec(output);
-    if (match) {
-      const cmdMajor = parseInt(match[1]);
-      const cmdMinor = parseInt(match[2]);
-      if (cmdMajor > major || (cmdMajor === major && cmdMinor >= minor)) {
-        console.log(
-          `${cmdMajor}.${cmdMinor} is compatible with ${major}.${minor}`,
-        );
-        return true;
-      }
-    }
-  } catch (e) {
-    console.log(e);
-  }
-  console.log(`not compatible with ${major}.${minor}`);
-  return false;
-}
-if (checkVersion('make --version', 3, 82)) {
-  make = 'make';
-  console.log(`Using ${execSync('which make').toString().trim()}`);
-} else if (checkVersion('gmake --version', 3, 82)) {
-  make = 'gmake';
-  console.log(`Using ${execSync('which gmake').toString().trim()}`);
-}
-
-if (!make) {
-  throw new Error('Error: make or gmake version 3.82 or higher is required.');
-}
-
 function lint(packagePath: string) {
+  // The Makefile use .ONESHELL, which requires make 3.82 or higher.
+  //    https://stackoverflow.com/a/32153249
+  const make = findMake(3, 82);
   const cmd = `${make} lint dir=${packagePath}`;
   console.log(`>> ${cmd}`);
   execSync(cmd, {stdio: 'inherit'});
 }
 
 function test(configPath: string, packagePath: string) {
+  // The Makefile use .ONESHELL, which requires make 3.82 or higher.
+  //    https://stackoverflow.com/a/32153249
+  const make = findMake(3, 82);
   setup(configPath, packagePath);
   const cmd = `${make} test dir=${packagePath}`;
   console.log(`>> ${cmd}`);
   execSync(cmd, {stdio: 'inherit'});
 }
 
-function setup(
+export function setup(
   configPath: string,
   packagePath: string,
 ): {config: Config; ciSetup: CISetup} {
@@ -196,7 +166,42 @@ function substitute(vars: Vars, value: string) {
   return value;
 }
 
-function uniqueId(length = 6) {
+function mapRun(cmd: string, paths: string[], outputsAlways: boolean = false) {
+  if (paths.length === 0) {
+    console.log('Nothing to do.');
+  }
+  let failed = [];
+  for (const path of paths) {
+    let stdout = '';
+    let stderr = '';
+    try {
+      const p = spawnSync('bash', ['-c', cmd], {cwd: path});
+      console.log(`✅ [${path}]: ${cmd}`);
+      stdout = p.stdout && p.stdout.toString('utf8');
+      stderr = p.stderr && p.stderr.toString('utf8');
+    } catch (e) {
+      failed.push(path);
+      console.log(`❌ [${path}]: ${cmd} (exit code ${e.status})`);
+      console.error(e.message);
+      stdout = e.stdout && e.stdout.toString('utf8');
+      stderr = e.stderr && e.stderr.toString('utf8');
+    }
+    if (outputsAlways || failed.includes(path)) {
+      console.log('---- stdout ----');
+      console.log(stdout || '');
+      console.log('---- stderr ----');
+      console.log(stderr || '');
+    }
+  }
+  console.log('=== Summary ===');
+  console.log(`  Passed: ${paths.length - failed.length}`);
+  console.log(`  Failed: ${failed.length}`);
+  if (failed.length > 0) {
+    throw new Error(`Failed '${cmd}' on: ${failed.join(', ')}`);
+  }
+}
+
+export function uniqueId(length = 6) {
   const min = 2 ** 32;
   const max = 2 ** 64;
   return Math.floor(Math.random() * max + min)
@@ -221,10 +226,46 @@ function getIdToken(projectId: string): string {
   return execSync(cmd).toString().trim();
 }
 
+function findMake(major: number, minor: number): string {
+  if (checkVersion('make --version', major, minor)) {
+    console.log(`Using ${execSync('which make').toString().trim()}`);
+    return 'make';
+  } else if (checkVersion('gmake --version', major, minor)) {
+    console.log(`Using ${execSync('which gmake').toString().trim()}`);
+    return 'gmake';
+  }
+  throw new Error(
+    `Error: make or gmake version ${major}.${minor} or higher is required.`,
+  );
+}
+
+function checkVersion(cmd: string, major: number, minor: number): boolean {
+  try {
+    const output = execSync(cmd).toString();
+    process.stdout.write(`${cmd} ${output.split('\n')[0]} -- `);
+    // console.log(`${cmd} ${output.split("\n")[0]}`);
+    const match = /(\d+)\.(\d+)/.exec(output);
+    if (match) {
+      const cmdMajor = parseInt(match[1]);
+      const cmdMinor = parseInt(match[2]);
+      if (cmdMajor > major || (cmdMajor === major && cmdMinor >= minor)) {
+        console.log(
+          `${cmdMajor}.${cmdMinor} is compatible with ${major}.${minor}`,
+        );
+        return true;
+      }
+    }
+  } catch (e) {
+    console.log(e);
+  }
+  console.log(`not compatible with ${major}.${minor}`);
+  return false;
+}
+
 const command = process.argv[2];
 switch (command) {
   case 'lint': {
-    const usageLint = usage('lint <package-path>');
+    const usageLint = usage('lint [package-path...]');
     const packagePath = process.argv[3];
     if (!packagePath) {
       console.error('Please provide the package path to lint.');
@@ -251,7 +292,10 @@ switch (command) {
   }
 
   default: {
-    // Error
-    throw new Error(usage('[lint | test] [options]'));
+    // Only throw an error if running the script directly.
+    // Otherwise, this file is being imported (for example, on tests).
+    if (process.argv[1].endsWith('custard.ts')) {
+      throw new Error(usage('[lint | test] [options]'));
+    }
   }
 }

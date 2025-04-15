@@ -19,14 +19,14 @@
   },
   "scripts": {
     "lint": "gts lint",
+    "check": "npm run compile",
     "test": "mocha -p -j 2 src/**/*.test.ts",
     "clean": "gts clean",
     "compile": "tsc",
-    "fix": "gts fix",
-    "prepare": "npm run compile",
-    "pretest": "npm run compile"
+    "fix": "gts fix"
   },
   "devDependencies": {
+    "@types/mocha": "^10.0.10",
     "@types/node": "^22.14.1",
     "gts": "^6.0.2",
     "mocha": "^11.1.0",
