@@ -251,6 +251,7 @@ switch (command) {
   }
 
   default: {
+    // Error
     throw new Error(usage('[lint | test] [options]'));
   }
 }
