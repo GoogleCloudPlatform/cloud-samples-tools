@@ -14,11 +14,11 @@
  limitations under the License.
  */
 
-import * as fs from "node:fs";
-import * as path from "node:path";
-import { execSync } from "node:child_process";
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import {execSync} from 'node:child_process';
 
-type Vars = { [k: string]: string };
+type Vars = {[k: string]: string};
 
 type CISetup = {
   env: Vars;
@@ -26,26 +26,26 @@ type CISetup = {
 };
 
 type Config = {
-  "package-file": string[];
-  "ci-setup-filename": string;
-  "ci-setup-defaults": CISetup;
-  "ci-setup-help-url": string;
+  'package-file': string[];
+  'ci-setup-filename': string;
+  'ci-setup-defaults': CISetup;
+  'ci-setup-help-url': string;
   match: string[];
   ignore: string[];
-  "exclude-packages": string[];
+  'exclude-packages': string[];
 };
 
 function usage(flags: string): string {
-  return [`usage: node run.ts ${flags}`].join("\n");
+  return [`usage: node run.ts ${flags}`].join('\n');
 }
 
 // The Makefile use .ONESHELL, which requires make 3.82 or higher.
 //    https://stackoverflow.com/a/32153249
-let make = "";
+let make = '';
 function checkVersion(cmd: string, major: number, minor: number): boolean {
   try {
     const output = execSync(cmd).toString();
-    process.stdout.write(`${cmd} ${output.split("\n")[0]} -- `);
+    process.stdout.write(`${cmd} ${output.split('\n')[0]} -- `);
     // console.log(`${cmd} ${output.split("\n")[0]}`);
     const match = /(\d+)\.(\d+)/.exec(output);
     if (match) {
@@ -53,66 +53,67 @@ function checkVersion(cmd: string, major: number, minor: number): boolean {
       const cmdMinor = parseInt(match[2]);
       if (cmdMajor > major || (cmdMajor === major && cmdMinor >= minor)) {
         console.log(
-          `${cmdMajor}.${cmdMinor} is compatible with ${major}.${minor}`
+          `${cmdMajor}.${cmdMinor} is compatible with ${major}.${minor}`,
         );
         return true;
       }
     }
-  } catch (_) {}
+  } catch (e) {
+    console.log(e);
+  }
   console.log(`not compatible with ${major}.${minor}`);
   return false;
 }
-if (checkVersion("make --version", 3, 82)) {
-  make = "make";
-  console.log(`Using ${execSync("which make").toString().trim()}`);
-} else if (checkVersion("gmake --version", 3, 82)) {
-  make = "gmake";
-  console.log(`Using ${execSync("which gmake").toString().trim()}`);
+if (checkVersion('make --version', 3, 82)) {
+  make = 'make';
+  console.log(`Using ${execSync('which make').toString().trim()}`);
+} else if (checkVersion('gmake --version', 3, 82)) {
+  make = 'gmake';
+  console.log(`Using ${execSync('which gmake').toString().trim()}`);
 }
 
 if (!make) {
-  console.error("Error: make or gmake version 3.82 or higher is required.");
-  process.exit(1);
+  throw new Error('Error: make or gmake version 3.82 or higher is required.');
 }
 
 function lint(packagePath: string) {
   const cmd = `${make} lint dir=${packagePath}`;
   console.log(`>> ${cmd}`);
-  execSync(cmd, { stdio: "inherit" });
+  execSync(cmd, {stdio: 'inherit'});
 }
 
 function test(configPath: string, packagePath: string) {
   setup(configPath, packagePath);
   const cmd = `${make} test dir=${packagePath}`;
   console.log(`>> ${cmd}`);
-  execSync(cmd, { stdio: "inherit" });
+  execSync(cmd, {stdio: 'inherit'});
 }
 
 function setup(
   configPath: string,
-  packagePath: string
-): { config: Config; ciSetup: CISetup } {
+  packagePath: string,
+): {config: Config; ciSetup: CISetup} {
   const config: Config = loadJsonc(configPath);
-  const ciSetupPath = path.join(packagePath, config["ci-setup-filename"]);
+  const ciSetupPath = path.join(packagePath, config['ci-setup-filename']);
   const ciSetupLocal: CISetup = loadJsonc(ciSetupPath);
-  const ciSetupDefaults = config["ci-setup-defaults"];
+  const ciSetupDefaults = config['ci-setup-defaults'];
   console.log(`ci-setup defaults: ${JSON.stringify(ciSetupDefaults, null, 2)}`);
   console.log(`ci-setup.json: ${JSON.stringify(ciSetupLocal, null, 2)}`);
   setupEnv(ciSetupLocal.env || {}, ciSetupDefaults.env || {});
   setupSecrets(ciSetupLocal.secrets || {}, ciSetupDefaults.secrets || {});
-  return { config, ciSetup: { ...ciSetupDefaults, ...ciSetupLocal } };
+  return {config, ciSetup: {...ciSetupDefaults, ...ciSetupLocal}};
 }
 
 function setupEnv(locals: Vars, defaults: Vars) {
   const automatic = {
     PROJECT_ID: () => defaultProject(),
     RUN_ID: () => uniqueId(),
-    SERVICE_ACCOUNT: () => "",
+    SERVICE_ACCOUNT: () => '',
   };
-  console.log("export env:");
+  console.log('export env:');
   const env = [...listVars(automatic, locals, defaults)];
-  const vars = Object.fromEntries(env.map(([key, { value }]) => [key, value]));
-  for (const [key, { value, source }] of env) {
+  const vars = Object.fromEntries(env.map(([key, {value}]) => [key, value]));
+  for (const [key, {value, source}] of env) {
     const result = substitute(vars, value);
     console.log(`  ${key}: ${JSON.stringify(result)} (${source})`);
     process.env[key] = result;
@@ -122,7 +123,7 @@ function setupEnv(locals: Vars, defaults: Vars) {
 function setupSecrets(locals: Vars, defaults: Vars) {
   const projectId = process.env.PROJECT_ID;
   if (!projectId) {
-    throw new Error("PROJECT_ID is not set");
+    throw new Error('PROJECT_ID is not set');
   }
   const automatic = {
     // Set global secret for the Service Account identity token
@@ -130,9 +131,9 @@ function setupSecrets(locals: Vars, defaults: Vars) {
     // usage: curl -H 'Bearer: $ID_TOKEN' https://
     ID_TOKEN: () => getIdToken(projectId),
   };
-  console.log("export secrets:");
+  console.log('export secrets:');
   const secrets = [...listVars(automatic, locals, defaults, accessSecret)];
-  for (const [key, { value: value, source }] of secrets) {
+  for (const [key, {value: value, source}] of secrets) {
     // ⚠️ DO NOT print the secret value.
     console.log(`  ${key}: "***" (${source})`);
     process.env[key] = value;
@@ -140,28 +141,28 @@ function setupSecrets(locals: Vars, defaults: Vars) {
 }
 
 function* listVars(
-  automatic: { [k: string]: () => string },
+  automatic: {[k: string]: () => string},
   locals: Vars,
   defaults: Vars,
-  access: (value: string) => string = (x) => x
-): Generator<[string, { value: string; source: string }]> {
-  for (const key in { ...automatic, ...defaults, ...locals }) {
+  access: (value: string) => string = x => x,
+): Generator<[string, {value: string; source: string}]> {
+  for (const key in {...automatic, ...defaults, ...locals}) {
     if (key in process.env) {
       // 1) User defined via an environment variable.
-      const value = process.env[key] || "";
-      yield [key, { value, source: "user-defined" }];
+      const value = process.env[key] || '';
+      yield [key, {value, source: 'user-defined'}];
     } else if (key in locals) {
       // 2) From the local ci-setup.json file.
       const value = access(locals[key]);
-      yield [key, { value, source: "from ci-setup.json" }];
+      yield [key, {value, source: 'from ci-setup.json'}];
     } else if (key in defaults) {
       // 3) Defaults from the config file.
       const value = access(defaults[key]);
-      yield [key, { value, source: "default value" }];
+      yield [key, {value, source: 'default value'}];
     } else if (key in automatic) {
       // 4) Automatic variables.
       const value = automatic[key]();
-      yield [key, { value, source: "automatic var" }];
+      yield [key, {value, source: 'automatic var'}];
     } else {
       // Unreachable.
       throw new Error(`Undefined variable: ${key}`);
@@ -170,16 +171,16 @@ function* listVars(
 }
 
 function loadJsonc(filePath: string) {
-  const jsoncData = fs.readFileSync(filePath, "utf8");
+  const jsoncData = fs.readFileSync(filePath, 'utf8');
   const jsonData = jsoncData
-    .replaceAll(/\s*\/\*.*?\*\//gs, "") // remove multi-line comments
-    .replaceAll(/\/\/.*/g, ""); // remove single-line comments
+    .replaceAll(/\s*\/\*.*?\*\//gs, '') // remove multi-line comments
+    .replaceAll(/\/\/.*/g, ''); // remove single-line comments
   return JSON.parse(jsonData);
 }
 
 function substitute(vars: Vars, value: string) {
   for (const key in vars) {
-    let re = new RegExp(`\\$(${key}\\b|\\{\\s*${key}\\s*\\})`, "g");
+    const re = new RegExp(`\\$(${key}\\b|\\{\\s*${key}\\s*\\})`, 'g');
     // JavaScript doesn't allow lazy substitutions, so we check if
     // the substitution needs to be done first.
     if (value.match(re)) {
@@ -204,13 +205,13 @@ function uniqueId(length = 6) {
 }
 
 function defaultProject(): string {
-  const cmd = "gcloud config get-value project";
+  const cmd = 'gcloud config get-value project';
   return execSync(cmd).toString().trim();
 }
 
 function accessSecret(secretPath: string): string {
-  const [projectId, ...secretIdParts] = secretPath.split("/");
-  const secretId = secretIdParts.join("/");
+  const [projectId, ...secretIdParts] = secretPath.split('/');
+  const secretId = secretIdParts.join('/');
   const cmd = `gcloud --project=${projectId} secrets versions access "latest" --secret=${secretId}`;
   return execSync(cmd).toString();
 }
@@ -222,39 +223,34 @@ function getIdToken(projectId: string): string {
 
 const command = process.argv[2];
 switch (command) {
-  case "lint": {
-    const usageLint = usage("lint <package-path>");
+  case 'lint': {
+    const usageLint = usage('lint <package-path>');
     const packagePath = process.argv[3];
     if (!packagePath) {
-      console.error("Please provide the package path to lint.");
-      console.error(usageLint);
-      process.exit(1);
+      console.error('Please provide the package path to lint.');
+      throw new Error(usageLint);
     }
     lint(packagePath);
     break;
   }
 
-  case "test": {
-    const usageTest = usage("test <config-path> <package-path>");
+  case 'test': {
+    const usageTest = usage('test <config-path> <package-path>');
     const configPath = process.argv[3];
     if (!configPath) {
-      console.error("Please provide the config file path.");
-      console.error(usageTest);
-      process.exit(1);
+      console.error('Please provide the config file path.');
+      throw new Error(usageTest);
     }
     const packagePath = process.argv[4];
     if (!packagePath) {
-      console.error("Please provide the package path to lint.");
-      console.error(usageTest);
-      process.exit(1);
+      console.error('Please provide the package path to lint.');
+      throw new Error(usageTest);
     }
     test(configPath, packagePath);
     break;
   }
 
   default: {
-    console.error(`Unknown command: ${command}`);
-    console.error(usage("[lint | test] [options]"));
-    process.exit(1);
+    throw new Error(usage('[lint | test] [options]'));
   }
 }
