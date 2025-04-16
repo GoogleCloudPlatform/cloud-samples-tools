@@ -1,6 +1,6 @@
 {
   "name": "custard",
-  "version": "0.2.4",
+  "version": "0.2.6",
   "description": "Cloud samples tools",
   "homepage": "https://github.com/GoogleCloudPlatform/cloud-samples-tools#readme",
   "bugs": {
@@ -26,8 +26,10 @@
     "fix": "gts fix"
   },
   "devDependencies": {
+    "@types/chai": "^5.2.1",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.14.1",
+    "chai": "^5.2.0",
     "gts": "^6.0.2",
     "mocha": "^11.1.0",
     "typescript": "^5.6.3"

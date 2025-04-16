@@ -14,187 +14,108 @@
  limitations under the License.
  */
 
-import {deepStrictEqual} from 'assert';
+import {expect} from 'chai';
 import * as custard from './custard.ts';
 
 const projectId = 'my-test-project';
 const serviceAccount = `my-sa@${projectId}.iam.gserviceaccount.com`;
 
-describe('setupEnv', () => {
+describe('listVars', () => {
   it('empty', () => {
-    const locals = {};
+    const env = {};
+    const ciSetup = {};
     const defaults = {};
-    const vars = setupVars({projectId, core, setup, serviceAccount}, 'run-id');
-    const expected = autovars;
-    deepStrictEqual(vars.env, expected);
+    const automatic = {};
+    const vars = [...custard.listVars(env, ciSetup, defaults, automatic)];
+    expect(vars).to.deep.equal([]);
+  });
+
+  it('4) automatic var', () => {
+    const env = {};
+    const ciSetup = {};
+    const defaults = {};
+    const automatic = {VAR: () => 'auto'};
+    const vars = [...custard.listVars(env, ciSetup, defaults, automatic)];
+    const expected = [['VAR', {value: 'auto', source: 'automatic var'}]];
+    expect(vars).to.deep.equal(expected);
+  });
+
+  it('3) default value', () => {
+    const env = {};
+    const ciSetup = {};
+    const defaults = {VAR: 'default'};
+    const automatic = {VAR: () => 'auto'};
+    const vars = [...custard.listVars(env, ciSetup, defaults, automatic)];
+    const expected = [['VAR', {value: 'default', source: 'default value'}]];
+    expect(vars).to.deep.equal(expected);
+  });
+
+  it('2) ci-setup.json', () => {
+    const env = {};
+    const ciSetup = {VAR: 'ci-setup'};
+    const defaults = {VAR: 'default'};
+    const automatic = {VAR: () => 'auto'};
+    const vars = [...custard.listVars(env, ciSetup, defaults, automatic)];
+    const expected = [['VAR', {value: 'ci-setup', source: 'ci-setup.json'}]];
+    expect(vars).to.deep.equal(expected);
+  });
+
+  it('1) user-defined', () => {
+    const env = {VAR: 'user'};
+    const ciSetup = {VAR: 'ci-setup'};
+    const defaults = {VAR: 'default'};
+    const automatic = {VAR: () => 'auto'};
+    const vars = [...custard.listVars(env, ciSetup, defaults, automatic)];
+    const expected = [['VAR', {value: 'user', source: 'user-defined'}]];
+    expect(vars).to.deep.equal(expected);
+  });
+
+  it('do not list env vars if not defined otherwise', () => {
+    const env = {
+      UNDEFINED: 'undefined',
+      CI_SETUP: 'ci-setup',
+      DEFAULT: 'default',
+      AUTO: 'auto',
+    };
+    const ciSetup = {CI_SETUP: 'should override'};
+    const defaults = {DEFAULT: 'should override'};
+    const automatic = {AUTO: () => 'should override'};
+    const vars = [...custard.listVars(env, ciSetup, defaults, automatic)];
+    const expected = [
+      ['AUTO', {value: 'auto', source: 'user-defined'}],
+      ['DEFAULT', {value: 'default', source: 'user-defined'}],
+      ['CI_SETUP', {value: 'ci-setup', source: 'user-defined'}],
+    ];
+    expect(vars).to.deep.equal(expected);
+  });
+
+  it('should only transform ciSetup and defaults', () => {
+    const env = {USER: 'user'};
+    const ciSetup = {CI_SETUP: 'ci-setup', USER: 'default-user'};
+    const defaults = {DEFAULT: 'default'};
+    const automatic = {AUTO: () => 'auto'};
+    const transform = (x: string) => x.toUpperCase();
+    const vars = [
+      ...custard.listVars(env, ciSetup, defaults, automatic, transform),
+    ];
+    const expected = [
+      ['AUTO', {value: 'auto', source: 'automatic var'}],
+      ['DEFAULT', {value: 'DEFAULT', source: 'default value'}],
+      ['CI_SETUP', {value: 'CI-SETUP', source: 'ci-setup.json'}],
+      ['USER', {value: 'user', source: 'user-defined'}],
+    ];
+    expect(vars).to.deep.equal(expected);
   });
 });
-// describe('setupVars', () => {
-//   describe('env', () => {
-//     it('empty', () => {
-//       const setup = {};
-//       const vars = setupVars(
-//         {projectId, core, setup, serviceAccount},
-//         'run-id',
-//       );
-//       const expected = autovars;
-//       deepStrictEqual(vars.env, expected);
-//     });
-
-//     it('zero vars', () => {
-//       const setup = {env: {}};
-//       const vars = setupVars(
-//         {projectId, core, setup, serviceAccount},
-//         'run-id',
-//       );
-//       const expected = autovars;
-//       deepStrictEqual(vars.env, expected);
-//     });
-
-//     it('one var', () => {
-//       const setup = {env: {A: 'x'}};
-//       const vars = setupVars(
-//         {projectId, core, setup, serviceAccount},
-//         'run-id',
-//       );
-//       const expected = {...autovars, A: 'x'};
-//       deepStrictEqual(vars.env, expected);
-//     });
-
-//     it('three vars', () => {
-//       const setup = {env: {A: 'x', B: 'y', C: 'z'}};
-//       const vars = setupVars(
-//         {projectId, core, setup, serviceAccount},
-//         'run-id',
-//       );
-//       const expected = {...autovars, A: 'x', B: 'y', C: 'z'};
-//       deepStrictEqual(vars.env, expected);
-//     });
-
-//     it('should override automatic variables', () => {
-//       const setup = {
-//         env: {PROJECT_ID: 'custom-value', SERVICE_ACCOUNT: 'baz@foo.com'},
-//       };
-//       const vars = setupVars(
-//         {projectId, core, setup, serviceAccount},
-//         'run-id',
-//       );
-//       const expected = {
-//         PROJECT_ID: 'custom-value',
-//         RUN_ID: 'run-id',
-//         SERVICE_ACCOUNT: 'baz@foo.com',
-//       };
-//       deepStrictEqual(vars.env, expected);
-//     });
-
-//     it('should interpolate variables', () => {
-//       const setup = {env: {A: 'x', B: 'y', C: '$A/${B}'}};
-//       const vars = setupVars(
-//         {projectId, core, setup, serviceAccount},
-//         'run-id',
-//       );
-//       const expected = {...autovars, A: 'x', B: 'y', C: 'x/y'};
-//       deepStrictEqual(vars.env, expected);
-//     });
-
-//     it('should not interpolate secrets', () => {
-//       const setup = {
-//         env: {C: '$x/$y'},
-//         secrets: {A: 'x', B: 'y'},
-//       };
-//       const vars = setupVars(
-//         {projectId, core, setup, serviceAccount},
-//         'run-id',
-//       );
-//       const expected = {...autovars, C: '$x/$y'};
-//       deepStrictEqual(vars.env, expected);
-//     });
-//   });
-
-//   describe('secrets', () => {
-//     it('zero secrets', () => {
-//       const setup = {secrets: {}};
-//       const vars = setupVars(
-//         {projectId, core, setup, serviceAccount},
-//         'run-id',
-//       );
-//       deepStrictEqual(vars.secrets, '');
-//     });
-
-//     it('one secret', () => {
-//       const setup = {secrets: {A: 'x'}};
-//       const vars = setupVars(
-//         {projectId, core, setup, serviceAccount},
-//         'run-id',
-//       );
-//       const expected = 'A:x';
-//       deepStrictEqual(vars.secrets, expected);
-//     });
-
-//     it('three secrets', () => {
-//       const setup = {secrets: {A: 'x', B: 'y', C: 'z'}};
-//       const vars = setupVars(
-//         {projectId, core, setup, serviceAccount},
-//         'run-id',
-//       );
-//       const expected = 'A:x\nB:y\nC:z';
-//       deepStrictEqual(vars.secrets, expected);
-//     });
-
-//     it('should not interpolate variables', () => {
-//       const setup = {
-//         env: {A: 'x', B: 'y'},
-//         secrets: {C: '$A/$B'},
-//       };
-//       const vars = setupVars(
-//         {projectId, core, setup, serviceAccount},
-//         'run-id',
-//       );
-//       const expected = 'C:$A/$B';
-//       deepStrictEqual(vars.secrets, expected);
-//     });
-
-//     it('should not interpolate secrets', () => {
-//       const setup = {secrets: {A: 'x', B: 'y', C: '$A/$B'}};
-//       const vars = setupVars(
-//         {projectId, core, setup, serviceAccount},
-//         'run-id',
-//       );
-//       const expected = 'A:x\nB:y\nC:$A/$B';
-//       deepStrictEqual(vars.secrets, expected);
-//     });
-//   });
-// });
-
-// describe('substituteVars', () => {
-//   it('should interpolate $VAR', () => {
-//     const got = substituteVars('$A-$B', {A: 'x', B: 'y'});
-//     const expected = 'x-y';
-//     deepStrictEqual(got, expected);
-//   });
-
-//   it('should interpolate ${VAR}', () => {
-//     const got = substituteVars('${A}-${B}', {A: 'x', B: 'y'});
-//     const expected = 'x-y';
-//     deepStrictEqual(got, expected);
-//   });
-
-//   it('should interpolate ${ VAR }', () => {
-//     const got = substituteVars('${ A }-${ \tB\t }', {A: 'x', B: 'y'});
-//     const expected = 'x-y';
-//     deepStrictEqual(got, expected);
-//   });
-
-//   it('should not interpolate on non-word boundary', () => {
-//     const got = substituteVars('$Ab', {A: 'x'});
-//     const expected = '$Ab';
-//     deepStrictEqual(got, expected);
-//   });
-// });
 
 describe('uniqueId', () => {
-  it('should match length', () => {
+  it('should match length 4', () => {
+    const n = 4;
+    expect(custard.uniqueId(n).length).to.equal(n);
+  });
+
+  it('should match length 6', () => {
     const n = 6;
-    deepStrictEqual(custard.uniqueId(n).length, n);
+    expect(custard.uniqueId(n).length).to.equal(n);
   });
 });

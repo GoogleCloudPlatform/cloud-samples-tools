@@ -53,13 +53,14 @@ function test(configPath: string, packagePath: string) {
   // The Makefile use .ONESHELL, which requires make 3.82 or higher.
   //    https://stackoverflow.com/a/32153249
   const make = findMake(3, 82);
-  setup(configPath, packagePath);
+  setup(process.env, configPath, packagePath);
   const cmd = `${make} test dir=${packagePath}`;
   console.log(`>> ${cmd}`);
   execSync(cmd, {stdio: 'inherit'});
 }
 
 export function setup(
+  env: NodeJS.ProcessEnv,
   configPath: string,
   packagePath: string,
 ): {config: Config; ciSetup: CISetup} {
@@ -69,29 +70,29 @@ export function setup(
   const ciSetupDefaults = config['ci-setup-defaults'];
   console.log(`ci-setup defaults: ${JSON.stringify(ciSetupDefaults, null, 2)}`);
   console.log(`ci-setup.json: ${JSON.stringify(ciSetupLocal, null, 2)}`);
-  setupEnv(ciSetupLocal.env || {}, ciSetupDefaults.env || {});
-  setupSecrets(ciSetupLocal.secrets || {}, ciSetupDefaults.secrets || {});
+  setupEnv(env, ciSetupLocal.env || {}, ciSetupDefaults.env || {});
+  setupSecrets(env, ciSetupLocal.secrets || {}, ciSetupDefaults.secrets || {});
   return {config, ciSetup: {...ciSetupDefaults, ...ciSetupLocal}};
 }
 
-function setupEnv(locals: Vars, defaults: Vars) {
+function setupEnv(env: NodeJS.ProcessEnv, ciSetup: Vars, defaults: Vars) {
   const automatic = {
     PROJECT_ID: () => defaultProject(),
     RUN_ID: () => uniqueId(),
     SERVICE_ACCOUNT: () => '',
   };
   console.log('export env:');
-  const env = [...listVars(automatic, locals, defaults)];
-  const vars = Object.fromEntries(env.map(([key, {value}]) => [key, value]));
-  for (const [key, {value, source}] of env) {
-    const result = substitute(vars, value);
+  const vars = [...listVars(env, ciSetup, defaults, automatic)];
+  const subs = Object.fromEntries(vars.map(([key, {value}]) => [key, value]));
+  for (const [key, {value, source}] of vars) {
+    const result = substitute(subs, value);
     console.log(`  ${key}: ${JSON.stringify(result)} (${source})`);
     process.env[key] = result;
   }
 }
 
-function setupSecrets(locals: Vars, defaults: Vars) {
-  const projectId = process.env.PROJECT_ID;
+function setupSecrets(env: NodeJS.ProcessEnv, ciSetup: Vars, defaults: Vars) {
+  const projectId = env.PROJECT_ID;
   if (!projectId) {
     throw new Error('PROJECT_ID is not set');
   }
@@ -102,32 +103,33 @@ function setupSecrets(locals: Vars, defaults: Vars) {
     ID_TOKEN: () => getIdToken(projectId),
   };
   console.log('export secrets:');
-  const secrets = [...listVars(automatic, locals, defaults, accessSecret)];
-  for (const [key, {value: value, source}] of secrets) {
+  const vars = [...listVars(env, ciSetup, defaults, automatic, accessSecret)];
+  for (const [key, {value: value, source}] of vars) {
     // ⚠️ DO NOT print the secret value.
     console.log(`  ${key}: "***" (${source})`);
     process.env[key] = value;
   }
 }
 
-function* listVars(
-  automatic: {[k: string]: () => string},
-  locals: Vars,
+export function* listVars(
+  env: NodeJS.ProcessEnv,
+  ciSetup: Vars,
   defaults: Vars,
-  access: (value: string) => string = x => x,
+  automatic: {[k: string]: () => string},
+  transform: (value: string) => string = x => x,
 ): Generator<[string, {value: string; source: string}]> {
-  for (const key in {...automatic, ...defaults, ...locals}) {
-    if (key in process.env) {
+  for (const key in {...automatic, ...defaults, ...ciSetup}) {
+    if (key in env) {
       // 1) User defined via an environment variable.
-      const value = process.env[key] || '';
+      const value = env[key] || '';
       yield [key, {value, source: 'user-defined'}];
-    } else if (key in locals) {
+    } else if (key in ciSetup) {
       // 2) From the local ci-setup.json file.
-      const value = access(locals[key]);
-      yield [key, {value, source: 'from ci-setup.json'}];
+      const value = transform(ciSetup[key]);
+      yield [key, {value, source: 'ci-setup.json'}];
     } else if (key in defaults) {
       // 3) Defaults from the config file.
-      const value = access(defaults[key]);
+      const value = transform(defaults[key]);
       yield [key, {value, source: 'default value'}];
     } else if (key in automatic) {
       // 4) Automatic variables.
@@ -148,8 +150,8 @@ function loadJsonc(filePath: string) {
   return JSON.parse(jsonData);
 }
 
-function substitute(vars: Vars, value: string) {
-  for (const key in vars) {
+function substitute(subs: Vars, value: string) {
+  for (const key in subs) {
     const re = new RegExp(`\\$(${key}\\b|\\{\\s*${key}\\s*\\})`, 'g');
     // JavaScript doesn't allow lazy substitutions, so we check if
     // the substitution needs to be done first.
@@ -160,7 +162,7 @@ function substitute(vars: Vars, value: string) {
       // handful of variables with a couple of levels of recursion.
       // Doing graph traversals or topological sort should not be
       // needed, unless we get into a pathological case.
-      value = value.replaceAll(re, substitute(vars, vars[key]));
+      value = value.replaceAll(re, substitute(subs, subs[key]));
     }
   }
   return value;
