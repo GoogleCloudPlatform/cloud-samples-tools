@@ -75,7 +75,11 @@ export function setup(
   return {config, ciSetup: {...ciSetupDefaults, ...ciSetupLocal}};
 }
 
-function setupEnv(env: NodeJS.ProcessEnv, ciSetup: Vars, defaults: Vars) {
+export function setupEnv(
+  env: NodeJS.ProcessEnv,
+  ciSetup: Vars,
+  defaults: Vars,
+) {
   const automatic = {
     PROJECT_ID: () => defaultProject(),
     RUN_ID: () => uniqueId(),
@@ -91,7 +95,11 @@ function setupEnv(env: NodeJS.ProcessEnv, ciSetup: Vars, defaults: Vars) {
   }
 }
 
-function setupSecrets(env: NodeJS.ProcessEnv, ciSetup: Vars, defaults: Vars) {
+export function setupSecrets(
+  env: NodeJS.ProcessEnv,
+  ciSetup: Vars,
+  defaults: Vars,
+) {
   const projectId = env.PROJECT_ID;
   if (!projectId) {
     throw new Error('PROJECT_ID is not set');

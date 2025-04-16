@@ -108,6 +108,12 @@ describe('listVars', () => {
   });
 });
 
+describe('setupEnv', () => {
+  it('should export automatic vars', () => {});
+});
+
+describe('setupSecrets', () => {});
+
 describe('uniqueId', () => {
   it('should match length 4', () => {
     const n = 4;
