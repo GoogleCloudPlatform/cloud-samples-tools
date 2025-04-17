@@ -107,7 +107,7 @@ jobs:
           id_token_audience: https://action.test/ # service must have this custom audience
           id_token_include_email: true
         - name: Setup Custard
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@v0.2.4
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@v0.2.5
         with:
           path: ${{ matrix.path }}
           ci-setup: ${{ toJson(fromJson(needs.affected.outputs.ci-setups)[matrix.path]) }}
