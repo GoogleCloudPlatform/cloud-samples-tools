@@ -238,7 +238,8 @@ describe('uniqueId', () => {
 
 describe('listEnv', () => {
   it('automatic variables', () => {
-    const vars = Object.fromEntries(custard.listEnv());
+    const env = {PROJECT_ID: 'my-project'};
+    const vars = Object.fromEntries(custard.listEnv(env));
     expect(Object.keys(vars)).deep.equals([
       'PROJECT_ID',
       'RUN_ID',
