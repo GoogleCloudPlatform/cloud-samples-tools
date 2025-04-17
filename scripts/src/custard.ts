@@ -266,8 +266,9 @@ export function uniqueId(length = 6) {
 }
 
 function defaultProject(): string {
+  const timeout = 10000; // 10 seconds
   const cmd = 'gcloud config get-value project';
-  return execSync(cmd).toString().trim();
+  return execSync(cmd, {timeout}).toString().trim();
 }
 
 function accessSecret(secretPath: string): string {
