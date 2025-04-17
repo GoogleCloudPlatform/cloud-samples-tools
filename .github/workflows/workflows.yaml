@@ -22,11 +22,13 @@ on:
       - .github/**
       - actions/**
       - custard/**
+      - scripts/**
   pull_request:
     paths:
       - .github/**
       - actions/**
       - custard/**
+      - scripts/**
   workflow_run:
     workflows:
       - Custard CI # .github/workflows/custard-ci.yaml
