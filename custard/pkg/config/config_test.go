@@ -175,7 +175,10 @@ func TestFindPackage(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		got := config.FindPackage(test.path)
+		got, err := config.FindPackage(test.path)
+		if err != nil {
+			t.Fatal("error finding package\n", err)
+		}
 		if test.expected != got {
 			t.Fatal("expected equal\n", test.expected, "\n", got)
 		}
@@ -191,27 +194,43 @@ func TestChanged(t *testing.T) {
 	}
 
 	tests := []struct {
+		name     string
 		diffs    []string
 		expected []string
 	}{
-		{ // Global change, everything is affected.
+		{
+			name:     "Global change, everything is affected",
 			diffs:    []string{filepath.Join("testdata", "file.txt")},
 			expected: []string{"."},
 		},
-		{ // Ignored files should not trigger tests.
+		{
+			name:     "Ignored file, nothing is affected",
 			diffs:    []string{filepath.Join("testdata", "ignored.txt")},
 			expected: []string{},
 		},
-		{ // Single affected package.
+		{
+			name:     "Single affected package",
 			diffs:    []string{filepath.Join("testdata", "my-package", "file.txt")},
 			expected: []string{filepath.Join("testdata", "my-package")},
 		},
-		{ // Single affected nested package.
+		{
+			name:     "Single affected nested package",
 			diffs:    []string{filepath.Join("testdata", "my-package", "subpackage", "file.txt")},
 			expected: []string{filepath.Join("testdata", "my-package", "subpackage")},
 		},
-		{ // Excluded package.
+		{
+			name:     "Excluded package, nothing is affected",
 			diffs:    []string{filepath.Join("testdata", "excluded", "file.txt")},
+			expected: []string{},
+		},
+		{ // If the file doesn't exist, it was removed.
+			name:     "Removed file, affects the package",
+			diffs:    []string{filepath.Join("testdata", "my-package", "removed.txt")},
+			expected: []string{filepath.Join("testdata", "my-package")},
+		},
+		{ // If the package directory doesn't exist, it was removed.
+			name:     "Removed package, nothing is affected",
+			diffs:    []string{filepath.Join("testdata", "removed", "file.txt")},
 			expected: []string{},
 		},
 	}
@@ -219,7 +238,7 @@ func TestChanged(t *testing.T) {
 	for _, test := range tests {
 		got := config.Changed(os.Stderr, test.diffs)
 		if !reflect.DeepEqual(test.expected, got) {
-			t.Fatal("expected equal\n", test.expected, "\n", got)
+			t.Fatal(test.name, "\nexpected equal\n", test.expected, "\n", got)
 		}
 	}
 }
