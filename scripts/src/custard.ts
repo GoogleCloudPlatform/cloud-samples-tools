@@ -104,24 +104,106 @@ function test(configPath: string, packagePath: string) {
   // The Makefile use .ONESHELL, which requires make 3.82 or higher.
   //    https://stackoverflow.com/a/32153249
   const make = findMake(3, 82);
-  setup(process.env, configPath, packagePath);
+  setup(configPath, packagePath);
   const cmd = `${make} test dir=${packagePath}`;
   console.log(`>> ${cmd}`);
   execSync(cmd, {stdio: 'inherit'});
 }
 
-export function setup(
-  env: NodeJS.ProcessEnv,
-  configPath: string,
-  packagePath: string,
-) {
+export function setup(configPath: string, packagePath: string) {
   const config = loadConfig(configPath);
   const defaults = config['ci-setup-defaults'] || {};
   const ciSetup = loadCISetup(config, packagePath);
   console.log(`ci-setup defaults: ${JSON.stringify(defaults, null, 2)}`);
   console.log(`ci-setup.json: ${JSON.stringify(ciSetup, null, 2)}`);
-  setupEnv(env, ciSetup.env || {}, defaults.env || {});
-  setupSecrets(env, ciSetup.secrets || {}, defaults.secrets || {});
+
+  const env = listEnv(process.env, ciSetup.env || {}, defaults.env || {});
+  for (const [key, value] of env) {
+    process.env[key] = value;
+  }
+  const secrets = listSecrets(
+    process.env,
+    ciSetup.secrets || {},
+    defaults.secrets || {},
+  );
+  for (const [key, value] of secrets) {
+    process.env[key] = value;
+  }
+}
+
+export function* listEnv(
+  env: NodeJS.ProcessEnv = {},
+  ciSetup: {[k: string]: string} = {},
+  defaults: {[k: string]: string} = {},
+): Generator<[string, string]> {
+  const automatic = {
+    PROJECT_ID: () => defaultProject(),
+    RUN_ID: () => uniqueId(),
+    SERVICE_ACCOUNT: () => '',
+  };
+  console.log('env:');
+  const vars = [...listVars(env, ciSetup, defaults, automatic)];
+  const subs = Object.fromEntries(vars.map(([key, {value}]) => [key, value]));
+  for (const [key, {value, source}] of vars) {
+    const result = substitute(subs, value);
+    console.log(`  ${key}: ${JSON.stringify(result)} (${source})`);
+    yield [key, result];
+  }
+}
+
+export function* listSecrets(
+  env: NodeJS.ProcessEnv = {},
+  ciSetup: {[k: string]: string} = {},
+  defaults: {[k: string]: string} = {},
+): Generator<[string, string]> {
+  const projectId = env.PROJECT_ID;
+  if (!projectId) {
+    throw new Error('PROJECT_ID is not set');
+  }
+  const automatic = {
+    // Set global secret for the Service Account identity token
+    // Use in place of 'gcloud auth print-identity-token' or auth.getIdTokenClient
+    // usage: curl -H 'Bearer: $ID_TOKEN' https://
+    ID_TOKEN: () => getIdToken(projectId),
+  };
+  console.log('export secrets:');
+  const vars = listVars(env, ciSetup, defaults, automatic, accessSecret);
+  for (const [key, {value: value, source}] of vars) {
+    // ⚠️ DO NOT print the secret value.
+    console.log(`  ${key}: "***" (${source})`);
+    yield [key, value];
+  }
+}
+
+export function* listVars(
+  env: NodeJS.ProcessEnv = {},
+  ciSetup: {[k: string]: string} = {},
+  defaults: {[k: string]: string} = {},
+  automatic: {[k: string]: () => string} = {},
+  transform: (value: string) => string = x => x,
+): Generator<[string, {value: string; source: string}]> {
+  for (const key in {...automatic, ...defaults, ...ciSetup}) {
+    if (key in env) {
+      // 1) User defined via an environment variable.
+      const value = env[key] || '';
+      yield [key, {value, source: 'user-defined'}];
+    } else if (key in ciSetup) {
+      // 2) From the local ci-setup.json file.
+      const value = transform(ciSetup[key]);
+      yield [key, {value, source: 'ci-setup.json'}];
+    } else if (key in defaults) {
+      // 3) Defaults from the config file.
+      const value = transform(defaults[key]);
+      yield [key, {value, source: 'default value'}];
+    } else if (key in automatic) {
+      // 4) Automatic variables.
+      const value = automatic[key]();
+      yield [key, {value, source: 'automatic var'}];
+    } else {
+      // Unreachable.
+      throw new Error(`Undefined variable: ${key}`);
+    }
+  }
 }
 
 export function loadConfig(filePath: string): Config {
@@ -151,81 +233,6 @@ export function loadCISetup(config: Config, packagePath: string): CISetup {
   }
   console.log(`No CI setup found for '${packagePath}'`);
   return {};
-}
-
-export function setupEnv(
-  env: NodeJS.ProcessEnv,
-  ciSetup: {[k: string]: string},
-  defaults: {[k: string]: string},
-) {
-  const automatic = {
-    PROJECT_ID: () => defaultProject(),
-    RUN_ID: () => uniqueId(),
-    SERVICE_ACCOUNT: () => '',
-  };
-  console.log('export env:');
-  const vars = [...listVars(env, ciSetup, defaults, automatic)];
-  const subs = Object.fromEntries(vars.map(([key, {value}]) => [key, value]));
-  for (const [key, {value, source}] of vars) {
-    const result = substitute(subs, value);
-    console.log(`  ${key}: ${JSON.stringify(result)} (${source})`);
-    process.env[key] = result;
-  }
-}
-
-export function setupSecrets(
-  env: NodeJS.ProcessEnv,
-  ciSetup: {[k: string]: string},
-  defaults: {[k: string]: string},
-) {
-  const projectId = env.PROJECT_ID;
-  if (!projectId) {
-    throw new Error('PROJECT_ID is not set');
-  }
-  const automatic = {
-    // Set global secret for the Service Account identity token
-    // Use in place of 'gcloud auth print-identity-token' or auth.getIdTokenClient
-    // usage: curl -H 'Bearer: $ID_TOKEN' https://
-    ID_TOKEN: () => getIdToken(projectId),
-  };
-  console.log('export secrets:');
-  const vars = [...listVars(env, ciSetup, defaults, automatic, accessSecret)];
-  for (const [key, {value: value, source}] of vars) {
-    // ⚠️ DO NOT print the secret value.
-    console.log(`  ${key}: "***" (${source})`);
-    process.env[key] = value;
-  }
-}
-
-export function* listVars(
-  env: NodeJS.ProcessEnv,
-  ciSetup: {[k: string]: string},
-  defaults: {[k: string]: string},
-  automatic: {[k: string]: () => string},
-  transform: (value: string) => string = x => x,
-): Generator<[string, {value: string; source: string}]> {
-  for (const key in {...automatic, ...defaults, ...ciSetup}) {
-    if (key in env) {
-      // 1) User defined via an environment variable.
-      const value = env[key] || '';
-      yield [key, {value, source: 'user-defined'}];
-    } else if (key in ciSetup) {
-      // 2) From the local ci-setup.json file.
-      const value = transform(ciSetup[key]);
-      yield [key, {value, source: 'ci-setup.json'}];
-    } else if (key in defaults) {
-      // 3) Defaults from the config file.
-      const value = transform(defaults[key]);
-      yield [key, {value, source: 'default value'}];
-    } else if (key in automatic) {
-      // 4) Automatic variables.
-      const value = automatic[key]();
-      yield [key, {value, source: 'automatic var'}];
-    } else {
-      // Unreachable.
-      throw new Error(`Undefined variable: ${key}`);
-    }
-  }
 }
 
 export function loadJsonc(filePath: string) {

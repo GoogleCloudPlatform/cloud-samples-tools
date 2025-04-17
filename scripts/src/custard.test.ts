@@ -18,9 +18,6 @@ import * as path from 'node:path';
 import {expect} from 'chai';
 import * as custard from './custard.ts';
 
-const projectId = 'my-test-project';
-const serviceAccount = `my-sa@${projectId}.iam.gserviceaccount.com`;
-
 describe('loadJsonc', () => {
   it('file does not exist', () => {
     const filePath = 'does-not-exist.jsonc';
@@ -236,5 +233,47 @@ describe('uniqueId', () => {
     const id1 = custard.uniqueId();
     const id2 = custard.uniqueId();
     expect(id1).to.not.equals(id2);
+  });
+});
+
+describe('listEnv', () => {
+  it('automatic variables', () => {
+    const vars = Object.fromEntries(custard.listEnv());
+    expect(Object.keys(vars)).deep.equals([
+      'PROJECT_ID',
+      'RUN_ID',
+      'SERVICE_ACCOUNT',
+    ]);
+  });
+
+  it('substitute env vars', () => {
+    const env = {
+      PROJECT_ID: 'my-project',
+      RUN_ID: 'my-run',
+      SERVICE_ACCOUNT: 'my-service-account',
+    };
+    const ciSetup = {VAR: '$X', X: 'x'};
+    const vars = Object.fromEntries(custard.listEnv(env, ciSetup));
+    expect(vars).deep.equals({
+      PROJECT_ID: 'my-project',
+      RUN_ID: 'my-run',
+      SERVICE_ACCOUNT: 'my-service-account',
+      VAR: 'x',
+      X: 'x',
+    });
+  });
+});
+
+describe('listSecrets', () => {
+  it('automatic variables', () => {
+    const env = {PROJECT_ID: 'my-project'};
+    const vars = Object.fromEntries(custard.listSecrets(env));
+    expect(Object.keys(vars)).deep.equals(['ID_TOKEN']);
+  });
+
+  it('do not substitute secrets', () => {
+    const env = {PROJECT_ID: 'my-project', ID_TOKEN: '$PROJECT_ID'};
+    const vars = Object.fromEntries(custard.listSecrets(env));
+    expect(vars).deep.equals({ID_TOKEN: '$PROJECT_ID'});
   });
 });
