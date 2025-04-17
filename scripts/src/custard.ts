@@ -156,15 +156,11 @@ export function* listSecrets(
   ciSetup: {[k: string]: string} = {},
   defaults: {[k: string]: string} = {},
 ): Generator<[string, string]> {
-  const projectId = env.PROJECT_ID;
-  if (!projectId) {
-    throw new Error('PROJECT_ID is not set');
-  }
   const automatic = {
     // Set global secret for the Service Account identity token
     // Use in place of 'gcloud auth print-identity-token' or auth.getIdTokenClient
     // usage: curl -H 'Bearer: $ID_TOKEN' https://
-    ID_TOKEN: () => getIdToken(projectId),
+    ID_TOKEN: () => getIdToken(env.PROJECT_ID),
   };
   console.log('export secrets:');
   const vars = listVars(env, ciSetup, defaults, automatic, accessSecret);
@@ -281,9 +277,12 @@ function accessSecret(secretPath: string): string {
   return execSync(cmd).toString();
 }
 
-function getIdToken(projectId: string): string {
-  const cmd = `gcloud --project=${projectId} auth print-identity-token`;
-  return execSync(cmd).toString().trim();
+function getIdToken(projectId?: string): string {
+  if (projectId) {
+    const cmd = `gcloud --project=${projectId} auth print-identity-token`;
+    return execSync(cmd).toString().trim();
+  }
+  return '';
 }
 
 function asArray(x: string | string[] | undefined): string[] | undefined {

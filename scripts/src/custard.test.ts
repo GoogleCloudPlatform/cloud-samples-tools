@@ -266,9 +266,8 @@ describe('listEnv', () => {
 
 describe('listSecrets', () => {
   it('automatic variables', () => {
-    const env = {PROJECT_ID: 'my-project'};
-    const vars = Object.fromEntries(custard.listSecrets(env));
-    expect(Object.keys(vars)).deep.equals(['ID_TOKEN']);
+    const vars = Object.fromEntries(custard.listSecrets());
+    expect(vars).deep.equals({ID_TOKEN: ''});
   });
 
   it('do not substitute secrets', () => {
