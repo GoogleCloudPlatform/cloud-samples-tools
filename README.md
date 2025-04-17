@@ -70,11 +70,15 @@ These are used as steps within your workflow job.
 
 Open the workflow files to see all the available options.
 
-### Custard setup
+### Setup Custard
 
 [`GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard`](actions/steps/setup-custard/action.yaml)
 
-This checks out your source code, authenticates to Google Cloud, sets up the environment variables and secrets from the `ci-setup.json` file.
+> **Note**: This requires
+> [`google-github-actions/auth`](https://github.com/google-github-actions/auth)
+> if there are any secrets to fetch.
+
+Sets up the environment variables and secrets from the `ci-setup.json` file.
 
 This is intended to be used with `find-affected`.
 For example, this is how to spin a test job for all affected packages.
@@ -89,20 +93,28 @@ jobs:
       matrix:
         path: ${{ fromJson(needs.affected.outputs.paths) }}
     steps:
-      - name: Setup Custard
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: google-github-actions/auth@v2
+        id: auth
+        with:
+          project_id: my-project
+          workload_identity_provider: projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider
+          service_account: my-service-account@my-project.iam.gserviceaccount.com
+          access_token_lifetime: 600s # 10 minutes
+          token_format: id_token
+          id_token_audience: https://action.test/ # service must have this custom audience
+          id_token_include_email: true
+        - name: Setup Custard
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@v0.2.5
         with:
           path: ${{ matrix.path }}
           ci-setup: ${{ toJson(fromJson(needs.affected.outputs.ci-setups)[matrix.path]) }}
-          # project-id: my-project-id
-          # workload-identity-provider: projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider
-          # service-account: my-service-account@my-project-id.iam.gserviceaccount.com
-
+          id-token: ${{ steps.auth.outputs.id_token }}
       - run: ./run-my-tests
         working-directory: ${{ matrix.path }}
 ```
-
-> **Note**: If any of `project-id`, `workload-identity-provider` or `service-account` is missing, the authentication step is skipped.
 
 ### Map run
 

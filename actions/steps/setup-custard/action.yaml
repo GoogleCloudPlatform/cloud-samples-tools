@@ -22,46 +22,87 @@ inputs:
   ci-setup:
     description: The CI setup for the package path.
     required: true
-  project-id:
-    description: The Google Cloud project ID.
-    required: false
-  workload-identity-provider:
-    description: The Google Cloud workload identity provider.
-    required: false
-  service-account:
-    description: The Google Cloud service account to use for credentials.
+  id-token:
+    description: The ID token to export variable, not exported if not provided.
     required: false
 
 runs:
+  # TODO: This should all be handled by the local runner.
+  #       When that's ready, we can call it directly and get rid of this.
   using: composite
   steps:
-    - name: Checkout
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-    - name: Authenticate
-      uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f # v2
-      if: inputs.project-id && inputs.workload-identity-provider && inputs.service-account
-      id: auth
-      with:
-        project_id: ${{ inputs.project-id }}
-        workload_identity_provider: ${{ inputs.workload-identity-provider }}
-        service_account: ${{ inputs.service-account }}
-        access_token_lifetime: 600s # 10 minutes
-        token_format: id_token
-        id_token_audience: https://action.test/ # service must have this custom audience
-        id_token_include_email: true
     - name: Export environment variables
       uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
       id: vars
       with:
         script: |
-          const { default: setupVars } = await import('${{ github.workspace }}/.github/scripts/setup-vars.js');
-          return await setupVars({
-            core,
-            projectId: '${{ inputs.project-id }}',
-            setup: ${{ inputs.ci-setup }},
-            serviceAccount: '${{ inputs.service-account }}',
-            idToken: '${{ steps.auth.outputs.id_token }}',
-          })
+          function uniqueId(length = 6) {
+            const min = 2 ** 32;
+            const max = 2 ** 64;
+            return Math.floor(Math.random() * max + min)
+              .toString(36)
+              .slice(0, length);
+          }
+          function substituteVars(value, env) {
+            for (const key in env) {
+              const re = new RegExp(`\\$(${key}\\b|\\{\\s*${key}\\s*\\})`, 'g');
+              value = value.replaceAll(re, env[key]);
+            }
+            return value;
+          }
+
+          const setup = ${{ inputs.ci-setup }};
+
+          // Define automatic variables plus custom variables.
+          const vars = {
+            PROJECT_ID: '${{ inputs.project-id }}',
+            RUN_ID: uniqueId(),
+            SERVICE_ACCOUNT: '${{ inputs.service-account }}',
+            ...(setup.env || {}),
+          };
+
+          // Apply variable interpolation.
+          const env = Object.fromEntries(
+            Object.keys(vars).map(key => [key, substituteVars(vars[key], vars)])
+          );
+
+          // Export environment variables.
+          console.log('env:');
+          for (const key in env) {
+            const value = env[key];
+            console.log(`  ${key}: ${value}`);
+            core.exportVariable(key, value);
+          }
+
+          // Show exported secrets, for logging purposes.
+          // TODO: We might want to fetch the secrets here and export them directly.
+          //       https://cloud.google.com/secret-manager/docs/create-secret-quickstart#secretmanager-quickstart-nodejs
+          console.log('secrets:');
+          for (const key in setup.secrets || {}) {
+            // This is the Google Cloud Secret Manager secret ID.
+            // NOT the secret value, so it's ok to show.
+            console.log(`  ${key}: ${setup.secrets[key]}`);
+          }
+
+          // Set global secret for the Service Account identity token
+          // Use in place of 'gcloud auth print-identity-token' or auth.getIdTokenClient
+          // usage: curl -H 'Bearer: $ID_TOKEN' https://
+          const idToken = '${{ inputs.id-token }}';
+          if (idToken) {
+            core.exportVariable('ID_TOKEN', idToken)
+            core.setSecret(idToken)
+            // For logging, show the source of the ID_TOKEN
+            console.log(`  ID_TOKEN: steps.auth.outputs.id_token (from GitHub Action)`);
+          }
+
+          // Return env and secrets to use for further steps.
+          return {
+            env: env,
+            // Transform secrets into the format needed for the GHA secret manager step.
+            secrets: Object.keys(setup.secrets || {})
+              .map(key => `${key}:${setup.secrets[key]}`)
+              .join('\n'),
+          };
     - name: Fetch secrets
       uses: google-github-actions/get-secretmanager-secrets@e5bb06c2ca53b244f978d33348d18317a7f263ce # v2
       if: ${{ fromJson(steps.vars.outputs.result).secrets }}
