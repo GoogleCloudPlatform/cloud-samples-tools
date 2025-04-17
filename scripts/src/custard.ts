@@ -18,35 +18,86 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {execSync, spawnSync} from 'node:child_process';
 
-type Vars = {[k: string]: string};
+export type CISetup = {
+  // Environment variables to export.
+  env?: {[k: string]: string};
 
-type CISetup = {
+  // Secret Manager secrets to export.
+  secrets?: {[k: string]: string};
+
   // Other fields can be here, but are not required.
-  env: Vars;
-  secrets: Vars;
 };
 
-type Config = {
-  'package-file': string[];
-  'ci-setup-filename': string;
-  'ci-setup-defaults': CISetup;
-  'ci-setup-help-url': string;
-  match: string[];
-  ignore: string[];
-  'exclude-packages': string[];
+export type Config = {
+  // Filename to look for the root of a package.
+  'package-file': string | string[];
+
+  // CI setup file, must be located in the same directory as the package file.
+  'ci-setup-filename'?: string | string[];
+
+  // CI setup defaults, used when no setup file or field is not sepcified in file.
+  'ci-setup-defaults'?: CISetup;
+
+  // CI setup help URL, shown when a setup file validation fails.
+  'ci-setup-help-url'?: string;
+
+  // Pattern to match filenames or directories.
+  match?: string | string[];
+
+  // Pattern to ignore filenames or directories.
+  ignore?: string | string[];
+
+  // Packages to always exclude.
+  'exclude-packages'?: string[];
 };
 
 function usage(flags: string): string {
-  return [`usage: node run.ts ${flags}`].join('\n');
+  return `usage: node custard.ts ${flags}`;
 }
 
-function lint(packagePath: string) {
+// function mapRun(cmd: string, paths: string[], outputsAlways: boolean = false) {
+//   if (paths.length === 0) {
+//     console.log('Nothing to do.');
+//   }
+//   let failed = [];
+//   for (const path of paths) {
+//     let stdout = '';
+//     let stderr = '';
+//     try {
+//       const p = spawnSync('bash', ['-c', cmd], {cwd: path});
+//       console.log(`✅ [${path}]: ${cmd}`);
+//       stdout = p.stdout && p.stdout.toString('utf8');
+//       stderr = p.stderr && p.stderr.toString('utf8');
+//     } catch (e) {
+//       failed.push(path);
+//       console.log(`❌ [${path}]: ${cmd} (exit code ${e.status})`);
+//       console.error(e.message);
+//       stdout = e.stdout && e.stdout.toString('utf8');
+//       stderr = e.stderr && e.stderr.toString('utf8');
+//     }
+//     if (outputsAlways || failed.includes(path)) {
+//       console.log('---- stdout ----');
+//       console.log(stdout || '');
+//       console.log('---- stderr ----');
+//       console.log(stderr || '');
+//     }
+//   }
+//   console.log('=== Summary ===');
+//   console.log(`  Passed: ${paths.length - failed.length}`);
+//   console.log(`  Failed: ${failed.length}`);
+//   if (failed.length > 0) {
+//     throw new Error(`Failed '${cmd}' on: ${failed.join(', ')}`);
+//   }
+// }
+function lint(packagePaths: string[]) {
   // The Makefile use .ONESHELL, which requires make 3.82 or higher.
   //    https://stackoverflow.com/a/32153249
   const make = findMake(3, 82);
-  const cmd = `${make} lint dir=${packagePath}`;
-  console.log(`>> ${cmd}`);
-  execSync(cmd, {stdio: 'inherit'});
+  for (const packagePath of packagePaths) {
+    const cmd = `${make} lint dir=${packagePath}`;
+    console.log(`>> ${cmd}`);
+    execSync(cmd, {stdio: 'inherit'});
+  }
 }
 
 function test(configPath: string, packagePath: string) {
@@ -63,22 +114,49 @@ export function setup(
   env: NodeJS.ProcessEnv,
   configPath: string,
   packagePath: string,
-): {config: Config; ciSetup: CISetup} {
-  const config: Config = loadJsonc(configPath);
-  const ciSetupPath = path.join(packagePath, config['ci-setup-filename']);
-  const ciSetupLocal: CISetup = loadJsonc(ciSetupPath);
-  const ciSetupDefaults = config['ci-setup-defaults'];
-  console.log(`ci-setup defaults: ${JSON.stringify(ciSetupDefaults, null, 2)}`);
-  console.log(`ci-setup.json: ${JSON.stringify(ciSetupLocal, null, 2)}`);
-  setupEnv(env, ciSetupLocal.env || {}, ciSetupDefaults.env || {});
-  setupSecrets(env, ciSetupLocal.secrets || {}, ciSetupDefaults.secrets || {});
-  return {config, ciSetup: {...ciSetupDefaults, ...ciSetupLocal}};
+) {
+  const config = loadConfig(configPath);
+  const defaults = config['ci-setup-defaults'] || {};
+  const ciSetup = loadCISetup(config, packagePath);
+  console.log(`ci-setup defaults: ${JSON.stringify(defaults, null, 2)}`);
+  console.log(`ci-setup.json: ${JSON.stringify(ciSetup, null, 2)}`);
+  setupEnv(env, ciSetup.env || {}, defaults.env || {});
+  setupSecrets(env, ciSetup.secrets || {}, defaults.secrets || {});
+}
+
+export function loadConfig(filePath: string): Config {
+  const config: Config = loadJsonc(filePath);
+
+  // Validation.
+  if (!config['package-file']) {
+    throw new Error(`'package-file' is required in ${filePath}`);
+  }
+
+  // Default values.
+  if (!config.match) {
+    config.match = ['*'];
+  }
+  return config;
+}
+
+export function loadCISetup(config: Config, packagePath: string): CISetup {
+  const defaultNames = ['ci-setup.jsonc', 'ci-setup.json'];
+  const filenames = asArray(config['ci-setup-filename']) || defaultNames;
+  for (const filename of filenames) {
+    const ciSetupPath = path.join(packagePath, filename);
+    if (fs.existsSync(ciSetupPath)) {
+      console.log(`Loading CI setup: ${ciSetupPath}`);
+      return loadJsonc(ciSetupPath);
+    }
+  }
+  console.log(`No CI setup found for '${packagePath}'`);
+  return {};
 }
 
 export function setupEnv(
   env: NodeJS.ProcessEnv,
-  ciSetup: Vars,
-  defaults: Vars,
+  ciSetup: {[k: string]: string},
+  defaults: {[k: string]: string},
 ) {
   const automatic = {
     PROJECT_ID: () => defaultProject(),
@@ -97,8 +175,8 @@ export function setupEnv(
 
 export function setupSecrets(
   env: NodeJS.ProcessEnv,
-  ciSetup: Vars,
-  defaults: Vars,
+  ciSetup: {[k: string]: string},
+  defaults: {[k: string]: string},
 ) {
   const projectId = env.PROJECT_ID;
   if (!projectId) {
@@ -121,8 +199,8 @@ export function setupSecrets(
 
 export function* listVars(
   env: NodeJS.ProcessEnv,
-  ciSetup: Vars,
-  defaults: Vars,
+  ciSetup: {[k: string]: string},
+  defaults: {[k: string]: string},
   automatic: {[k: string]: () => string},
   transform: (value: string) => string = x => x,
 ): Generator<[string, {value: string; source: string}]> {
@@ -150,7 +228,7 @@ export function* listVars(
   }
 }
 
-function loadJsonc(filePath: string) {
+export function loadJsonc(filePath: string) {
   const jsoncData = fs.readFileSync(filePath, 'utf8');
   const jsonData = jsoncData
     .replaceAll(/\s*\/\*.*?\*\//gs, '') // remove multi-line comments
@@ -158,7 +236,7 @@ function loadJsonc(filePath: string) {
   return JSON.parse(jsonData);
 }
 
-function substitute(subs: Vars, value: string) {
+export function substitute(subs: {[k: string]: string}, value: string) {
   for (const key in subs) {
     const re = new RegExp(`\\$(${key}\\b|\\{\\s*${key}\\s*\\})`, 'g');
     // JavaScript doesn't allow lazy substitutions, so we check if
@@ -174,41 +252,6 @@ function substitute(subs: Vars, value: string) {
     }
   }
   return value;
-}
-
-function mapRun(cmd: string, paths: string[], outputsAlways: boolean = false) {
-  if (paths.length === 0) {
-    console.log('Nothing to do.');
-  }
-  let failed = [];
-  for (const path of paths) {
-    let stdout = '';
-    let stderr = '';
-    try {
-      const p = spawnSync('bash', ['-c', cmd], {cwd: path});
-      console.log(`✅ [${path}]: ${cmd}`);
-      stdout = p.stdout && p.stdout.toString('utf8');
-      stderr = p.stderr && p.stderr.toString('utf8');
-    } catch (e) {
-      failed.push(path);
-      console.log(`❌ [${path}]: ${cmd} (exit code ${e.status})`);
-      console.error(e.message);
-      stdout = e.stdout && e.stdout.toString('utf8');
-      stderr = e.stderr && e.stderr.toString('utf8');
-    }
-    if (outputsAlways || failed.includes(path)) {
-      console.log('---- stdout ----');
-      console.log(stdout || '');
-      console.log('---- stderr ----');
-      console.log(stderr || '');
-    }
-  }
-  console.log('=== Summary ===');
-  console.log(`  Passed: ${paths.length - failed.length}`);
-  console.log(`  Failed: ${failed.length}`);
-  if (failed.length > 0) {
-    throw new Error(`Failed '${cmd}' on: ${failed.join(', ')}`);
-  }
 }
 
 export function uniqueId(length = 6) {
@@ -236,52 +279,23 @@ function getIdToken(projectId: string): string {
   return execSync(cmd).toString().trim();
 }
 
-function findMake(major: number, minor: number): string {
-  if (checkVersion('make --version', major, minor)) {
-    console.log(`Using ${execSync('which make').toString().trim()}`);
-    return 'make';
-  } else if (checkVersion('gmake --version', major, minor)) {
-    console.log(`Using ${execSync('which gmake').toString().trim()}`);
-    return 'gmake';
+function asArray(x: string | string[] | undefined): string[] | undefined {
+  if (!x) {
+    return undefined;
   }
-  throw new Error(
-    `Error: make or gmake version ${major}.${minor} or higher is required.`,
-  );
-}
-
-function checkVersion(cmd: string, major: number, minor: number): boolean {
-  try {
-    const output = execSync(cmd).toString();
-    process.stdout.write(`${cmd} ${output.split('\n')[0]} -- `);
-    // console.log(`${cmd} ${output.split("\n")[0]}`);
-    const match = /(\d+)\.(\d+)/.exec(output);
-    if (match) {
-      const cmdMajor = parseInt(match[1]);
-      const cmdMinor = parseInt(match[2]);
-      if (cmdMajor > major || (cmdMajor === major && cmdMinor >= minor)) {
-        console.log(
-          `${cmdMajor}.${cmdMinor} is compatible with ${major}.${minor}`,
-        );
-        return true;
-      }
-    }
-  } catch (e) {
-    console.log(e);
-  }
-  console.log(`not compatible with ${major}.${minor}`);
-  return false;
+  return Array.isArray(x) ? x : [x];
 }
 
 const command = process.argv[2];
 switch (command) {
   case 'lint': {
     const usageLint = usage('lint [package-path...]');
-    const packagePath = process.argv[3];
-    if (!packagePath) {
-      console.error('Please provide the package path to lint.');
+    const packagePaths = process.argv.slice(3);
+    if (packagePaths.length === 0) {
+      console.error('Please provide the paths to lint.');
       throw new Error(usageLint);
     }
-    lint(packagePath);
+    lint(packagePaths);
     break;
   }
 

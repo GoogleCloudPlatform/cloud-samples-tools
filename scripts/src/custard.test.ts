@@ -14,11 +14,87 @@
  limitations under the License.
  */
 
+import * as path from 'node:path';
 import {expect} from 'chai';
 import * as custard from './custard.ts';
 
 const projectId = 'my-test-project';
 const serviceAccount = `my-sa@${projectId}.iam.gserviceaccount.com`;
+
+describe('loadJsonc', () => {
+  it('file does not exist', () => {
+    const filePath = 'does-not-exist.jsonc';
+    const err = 'no such file or directory';
+    expect(() => custard.loadJsonc(filePath)).to.throw(err);
+  });
+
+  it('comments', () => {
+    const filePath = path.join('test', 'jsonc', 'comments.jsonc');
+    expect(custard.loadJsonc(filePath)).deep.equals({x: 1, y: 2});
+  });
+});
+
+describe('loadConfig', () => {
+  it('empty config', () => {
+    const filePath = path.join('test', 'config', 'empty.json');
+    const err = "'package-file' is required in test/config/empty.json";
+    expect(() => custard.loadConfig(filePath)).to.throw(err);
+  });
+
+  it('default values', () => {
+    const filePath = path.join('test', 'config', 'default-values.json');
+    expect(custard.loadConfig(filePath)).deep.equals({
+      'package-file': ['package.json'],
+      match: ['*'],
+    });
+  });
+});
+
+describe('loadCISetup', () => {
+  it('no ci-setup file', () => {
+    const config: custard.Config = {'package-file': 'package.json'};
+    const packagePath = path.join('test', 'ci-setup', 'without-setup');
+    expect(custard.loadCISetup(config, packagePath)).deep.equals({});
+  });
+
+  it('load ci-setup.jsonc', () => {
+    const config: custard.Config = {'package-file': 'package.json'};
+    const packagePath = path.join('test', 'ci-setup', 'with-setup-jsonc');
+    expect(custard.loadCISetup(config, packagePath)).deep.equals({
+      env: {A: 'a', B: 'b'},
+      secrets: {C: 'c'},
+      'other-field': 'with comments',
+    });
+  });
+
+  it('load ci-setup.json', () => {
+    const config: custard.Config = {'package-file': 'package.json'};
+    const packagePath = path.join('test', 'ci-setup', 'with-setup-json');
+    expect(custard.loadCISetup(config, packagePath)).deep.equals({
+      env: {A: 'a', B: 'b'},
+      secrets: {C: 'c'},
+      'other-field': 'without comments',
+    });
+  });
+
+  it('load custom ci-setup filename string', () => {
+    const config: custard.Config = {
+      'package-file': 'package.json',
+      'ci-setup-filename': 'my-setup.json',
+    };
+    const packagePath = path.join('test', 'ci-setup', 'custom-name');
+    expect(custard.loadCISetup(config, packagePath)).deep.equals({x: 1, y: 2});
+  });
+
+  it('load custom ci-setup filename list', () => {
+    const config: custard.Config = {
+      'package-file': 'package.json',
+      'ci-setup-filename': ['my-setup.jsonc', 'my-setup.json'],
+    };
+    const packagePath = path.join('test', 'ci-setup', 'custom-name');
+    expect(custard.loadCISetup(config, packagePath)).deep.equals({x: 1, y: 2});
+  });
+});
 
 describe('listVars', () => {
   it('empty', () => {
@@ -108,11 +184,42 @@ describe('listVars', () => {
   });
 });
 
-describe('setupEnv', () => {
-  it('should export automatic vars', () => {});
-});
+describe('substitute', () => {
+  it('undefined sub', () => {
+    const subs = {};
+    expect(custard.substitute(subs, '$VAR')).to.equal('$VAR');
+  });
 
-describe('setupSecrets', () => {});
+  it('defined direct', () => {
+    const subs = {VAR: 'value'};
+    expect(custard.substitute(subs, '$VAR')).to.equal('value');
+  });
+
+  it('defined indirect', () => {
+    const subs = {X: '$Y', VAR: '$X', Y: 'value'};
+    expect(custard.substitute(subs, '$VAR')).to.equal('value');
+  });
+
+  it('$VAR match on word boundary', () => {
+    const subs = {VAR: 'b'};
+    expect(custard.substitute(subs, 'a-$VAR-c')).to.equal('a-b-c');
+  });
+
+  it('$VAR mismatch on non-word boundary', () => {
+    const subs = {VAR: 'b'};
+    expect(custard.substitute(subs, 'a-$VARs-c')).to.equal('a-$VARs-c');
+  });
+
+  it('${VAR} match without spaces', () => {
+    const subs = {VAR: 'b'};
+    expect(custard.substitute(subs, 'a-${VAR}s-c')).to.equal('a-bs-c');
+  });
+
+  it('${VAR} match with spaces', () => {
+    const subs = {VAR: 'b'};
+    expect(custard.substitute(subs, 'a-${  VAR  }s-c')).to.equal('a-bs-c');
+  });
+});
 
 describe('uniqueId', () => {
   it('should match length 4', () => {
@@ -123,5 +230,11 @@ describe('uniqueId', () => {
   it('should match length 6', () => {
     const n = 6;
     expect(custard.uniqueId(n).length).to.equal(n);
+  });
+
+  it('should be unique', () => {
+    const id1 = custard.uniqueId();
+    const id2 = custard.uniqueId();
+    expect(id1).to.not.equals(id2);
   });
 });

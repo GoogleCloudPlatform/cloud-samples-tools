@@ -1,0 +1,5 @@
+{
+  "env": { "A": "a", "B": "b" },
+  "secrets": { "C": "c" },
+  "other-field": "without comments"
+}
