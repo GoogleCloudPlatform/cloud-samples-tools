@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/GoogleCloudPlatform/cloud-samples-tools/compare/v0.2.5...v0.3.0) (2025-04-17)
+
+
+### Features
+
+* remove checkout and auth from setup-custard action ([#48](https://github.com/GoogleCloudPlatform/cloud-samples-tools/issues/48)) ([e1b1b61](https://github.com/GoogleCloudPlatform/cloud-samples-tools/commit/e1b1b61656742c910cf06efdd6e5a7b83b647e36))
+
 ## [0.2.5](https://github.com/GoogleCloudPlatform/cloud-samples-tools/compare/v0.2.4...v0.2.5) (2025-04-15)
 
 
