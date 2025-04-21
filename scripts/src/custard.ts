@@ -236,6 +236,7 @@ export function loadCISetup(config: Config, packagePath: string): CISetup {
     const ciSetupPath = path.join(packagePath, filename);
     if (fs.existsSync(ciSetupPath)) {
       console.log(`Loading CI setup: ${ciSetupPath}`);
+      // TODO: Validation.
       return loadJsonc(ciSetupPath);
     }
   }
