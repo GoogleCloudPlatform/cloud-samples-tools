@@ -252,6 +252,7 @@ describe('listEnv', () => {
       PROJECT_ID: 'my-project',
       RUN_ID: 'my-run',
       SERVICE_ACCOUNT: 'my-service-account',
+      UNDEFINED: 'should not be exported',
     };
     const ciSetup = {VAR: '$X', X: 'x'};
     const vars = Object.fromEntries(custard.listEnv(env, ciSetup));

@@ -17,6 +17,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {execSync, spawnSync} from 'node:child_process';
+import {fail} from 'node:assert';
 
 export type CISetup = {
   // Environment variables to export.
@@ -26,6 +27,17 @@ export type CISetup = {
   secrets?: {[k: string]: string};
 
   // Other fields can be here, but are not required.
+};
+
+export type Command = {
+  // Run before the main command, at the repo root.
+  pre?: string;
+
+  // The main command, at the package path.
+  run?: string;
+
+  // Run after the main command, at the repo root.
+  post?: string;
 };
 
 export type Config = {
@@ -47,6 +59,10 @@ export type Config = {
   // Pattern to ignore filenames or directories.
   ignore?: string | string[];
 
+  // Commands for each stage.
+  lint?: Command;
+  test?: Command;
+
   // Packages to always exclude.
   'exclude-packages'?: string[];
 };
@@ -55,63 +71,58 @@ function usage(flags: string): string {
   return `usage: node custard.ts ${flags}`;
 }
 
-// function mapRun(cmd: string, paths: string[], outputsAlways: boolean = false) {
-//   if (paths.length === 0) {
-//     console.log('Nothing to do.');
-//   }
-//   let failed = [];
-//   for (const path of paths) {
-//     let stdout = '';
-//     let stderr = '';
-//     try {
-//       const p = spawnSync('bash', ['-c', cmd], {cwd: path});
-//       console.log(`✅ [${path}]: ${cmd}`);
-//       stdout = p.stdout && p.stdout.toString('utf8');
-//       stderr = p.stderr && p.stderr.toString('utf8');
-//     } catch (e) {
-//       failed.push(path);
-//       console.log(`❌ [${path}]: ${cmd} (exit code ${e.status})`);
-//       console.error(e.message);
-//       stdout = e.stdout && e.stdout.toString('utf8');
-//       stderr = e.stderr && e.stderr.toString('utf8');
-//     }
-//     if (outputsAlways || failed.includes(path)) {
-//       console.log('---- stdout ----');
-//       console.log(stdout || '');
-//       console.log('---- stderr ----');
-//       console.log(stderr || '');
-//     }
-//   }
-//   console.log('=== Summary ===');
-//   console.log(`  Passed: ${paths.length - failed.length}`);
-//   console.log(`  Failed: ${failed.length}`);
-//   if (failed.length > 0) {
-//     throw new Error(`Failed '${cmd}' on: ${failed.join(', ')}`);
-//   }
-// }
-function lint(packagePaths: string[]) {
-  // The Makefile use .ONESHELL, which requires make 3.82 or higher.
-  //    https://stackoverflow.com/a/32153249
-  const make = findMake(3, 82);
-  for (const packagePath of packagePaths) {
-    const cmd = `${make} lint dir=${packagePath}`;
-    console.log(`>> ${cmd}`);
-    execSync(cmd, {stdio: 'inherit'});
+function run(cmd: Command, paths: string[]) {
+  if (cmd.pre) {
+    console.log(`>> [root]$ ${cmd.pre}`);
+    execSync(cmd.pre, {stdio: 'inherit'});
+  }
+  let failures = [];
+  if (cmd.run) {
+    for (const path of paths) {
+      console.log(`>> ${path}$ ${cmd.run}`);
+      try {
+        execSync(cmd.run, {stdio: 'inherit'});
+      } catch (e) {
+        console.error(e);
+        failures.push(path);
+      }
+    }
+  }
+  if (cmd.post) {
+    console.log(`>> [root]$ ${cmd.post}`);
+    execSync(cmd.post, {stdio: 'inherit'});
+  }
+
+  if (paths.length > 1) {
+    console.log(`=== Summary (${paths.length} packages) ===`);
+    console.log(`  Passed: ${paths.length - failures.length}`);
+    console.log(`  Failed: ${failures.length}`);
+  }
+  if (failures.length > 0) {
+    throw new Error(`Failed '${cmd}' on: ${failures.join(', ')}`);
   }
 }
 
-function test(configPath: string, packagePath: string) {
-  // The Makefile use .ONESHELL, which requires make 3.82 or higher.
-  //    https://stackoverflow.com/a/32153249
-  const make = findMake(3, 82);
-  setup(configPath, packagePath);
-  const cmd = `${make} test dir=${packagePath}`;
-  console.log(`>> ${cmd}`);
-  execSync(cmd, {stdio: 'inherit'});
+function lint(configPath: string, packagePaths: string[]) {
+  const config = loadConfig(configPath);
+  if (!config.lint) {
+    console.log(`No 'lint' command defined in ${configPath}.`);
+    return;
+  }
+  run(config.lint, packagePaths);
 }
 
-export function setup(configPath: string, packagePath: string) {
+function test(configPath: string, packagePath: string) {
   const config = loadConfig(configPath);
+  if (!config.test) {
+    console.log(`No 'test' command defined in ${configPath}.`);
+    return;
+  }
+  setup(config, packagePath);
+  run(config.test, [packagePath]);
+}
+
+export function setup(config: Config, packagePath: string) {
   const defaults = config['ci-setup-defaults'] || {};
   const ciSetup = loadCISetup(config, packagePath);
   console.log(`ci-setup defaults: ${JSON.stringify(defaults, null, 2)}`);
@@ -295,13 +306,18 @@ function asArray(x: string | string[] | undefined): string[] | undefined {
 const command = process.argv[2];
 switch (command) {
   case 'lint': {
-    const usageLint = usage('lint [package-path...]');
-    const packagePaths = process.argv.slice(3);
+    const usageLint = usage('lint <config-path> [package-path...]');
+    const configPath = process.argv[3];
+    if (!configPath) {
+      console.error('Please provide the config file path.');
+      throw new Error(usageLint);
+    }
+    const packagePaths = process.argv.slice(4);
     if (packagePaths.length === 0) {
       console.error('Please provide the paths to lint.');
       throw new Error(usageLint);
     }
-    lint(packagePaths);
+    lint(configPath, packagePaths);
     break;
   }
 
