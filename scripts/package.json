@@ -12,6 +12,7 @@
   },
   "license": "Apache-2.0",
   "author": "",
+  "private": true,
   "type": "module",
   "main": "custard.ts",
   "engines": {

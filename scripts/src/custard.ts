@@ -16,8 +16,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import {execSync, spawnSync} from 'node:child_process';
-import {fail} from 'node:assert';
+import {execSync} from 'node:child_process';
 
 export type CISetup = {
   // Environment variables to export.
@@ -71,19 +70,20 @@ function usage(flags: string): string {
   return `usage: node custard.ts ${flags}`;
 }
 
-function run(cmd: Command, paths: string[]) {
+function run(cmd: Command, paths: string[], setup = (_path: string) => {}) {
   if (cmd.pre) {
     console.log(`>> [root]$ ${cmd.pre}`);
     execSync(cmd.pre, {stdio: 'inherit'});
   }
-  let failures = [];
+  const failures = [];
   if (cmd.run) {
     for (const path of paths) {
       console.log(`>> ${path}$ ${cmd.run}`);
+      setup(path);
       try {
-        execSync(cmd.run, {stdio: 'inherit'});
+        execSync(cmd.run, {stdio: 'inherit', cwd: path});
       } catch (e) {
-        console.error(e);
+        console.error(`${e}`);
         failures.push(path);
       }
     }
@@ -99,41 +99,42 @@ function run(cmd: Command, paths: string[]) {
     console.log(`  Failed: ${failures.length}`);
   }
   if (failures.length > 0) {
-    throw new Error(`Failed '${cmd}' on: ${failures.join(', ')}`);
+    throw new Error(`Failed:\n${failures.map(path => `- ${path}`).join('\n')}`);
   }
 }
 
-function lint(configPath: string, packagePaths: string[]) {
+export function lint(configPath: string, packagePaths: string[]) {
   const config = loadConfig(configPath);
   if (!config.lint) {
-    console.log(`No 'lint' command defined in ${configPath}.`);
-    return;
+    throw new Error(`No 'lint' command defined in ${configPath}.`);
   }
   run(config.lint, packagePaths);
 }
 
-function test(configPath: string, packagePath: string) {
+export function test(
+  configPath: string,
+  packagePaths: string[],
+  env = process.env,
+) {
   const config = loadConfig(configPath);
   if (!config.test) {
-    console.log(`No 'test' command defined in ${configPath}.`);
-    return;
+    throw new Error(`No 'test' command defined in ${configPath}.`);
   }
-  setup(config, packagePath);
-  run(config.test, [packagePath]);
+  run(config.test, packagePaths, path => setup(config, path, env));
 }
 
-export function setup(config: Config, packagePath: string) {
+export function setup(config: Config, packagePath: string, env = process.env) {
   const defaults = config['ci-setup-defaults'] || {};
   const ciSetup = loadCISetup(config, packagePath);
   console.log(`ci-setup defaults: ${JSON.stringify(defaults, null, 2)}`);
   console.log(`ci-setup.json: ${JSON.stringify(ciSetup, null, 2)}`);
 
-  const env = listEnv(process.env, ciSetup.env || {}, defaults.env || {});
-  for (const [key, value] of env) {
+  const vars = listEnv(env, ciSetup.env || {}, defaults.env || {});
+  for (const [key, value] of vars) {
     process.env[key] = value;
   }
   const secrets = listSecrets(
-    process.env,
+    env,
     ciSetup.secrets || {},
     defaults.secrets || {},
   );
@@ -328,12 +329,12 @@ switch (command) {
       console.error('Please provide the config file path.');
       throw new Error(usageTest);
     }
-    const packagePath = process.argv[4];
-    if (!packagePath) {
-      console.error('Please provide the package path to lint.');
+    const packagePaths = process.argv.slice(4);
+    if (packagePaths.length === 0) {
+      console.error('Please provide the paths to test.');
       throw new Error(usageTest);
     }
-    test(configPath, packagePath);
+    test(configPath, packagePaths);
     break;
   }
 

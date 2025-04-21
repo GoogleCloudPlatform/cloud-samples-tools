@@ -1,8 +1,0 @@
-{
-  "package-file": "pkg.json",
-  "lint": {
-    "pre": "echo 'pre-step'",
-    "cmd": "echo 'run command",
-    "post": "echo 'post-step"
-  }
-}

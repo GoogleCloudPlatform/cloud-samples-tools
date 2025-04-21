@@ -278,3 +278,86 @@ describe('listSecrets', () => {
     expect(vars).deep.equals({ID_TOKEN: '$PROJECT_ID'});
   });
 });
+
+describe('lint', () => {
+  it('undefined', () => {
+    const config = 'test/cmd/config-no-cmd.json';
+    const paths: string[] = [];
+    console.log(`\n--- lint.undefined ${config} ${paths}`);
+    expect(() => custard.lint(config, paths)).to.throw(
+      `No 'lint' command defined in ${config}`,
+    );
+  });
+
+  it('empty', () => {
+    const config = 'test/cmd/config.json';
+    const paths: string[] = [];
+    console.log(`\n--- lint.empty ${config} ${paths}`);
+    expect(() => custard.lint(config, paths)).to.not.throw();
+  });
+
+  it('one', () => {
+    const config = 'test/cmd/config.json';
+    const paths = ['test/cmd/pkg-pass'];
+    console.log(`\n--- lint.one ${config} ${paths}`);
+    expect(() => custard.lint(config, paths)).to.not.throw();
+  });
+
+  it('fail 1', () => {
+    const config = 'test/cmd/config.json';
+    const paths = ['test/cmd/pkg-fail', 'test/cmd/pkg-pass'];
+    console.log(`\n--- lint.two ${config} ${paths}`);
+    expect(() => custard.lint(config, paths)).to.throw();
+  });
+
+  it('fail 2', () => {
+    const config = 'test/cmd/config.json';
+    const paths = ['test/cmd/pkg-pass', 'test/cmd/pkg-fail'];
+    console.log(`\n--- lint.two ${config} ${paths}`);
+    expect(() => custard.lint(config, paths)).to.throw();
+  });
+});
+
+describe('test', () => {
+  it('undefined', () => {
+    const config = 'test/cmd/config-no-cmd.json';
+    const paths: string[] = [];
+    const env = {};
+    console.log(`\n--- test.undefined ${config} ${paths} ${env}`);
+    expect(() => custard.test(config, paths, env)).to.throw(
+      `No 'test' command defined in ${config}`,
+    );
+  });
+
+  it('empty', () => {
+    const config = 'test/cmd/config.json';
+    const paths: string[] = [];
+    const env = {};
+    console.log(`\n--- test.empty ${config} ${paths} ${env}`);
+    expect(() => custard.test(config, paths, env)).to.not.throw();
+  });
+
+  it('one', () => {
+    const config = 'test/cmd/config.json';
+    const paths = ['test/cmd/pkg-pass'];
+    const env = {PROJECT_ID: 'project-id', ID_TOKEN: 'id-token'};
+    console.log(`\n--- test.one ${config} ${paths} ${env}`);
+    expect(() => custard.test(config, paths, env)).to.not.throw();
+  });
+
+  it('fail 1', () => {
+    const config = 'test/cmd/config.json';
+    const paths = ['test/cmd/pkg-fail', 'test/cmd/pkg-pass'];
+    const env = {PROJECT_ID: 'project-id', ID_TOKEN: 'id-token'};
+    console.log(`\n--- test.two ${config} ${paths} ${env}`);
+    expect(() => custard.test(config, paths, env)).to.throw();
+  });
+
+  it('fail 2', () => {
+    const config = 'test/cmd/config.json';
+    const paths = ['test/cmd/pkg-pass', 'test/cmd/pkg-fail'];
+    const env = {PROJECT_ID: 'project-id', ID_TOKEN: 'id-token'};
+    console.log(`\n--- test.two ${config} ${paths} ${env}`);
+    expect(() => custard.test(config, paths, env)).to.throw();
+  });
+});
