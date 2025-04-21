@@ -304,8 +304,7 @@ function asArray(x: string | string[] | undefined): string[] | undefined {
   return Array.isArray(x) ? x : [x];
 }
 
-const command = process.argv[2];
-switch (command) {
+switch (process.argv[2]) {
   case 'lint': {
     const usageLint = usage('lint <config-path> [package-path...]');
     const configPath = process.argv[3];
@@ -341,7 +340,7 @@ switch (command) {
   default: {
     // Only throw an error if running the script directly.
     // Otherwise, this file is being imported (for example, on tests).
-    if (process.argv[1].endsWith('custard.ts')) {
+    if (process.argv[1] && process.argv[1].match(/custard\.(ts|js)$|^-$/)) {
       throw new Error(usage('[lint | test] [options]'));
     }
   }

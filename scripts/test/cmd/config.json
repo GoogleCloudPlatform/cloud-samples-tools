@@ -1,13 +1,13 @@
 {
   "package-file": "pkg.json",
   "lint": {
-    "pre": "echo \"$(pwd): pre-lint\"",
+    "pre": "echo 'pre-lint'",
     "run": "sh lint.sh",
-    "post": "echo \"$(pwd): post-lint\""
+    "post": "echo 'post-lint'"
   },
   "test": {
-    "pre": "echo \"$(pwd): pre-test\"",
+    "pre": "echo 'pre-test'",
     "run": "sh test.sh",
-    "post": "echo \"$(pwd): post-test\""
+    "post": "echo 'post-test'"
   }
 }
