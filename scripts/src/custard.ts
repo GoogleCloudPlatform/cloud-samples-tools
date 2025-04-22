@@ -514,6 +514,12 @@ switch (process.argv[2]) {
     break;
   }
 
+  case undefined: {
+    // If no command was passed, just show the usage without an error.
+    console.log(usage('[lint | test] [options]'));
+    break;
+  }
+
   default: {
     // Only throw an error if running the script directly.
     // Otherwise, this file is being imported (for example, on tests).
