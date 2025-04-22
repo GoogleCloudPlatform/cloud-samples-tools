@@ -17,7 +17,6 @@
 import * as path from 'node:path';
 import {expect} from 'chai';
 import * as custard from './custard.ts';
-import {env} from 'node:process';
 
 describe('loadJsonc', () => {
   it('file does not exist', () => {
@@ -138,7 +137,7 @@ describe('validateCISetup', () => {
     expect(custard.validateCISetup(config, ciSetup)).to.deep.equal([
       '\'env\' must be {string: string} definitions, got: {"A":1}',
       '\'secrets\' must be {string: string} definitions, got: {"B":1}',
-      "'name1' must be string, got: 1",
+      "'var1' must be string, got: 1",
     ]);
   });
 });
