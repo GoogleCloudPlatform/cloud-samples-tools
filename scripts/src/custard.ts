@@ -25,7 +25,12 @@ export type CISetup = {
   // Secret Manager secrets to export.
   secrets?: {[k: string]: string};
 
+  /* eslint-disable  @typescript-eslint/no-explicit-any */
   // Other fields can be here, but are not required.
+  // They can be any type, the ci-setup files are validated
+  // against the defaults defined in the config file.
+  [k: string]: any;
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 };
 
 export type Command = {
@@ -234,61 +239,6 @@ export function loadConfig(filePath: string): Config {
   return config;
 }
 
-export function validateConfig(config: any): string[] {
-  let errors = [];
-  // Required fields.
-  if (!config['package-file']) {
-    errors.push("'package-file' is required");
-  }
-
-  // Undefined fields.
-  const validFields = [
-    'package-file',
-    'ci-setup-filename',
-    'ci-setup-defaults',
-    'ci-setup-help-url',
-    'match',
-    'ignore',
-    'lint',
-    'test',
-    'exclude-packages',
-  ];
-  for (const key in config) {
-    if (!validFields.includes(key)) {
-      errors.push(`'${key}' is not a valid field`);
-    }
-  }
-  for (const key in config.lint || {}) {
-    if (!['pre', 'run', 'post'].includes(key)) {
-      errors.push(`'lint.${key}' is not a valid field`);
-    }
-  }
-  for (const key in config.test || {}) {
-    if (!['pre', 'run', 'post'].includes(key)) {
-      errors.push(`'test.${key}' is not a valid field`);
-    }
-  }
-
-  // Type checking.
-  errors = errors.concat(
-    checkStringOrStrings(config, 'package-file'),
-    checkStringOrStrings(config, 'ci-setup-filename'),
-    checkDefinitions(config['ci-setup-defaults'], 'ci-setup-defaults.env'),
-    checkDefinitions(config['ci-setup-defaults'], 'ci-setup-defaults.secrets'),
-    checkString(config, 'ci-setup-help-url'),
-    checkStringOrStrings(config, 'match'),
-    checkStringOrStrings(config, 'ignore'),
-    checkString(config['lint'], 'lint.pre'),
-    checkString(config['lint'], 'lint.run'),
-    checkString(config['lint'], 'lint.post'),
-    checkString(config['test'], 'test.pre'),
-    checkString(config['test'], 'test.run'),
-    checkString(config['test'], 'test.post'),
-    checkStringOrStrings(config, 'exclude-packages'),
-  );
-  return errors;
-}
-
 export function loadCISetup(config: Config, packagePath: string): CISetup {
   const defaultNames = ['ci-setup.jsonc', 'ci-setup.json'];
   const filenames = asArray(config['ci-setup-filename']) || defaultNames;
@@ -296,8 +246,15 @@ export function loadCISetup(config: Config, packagePath: string): CISetup {
     const ciSetupPath = path.join(packagePath, filename);
     if (fs.existsSync(ciSetupPath)) {
       console.log(`Loading CI setup: ${ciSetupPath}`);
-      // TODO: Validation.
-      return loadJsonc(ciSetupPath);
+      const ciSetup: CISetup = loadJsonc(ciSetupPath);
+      const errors = validateCISetup(config, ciSetup);
+      if (errors.length > 0) {
+        throw new Error(
+          `❌ validation errors in CI setup file: ${ciSetupPath}\n` +
+            errors.map(e => `- ${e}`).join('\n'),
+        );
+      }
+      return ciSetup;
     }
   }
   console.log(`No CI setup found for '${packagePath}'`);
@@ -365,6 +322,105 @@ function asArray(x: string | string[] | undefined): string[] | undefined {
   return Array.isArray(x) ? x : [x];
 }
 
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+// For validation, the data comes from JSON files, so they can be anything.
+// There are no type guarantees, so many of these functions take
+// parameters of type `any` and validate the type at runtime.
+export function validateConfig(config: any): string[] {
+  // Required fields.
+  let errors = [];
+  if (!config['package-file']) {
+    errors.push("'package-file' is required");
+  }
+
+  // Undefined fields.
+  const validFields = [
+    'package-file',
+    'ci-setup-filename',
+    'ci-setup-defaults',
+    'ci-setup-help-url',
+    'match',
+    'ignore',
+    'lint',
+    'test',
+    'exclude-packages',
+  ];
+  for (const key in config) {
+    if (!validFields.includes(key)) {
+      errors.push(`'${key}' is not a valid field`);
+    }
+  }
+  for (const key in config.lint || {}) {
+    if (!['pre', 'run', 'post'].includes(key)) {
+      errors.push(`'lint.${key}' is not a valid field`);
+    }
+  }
+  for (const key in config.test || {}) {
+    if (!['pre', 'run', 'post'].includes(key)) {
+      errors.push(`'test.${key}' is not a valid field`);
+    }
+  }
+
+  // Type checking.
+  errors = errors.concat(
+    checkStringOrStrings(config, 'package-file'),
+    checkStringOrStrings(config, 'ci-setup-filename'),
+    checkDefinitions(config['ci-setup-defaults'], 'ci-setup-defaults.env'),
+    checkDefinitions(config['ci-setup-defaults'], 'ci-setup-defaults.secrets'),
+    checkString(config, 'ci-setup-help-url'),
+    checkStringOrStrings(config, 'match'),
+    checkStringOrStrings(config, 'ignore'),
+    checkString(config['lint'], 'lint.pre'),
+    checkString(config['lint'], 'lint.run'),
+    checkString(config['lint'], 'lint.post'),
+    checkString(config['test'], 'test.pre'),
+    checkString(config['test'], 'test.run'),
+    checkString(config['test'], 'test.post'),
+    checkStringOrStrings(config, 'exclude-packages'),
+  );
+  return errors;
+}
+
+export function validateCISetup(config: Config, ciSetup: any): string[] {
+  // Undefined fields.
+  let errors = [];
+  const validFields = [
+    'env',
+    'secrets',
+    ...Object.keys(config['ci-setup-defaults'] || {}),
+  ];
+  for (const key in ciSetup) {
+    if (!validFields.includes(key)) {
+      errors.push(`'${key}' is not a valid field`);
+    }
+  }
+
+  // Type checking.
+  errors = errors.concat(
+    checkDefinitions(ciSetup, 'env'),
+    checkDefinitions(ciSetup, 'secrets'),
+  );
+  if (config['ci-setup-defaults']) {
+    for (const key in config['ci-setup-defaults'] || {}) {
+      const ciSetupValue = ciSetup[key];
+      if (ciSetupValue === undefined) {
+        continue;
+      }
+      const defaultValue = config['ci-setup-defaults'][key];
+      if (typeof ciSetupValue !== typeof defaultValue) {
+        errors.push(
+          `'${key}' must be ${typeof defaultValue}, got: ${JSON.stringify(
+            ciSetupValue,
+          )}`,
+        );
+      }
+    }
+  }
+
+  // TODO: check for undefined variable substitutions
+  return errors;
+}
+
 function check(
   kvs: any,
   key: string,
@@ -423,6 +479,7 @@ function isMapStringString(kvs: any): boolean {
   }
   return true;
 }
+/* eslint-enable  @typescript-eslint/no-explicit-any */
 
 switch (process.argv[2]) {
   case 'lint': {

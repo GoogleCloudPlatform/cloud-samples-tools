@@ -17,6 +17,7 @@
 import * as path from 'node:path';
 import {expect} from 'chai';
 import * as custard from './custard.ts';
+import {env} from 'node:process';
 
 describe('loadJsonc', () => {
   it('file does not exist', () => {
@@ -101,6 +102,47 @@ describe('validateConfig', () => {
   });
 });
 
+describe('validateCISetup', () => {
+  it('undefined fields', () => {
+    const config = {
+      'package-file': 'pkg.txt',
+      'ci-setup-defaults': {
+        'defined-field': 1,
+      },
+    };
+    const ciSetup = {
+      env: {}, // even if not in the defaults, this is ok
+      secrets: {}, // even if not in the defaults, this is ok
+      'defined-field': 2, // it's in the defaults, this is ok
+      'undefined-field': 1, // not in the defaults, this is an error
+    };
+    expect(custard.validateCISetup(config, ciSetup)).to.deep.equal([
+      "'undefined-field' is not a valid field",
+    ]);
+  });
+
+  it('type checking', () => {
+    const config = {
+      'package-file': 'pkg.txt',
+      'ci-setup-defaults': {
+        var1: 'override',
+        var2: 'default',
+      },
+    };
+    const ciSetup = {
+      env: {A: 1},
+      secrets: {B: 1},
+      var1: 1,
+      // var2 is undefined, this is ok
+    };
+    expect(custard.validateCISetup(config, ciSetup)).to.deep.equal([
+      '\'env\' must be {string: string} definitions, got: {"A":1}',
+      '\'secrets\' must be {string: string} definitions, got: {"B":1}',
+      "'name1' must be string, got: 1",
+    ]);
+  });
+});
+
 describe('loadCISetup', () => {
   it('no ci-setup file', () => {
     const config: custard.Config = {'package-file': 'package.json'};
@@ -114,7 +156,6 @@ describe('loadCISetup', () => {
     expect(custard.loadCISetup(config, packagePath)).deep.equals({
       env: {A: 'a', B: 'b'},
       secrets: {C: 'c'},
-      'other-field': 'with comments',
     });
   });
 
@@ -124,7 +165,6 @@ describe('loadCISetup', () => {
     expect(custard.loadCISetup(config, packagePath)).deep.equals({
       env: {A: 'a', B: 'b'},
       secrets: {C: 'c'},
-      'other-field': 'without comments',
     });
   });
 
@@ -134,7 +174,10 @@ describe('loadCISetup', () => {
       'ci-setup-filename': 'my-setup.json',
     };
     const packagePath = path.join('test', 'ci-setup', 'custom-name');
-    expect(custard.loadCISetup(config, packagePath)).deep.equals({x: 1, y: 2});
+    expect(custard.loadCISetup(config, packagePath)).deep.equals({
+      env: {A: 'a', B: 'b'},
+      secrets: {C: 'c'},
+    });
   });
 
   it('load custom ci-setup filename list', () => {
@@ -143,7 +186,10 @@ describe('loadCISetup', () => {
       'ci-setup-filename': ['my-setup.jsonc', 'my-setup.json'],
     };
     const packagePath = path.join('test', 'ci-setup', 'custom-name');
-    expect(custard.loadCISetup(config, packagePath)).deep.equals({x: 1, y: 2});
+    expect(custard.loadCISetup(config, packagePath)).deep.equals({
+      env: {A: 'a', B: 'b'},
+      secrets: {C: 'c'},
+    });
   });
 });
 
