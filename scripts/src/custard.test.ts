@@ -32,18 +32,72 @@ describe('loadJsonc', () => {
 });
 
 describe('loadConfig', () => {
-  it('empty config', () => {
-    const filePath = path.join('test', 'config', 'empty.json');
-    const err = "'package-file' is required in test/config/empty.json";
-    expect(() => custard.loadConfig(filePath)).to.throw(err);
-  });
-
   it('default values', () => {
-    const filePath = path.join('test', 'config', 'default-values.json');
-    expect(custard.loadConfig(filePath)).deep.equals({
+    const configPath = path.join('test', 'config', 'default-values.json');
+    expect(custard.loadConfig(configPath)).deep.equals({
       'package-file': ['package.json'],
       match: ['*'],
     });
+  });
+
+  it('validation', () => {
+    const configPath = path.join('test', 'config', 'empty.json');
+    expect(() => custard.loadConfig(configPath)).to.throw(
+      "'package-file' is required",
+    );
+  });
+});
+
+describe('validateConfig', () => {
+  it('required fields', () => {
+    const config = {};
+    expect(custard.validateConfig(config)).to.deep.equal([
+      "'package-file' is required",
+    ]);
+  });
+
+  it('undefined fields', () => {
+    const config = {
+      'package-file': 'pkg.txt',
+      'undefined-field': 1,
+      lint: {'undefined-lint': 1},
+      test: {'undefined-test': 1},
+    };
+    expect(custard.validateConfig(config)).to.deep.equal([
+      "'undefined-field' is not a valid field",
+      "'lint.undefined-lint' is not a valid field",
+      "'test.undefined-test' is not a valid field",
+    ]);
+  });
+
+  it('type checking', () => {
+    const config = {
+      'package-file': 1,
+      'ci-setup-filename': 1,
+      'ci-setup-defaults': {env: {A: 1}, secrets: {B: 1}},
+      'ci-setup-help-url': 1,
+      match: 1,
+      ignore: 1,
+      lint: {pre: 1, run: 1, post: 1},
+      test: {pre: 1, run: 1, post: 1},
+      'exclude-packages': 1,
+    };
+    expect(custard.validateConfig(config)).to.deep.equal([
+      "'package-file' must be string or string[], got: 1",
+      "'ci-setup-filename' must be string or string[], got: 1",
+      '\'ci-setup-defaults.env\' must be {string: string} definitions, got: {"A":1}',
+      '\'ci-setup-defaults.secrets\' must be {string: string} definitions, got: {"B":1}',
+      "'ci-setup-help-url' must be string, got: 1",
+      "'match' must be string or string[], got: 1",
+      "'ignore' must be string or string[], got: 1",
+      "'lint.pre' must be string, got: 1",
+      "'lint.run' must be string, got: 1",
+      "'lint.post' must be string, got: 1",
+      "'test.pre' must be string, got: 1",
+      "'test.run' must be string, got: 1",
+      "'test.post' must be string, got: 1",
+      "'exclude-packages' must be string or string[], got: 1",
+    ]);
   });
 });
 

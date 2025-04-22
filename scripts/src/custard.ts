@@ -63,7 +63,7 @@ export type Config = {
   test?: Command;
 
   // Packages to always exclude.
-  'exclude-packages'?: string[];
+  'exclude-packages'?: string | string[];
 };
 
 function usage(flags: string): string {
@@ -217,16 +217,76 @@ export function* listVars(
 export function loadConfig(filePath: string): Config {
   const config: Config = loadJsonc(filePath);
 
-  // Validation.
-  if (!config['package-file']) {
-    throw new Error(`'package-file' is required in ${filePath}`);
-  }
-
   // Default values.
   if (!config.match) {
     config.match = ['*'];
   }
+
+  // Validation.
+  const errors = validateConfig(config);
+  if (errors.length > 0) {
+    throw new Error(
+      `❌ validation errors in config file: ${filePath}\n` +
+        errors.map(e => `- ${e}`).join('\n'),
+    );
+  }
+
   return config;
+}
+
+export function validateConfig(config: any): string[] {
+  let errors = [];
+  // Required fields.
+  if (!config['package-file']) {
+    errors.push("'package-file' is required");
+  }
+
+  // Undefined fields.
+  const validFields = [
+    'package-file',
+    'ci-setup-filename',
+    'ci-setup-defaults',
+    'ci-setup-help-url',
+    'match',
+    'ignore',
+    'lint',
+    'test',
+    'exclude-packages',
+  ];
+  for (const key in config) {
+    if (!validFields.includes(key)) {
+      errors.push(`'${key}' is not a valid field`);
+    }
+  }
+  for (const key in config.lint || {}) {
+    if (!['pre', 'run', 'post'].includes(key)) {
+      errors.push(`'lint.${key}' is not a valid field`);
+    }
+  }
+  for (const key in config.test || {}) {
+    if (!['pre', 'run', 'post'].includes(key)) {
+      errors.push(`'test.${key}' is not a valid field`);
+    }
+  }
+
+  // Type checking.
+  errors = errors.concat(
+    checkStringOrStrings(config, 'package-file'),
+    checkStringOrStrings(config, 'ci-setup-filename'),
+    checkDefinitions(config['ci-setup-defaults'], 'ci-setup-defaults.env'),
+    checkDefinitions(config['ci-setup-defaults'], 'ci-setup-defaults.secrets'),
+    checkString(config, 'ci-setup-help-url'),
+    checkStringOrStrings(config, 'match'),
+    checkStringOrStrings(config, 'ignore'),
+    checkString(config['lint'], 'lint.pre'),
+    checkString(config['lint'], 'lint.run'),
+    checkString(config['lint'], 'lint.post'),
+    checkString(config['test'], 'test.pre'),
+    checkString(config['test'], 'test.run'),
+    checkString(config['test'], 'test.post'),
+    checkStringOrStrings(config, 'exclude-packages'),
+  );
+  return errors;
 }
 
 export function loadCISetup(config: Config, packagePath: string): CISetup {
@@ -303,6 +363,65 @@ function asArray(x: string | string[] | undefined): string[] | undefined {
     return undefined;
   }
   return Array.isArray(x) ? x : [x];
+}
+
+function check(
+  kvs: any,
+  key: string,
+  isType: (x: any) => boolean,
+  err: string,
+): string[] {
+  // Fields are not required by default.
+  // Required fields must be checked explicitly.
+  const k = key.split('.').pop() || key;
+  if (kvs && kvs[k] && !isType(kvs[k])) {
+    return [`'${key}' must be ${err}, got: ${JSON.stringify(kvs[k])}`];
+  }
+  return [];
+}
+
+function checkString(kvs: any, key: string): string[] {
+  return check(kvs, key, isString, 'string');
+}
+
+function checkStringOrStrings(kvs: any, key: string): string[] {
+  return check(kvs, key, isStringOrStrings, 'string or string[]');
+}
+
+function checkDefinitions(kvs: any, key: string): string[] {
+  return check(kvs, key, isMapStringString, '{string: string} definitions');
+}
+
+function isString(x: any): boolean {
+  return typeof x === 'string';
+}
+
+function isArray(xs: any, isElem: (x: any) => boolean): boolean {
+  if (!Array.isArray(xs)) {
+    return false;
+  }
+  for (const x of xs) {
+    if (!isElem(x)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function isStringOrStrings(x: any): boolean {
+  return isString(x) || isArray(x, isString);
+}
+
+function isMapStringString(kvs: any): boolean {
+  if (typeof kvs !== 'object') {
+    return false;
+  }
+  for (const key in kvs) {
+    if (typeof key !== 'string' || typeof kvs[key] !== 'string') {
+      return false;
+    }
+  }
+  return true;
 }
 
 switch (process.argv[2]) {
