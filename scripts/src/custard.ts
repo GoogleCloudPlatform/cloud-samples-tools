@@ -115,7 +115,7 @@ function run(cmd: Command, paths: string[], setup?: (path: string) => void) {
   }
 
   if (paths.length > 1) {
-    console.log(`=== Summary (${paths.length} packages) ===`);
+    console.log(`\n=== Summary (${paths.length} packages) ===`);
     console.log(`  Passed: ${paths.length - failures.length}`);
     console.log(`  Failed: ${failures.length}`);
   }
