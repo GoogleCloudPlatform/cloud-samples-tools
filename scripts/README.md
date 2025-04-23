@@ -12,6 +12,9 @@ For consistency, we recommend running tests using this script.
 
 - [Node.js](https://nodejs.org/en/download/current) version 23 or higher (to run TypeScript files directly).
 
+> **Note**: Node 23 issues a warning about "Type Stripping" being experimental.
+> This does not cause any issues and everything works as expected.
+
 ## Config file
 
 To support lint and test commands, we have to define them in the config file.
