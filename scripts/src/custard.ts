@@ -77,24 +77,26 @@ function usage(flags: string): string {
   return `usage: node custard.ts ${flags}`;
 }
 
-function run(cmd: Command, paths: string[], setup = (_path: string) => {}) {
+function run(cmd: Command, paths: string[], setup?: (path: string) => {}) {
   if (cmd.pre) {
     const steps = asArray(cmd.pre) || [];
     for (const step of steps) {
-      console.log(`pre> [root]$ ${step}`);
+      console.log(`#pre> [root]$ ${step}`);
       execSync(step, {stdio: 'inherit'});
     }
   }
   const failures = [];
   if (cmd.run) {
     for (const path of paths) {
-      console.log('run> ci-setup');
-      setup(path);
+      if (setup) {
+        console.log(`#run> ${path}$ ci-setup`);
+        setup(path);
+      }
       try {
         // For each path, stop on the first command failure.
         const steps = asArray(cmd.run) || [];
         for (const step of steps) {
-          console.log(`run> ${path}$ ${step}`);
+          console.log(`#run> ${path}$ ${step}`);
           execSync(step, {stdio: 'inherit', cwd: path});
         }
       } catch (e) {
@@ -107,7 +109,7 @@ function run(cmd: Command, paths: string[], setup = (_path: string) => {}) {
   if (cmd.post) {
     const steps = asArray(cmd.post) || [];
     for (const step of steps) {
-      console.log(`post> [root]$ ${step}`);
+      console.log(`#post> [root]$ ${step}`);
       execSync(step, {stdio: 'inherit'});
     }
   }
