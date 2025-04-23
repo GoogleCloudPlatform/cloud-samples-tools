@@ -406,7 +406,9 @@ export function validateCISetup(config: Config, ciSetup: any): string[] {
     ...Object.keys(config['ci-setup-defaults'] || {}),
   ];
   for (const key in ciSetup) {
-    if (!validFields.includes(key)) {
+    // Fields starting with underscore (_) are considered comments.
+    // They should not be considered as errors.
+    if (!key.startsWith('_') && !validFields.includes(key)) {
       errors.push(`'${key}' is not a valid field`);
     }
   }

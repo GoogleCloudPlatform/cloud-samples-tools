@@ -114,6 +114,7 @@ describe('validateCISetup', () => {
       secrets: {}, // even if not in the defaults, this is ok
       'defined-field': 2, // it's in the defaults, this is ok
       'undefined-field': 1, // not in the defaults, this is an error
+      _comment: 'underscore names are comments', // this is ok
     };
     expect(custard.validateCISetup(config, ciSetup)).to.deep.equal([
       "'undefined-field' is not a valid field",
