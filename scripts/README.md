@@ -26,6 +26,7 @@ For example:
 // config.jsonc
 {
   "package-file": "...",
+  // ...
   "lint": {
     // Runs at the root directory, before any packages.
     "pre": "echo 'pre-lint'",
@@ -45,6 +46,7 @@ For example:
     // Runs at the root directory, after all packages.
     "post": "echo 'post-test'",
   },
+  // ...
 }
 ```
 
