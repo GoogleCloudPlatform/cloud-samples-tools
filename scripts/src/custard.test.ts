@@ -90,12 +90,12 @@ describe('validateConfig', () => {
       "'ci-setup-help-url' must be string, got: 1",
       "'match' must be string or string[], got: 1",
       "'ignore' must be string or string[], got: 1",
-      "'lint.pre' must be string, got: 1",
-      "'lint.run' must be string, got: 1",
-      "'lint.post' must be string, got: 1",
-      "'test.pre' must be string, got: 1",
-      "'test.run' must be string, got: 1",
-      "'test.post' must be string, got: 1",
+      "'lint.pre' must be string or string[], got: 1",
+      "'lint.run' must be string or string[], got: 1",
+      "'lint.post' must be string or string[], got: 1",
+      "'test.pre' must be string or string[], got: 1",
+      "'test.run' must be string or string[], got: 1",
+      "'test.post' must be string or string[], got: 1",
       "'exclude-packages' must be string or string[], got: 1",
     ]);
   });

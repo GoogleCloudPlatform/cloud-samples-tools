@@ -42,7 +42,11 @@ For example:
     // Runs for each package at the package's directory.
     // Loads the ci-setup.json file, and exports variables
     // and secrets before running this step.
-    "run": "sh test.sh",
+    "run": [
+      // You can also run multiple commands.
+      "sh install-dependencies.sh",
+      "sh test.sh",
+    ],
     // Runs at the root directory, after all packages.
     "post": "echo 'post-test'",
   },
@@ -51,7 +55,7 @@ For example:
 ```
 
 Both `lint` and `test` commands are optional.
-All `pre`, `run`, and `post` steps are also optional.
+All `pre`, `run`, and `post` steps are also optional, they can be a single command, or a list of commands.
 If a command or step is not defined, it's skipped.
 
 The `pre` and `post` steps run on the current working directory where the script was launched, usually the repo's root directory.

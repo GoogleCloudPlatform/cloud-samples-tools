@@ -37,13 +37,13 @@ export type CISetup = {
 
 export type Command = {
   // Run before the main command, at the repo root.
-  pre?: string;
+  pre?: string | string[];
 
   // The main command, at the package path.
-  run?: string;
+  run?: string | string[];
 
   // Run after the main command, at the repo root.
-  post?: string;
+  post?: string | string[];
 };
 
 export type Config = {
@@ -79,25 +79,37 @@ function usage(flags: string): string {
 
 function run(cmd: Command, paths: string[], setup = (_path: string) => {}) {
   if (cmd.pre) {
-    console.log(`>> [root]$ ${cmd.pre}`);
-    execSync(cmd.pre, {stdio: 'inherit'});
+    const steps = asArray(cmd.pre) || [];
+    for (const step of steps) {
+      console.log(`pre> [root]$ ${step}`);
+      execSync(step, {stdio: 'inherit'});
+    }
   }
   const failures = [];
   if (cmd.run) {
     for (const path of paths) {
-      console.log(`>> ${path}$ ${cmd.run}`);
+      console.log('run> ci-setup');
       setup(path);
       try {
-        execSync(cmd.run, {stdio: 'inherit', cwd: path});
+        // For each path, stop on the first command failure.
+        const steps = asArray(cmd.run) || [];
+        for (const step of steps) {
+          console.log(`run> ${path}$ ${step}`);
+          execSync(step, {stdio: 'inherit', cwd: path});
+        }
       } catch (e) {
+        // Run all paths always, catch the exception and report errors.
         console.error(`${e}`);
         failures.push(path);
       }
     }
   }
   if (cmd.post) {
-    console.log(`>> [root]$ ${cmd.post}`);
-    execSync(cmd.post, {stdio: 'inherit'});
+    const steps = asArray(cmd.post) || [];
+    for (const step of steps) {
+      console.log(`post> [root]$ ${step}`);
+      execSync(step, {stdio: 'inherit'});
+    }
   }
 
   if (paths.length > 1) {
@@ -372,12 +384,12 @@ export function validateConfig(config: any): string[] {
     checkString(config, 'ci-setup-help-url'),
     checkStringOrStrings(config, 'match'),
     checkStringOrStrings(config, 'ignore'),
-    checkString(config['lint'], 'lint.pre'),
-    checkString(config['lint'], 'lint.run'),
-    checkString(config['lint'], 'lint.post'),
-    checkString(config['test'], 'test.pre'),
-    checkString(config['test'], 'test.run'),
-    checkString(config['test'], 'test.post'),
+    checkStringOrStrings(config['lint'], 'lint.pre'),
+    checkStringOrStrings(config['lint'], 'lint.run'),
+    checkStringOrStrings(config['lint'], 'lint.post'),
+    checkStringOrStrings(config['test'], 'test.pre'),
+    checkStringOrStrings(config['test'], 'test.run'),
+    checkStringOrStrings(config['test'], 'test.post'),
     checkStringOrStrings(config, 'exclude-packages'),
   );
   return errors;
