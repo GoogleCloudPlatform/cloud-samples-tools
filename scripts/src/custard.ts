@@ -141,7 +141,7 @@ export function lint(configPath: string, packagePaths: string[]) {
   if (!config.lint) {
     throw new Error(`No 'lint' command defined in ${configPath}.`);
   }
-  run(config.lint, packagePaths);
+  run(config.lint, packagePaths, path => loadCISetup(config, path));
 }
 
 export function test(
@@ -279,7 +279,10 @@ export function loadCISetup(config: Config, packagePath: string): CISetup {
       if (errors.length > 0) {
         throw new Error(
           `❌ validation errors in CI setup file: ${ciSetupPath}\n` +
-            errors.map(e => `- ${e}`).join('\n'),
+            errors.map(e => `- ${e}`).join('\n') +
+            (config['ci-setup-help-url']
+              ? `\nSee ${config['ci-setup-help-url']}`
+              : ''),
         );
       }
       return ciSetup;
