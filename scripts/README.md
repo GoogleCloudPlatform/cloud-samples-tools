@@ -65,8 +65,8 @@ The `run` step is run for every package, under the package's directory.
 All packages are run always, even if they fail.
 If any `run` fails, the errors are reported and the script exits with a non-zero exit code.
 
-The `lint` command will not use the `ci-setup.json` file.
-The `test` command loads the `ci-setup.json`, validates it, exports environment variables, and fetches secrets before running the `run` step.
+The `lint` command only validate the `ci-setup.json` file, but not export any variables or secrets.
+The `test` command loads the `ci-setup.json`, validates it, and exports environment variables and secrets before running the `run` step.
 
 ## Running
 
