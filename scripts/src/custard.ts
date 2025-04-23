@@ -386,6 +386,7 @@ export function validateConfig(config: any): string[] {
     checkStringOrStrings(config, 'ignore'),
     checkStringOrStrings(config['lint'], 'lint.pre'),
     checkStringOrStrings(config['lint'], 'lint.run'),
+    checkStringOrStrings(config['lint'], 'lint.post'),
     checkStringOrStrings(config['test'], 'test.pre'),
     checkStringOrStrings(config['test'], 'test.run'),
     checkStringOrStrings(config['test'], 'test.post'),
