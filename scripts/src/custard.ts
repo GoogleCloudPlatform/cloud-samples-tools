@@ -81,7 +81,7 @@ function run(cmd: Command, paths: string[], setup?: (path: string) => void) {
   if (cmd.pre) {
     const steps = asArray(cmd.pre) || [];
     for (const step of steps) {
-      console.log(`#pre> [root]$ ${step}`);
+      console.log(`\n#pre> [root]$ ${step}`);
       execSync(step, {stdio: 'inherit'});
     }
   }
@@ -89,14 +89,14 @@ function run(cmd: Command, paths: string[], setup?: (path: string) => void) {
   if (cmd.run) {
     for (const path of paths) {
       if (setup) {
-        console.log(`#run> ${path}$ ci-setup`);
+        console.log(`\n#run> ${path}$ ci-setup`);
         setup(path);
       }
       try {
         // For each path, stop on the first command failure.
         const steps = asArray(cmd.run) || [];
         for (const step of steps) {
-          console.log(`#run> ${path}$ ${step}`);
+          console.log(`\n#run> ${path}$ ${step}`);
           execSync(step, {stdio: 'inherit', cwd: path});
         }
       } catch (e) {
@@ -109,7 +109,7 @@ function run(cmd: Command, paths: string[], setup?: (path: string) => void) {
   if (cmd.post) {
     const steps = asArray(cmd.post) || [];
     for (const step of steps) {
-      console.log(`#post> [root]$ ${step}`);
+      console.log(`\n#post> [root]$ ${step}`);
       execSync(step, {stdio: 'inherit'});
     }
   }
