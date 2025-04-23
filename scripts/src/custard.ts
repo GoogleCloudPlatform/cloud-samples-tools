@@ -282,7 +282,8 @@ export function loadCISetup(config: Config, packagePath: string): CISetup {
             errors.map(e => `- ${e}`).join('\n') +
             (config['ci-setup-help-url']
               ? `\nSee ${config['ci-setup-help-url']}`
-              : ''),
+              : '') +
+            '\n',
         );
       }
       return ciSetup;
