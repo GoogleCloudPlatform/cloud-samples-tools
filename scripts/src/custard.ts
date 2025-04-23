@@ -77,7 +77,7 @@ function usage(flags: string): string {
   return `usage: node custard.ts ${flags}`;
 }
 
-function run(cmd: Command, paths: string[], setup?: (path: string) => {}) {
+function run(cmd: Command, paths: string[], setup?: (path: string) => void) {
   if (cmd.pre) {
     const steps = asArray(cmd.pre) || [];
     for (const step of steps) {
