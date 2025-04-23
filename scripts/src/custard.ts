@@ -81,7 +81,7 @@ function run(cmd: Command, paths: string[], setup?: (path: string) => void) {
   if (cmd.pre) {
     const steps = asArray(cmd.pre) || [];
     for (const step of steps) {
-      console.log(`\n#[root]$ ${step}`);
+      console.log(`\n➜ [root]$ ${step}`);
       const start = Date.now();
       execSync(step, {stdio: 'inherit'});
       const end = Date.now();
@@ -92,7 +92,7 @@ function run(cmd: Command, paths: string[], setup?: (path: string) => void) {
   if (cmd.run) {
     for (const path of paths) {
       if (setup) {
-        console.log(`\n#${path}$ ci-setup`);
+        console.log(`\n➜ ${path}$ ci-setup`);
         const start = Date.now();
         setup(path);
         const end = Date.now();
@@ -102,7 +102,7 @@ function run(cmd: Command, paths: string[], setup?: (path: string) => void) {
         // For each path, stop on the first command failure.
         const steps = asArray(cmd.run) || [];
         for (const step of steps) {
-          console.log(`\n#${path}$ ${step}`);
+          console.log(`\n➜ ${path}$ ${step}`);
           const start = Date.now();
           execSync(step, {stdio: 'inherit', cwd: path});
           const end = Date.now();
@@ -118,7 +118,7 @@ function run(cmd: Command, paths: string[], setup?: (path: string) => void) {
   if (cmd.post) {
     const steps = asArray(cmd.post) || [];
     for (const step of steps) {
-      console.log(`\n#[root]$ ${step}`);
+      console.log(`\n➜ [root]$ ${step}`);
       const start = Date.now();
       execSync(step, {stdio: 'inherit'});
       const end = Date.now();
