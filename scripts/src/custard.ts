@@ -18,6 +18,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {execSync} from 'node:child_process';
 
+const version = '0.2.5'; // x-release-please-version
+
 export type CISetup = {
   // Environment variables to export.
   env?: {[k: string]: string};
@@ -514,9 +516,14 @@ switch (process.argv[2]) {
     break;
   }
 
+  case 'version': {
+    console.log(version);
+    break;
+  }
+
   case undefined: {
     // If no command was passed, just show the usage without an error.
-    console.log(usage('[lint | test] [options]'));
+    console.log(usage('[lint | test | version] [options]'));
     break;
   }
 
