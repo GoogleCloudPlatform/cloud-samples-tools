@@ -497,55 +497,59 @@ function isMapStringString(kvs: any): boolean {
 }
 /* eslint-enable  @typescript-eslint/no-explicit-any */
 
-switch (process.argv[2]) {
-  case 'lint': {
-    const usageLint = usage('lint <config-path> [package-path...]');
-    const configPath = process.argv[3];
-    if (!configPath) {
-      console.error('Please provide the config file path.');
-      throw new Error(usageLint);
+function main(argv: string[]) {
+  switch (argv[2]) {
+    case 'lint': {
+      const usageLint = usage('lint <config-path> [package-path...]');
+      const configPath = argv[3];
+      if (!configPath) {
+        console.error('Please provide the config file path.');
+        throw new Error(usageLint);
+      }
+      const packagePaths = argv.slice(4);
+      if (packagePaths.length === 0) {
+        console.error('Please provide the paths to lint.');
+        throw new Error(usageLint);
+      }
+      lint(configPath, packagePaths);
+      break;
     }
-    const packagePaths = process.argv.slice(4);
-    if (packagePaths.length === 0) {
-      console.error('Please provide the paths to lint.');
-      throw new Error(usageLint);
+
+    case 'test': {
+      const usageTest = usage('test <config-path> <package-path>');
+      const configPath = argv[3];
+      if (!configPath) {
+        console.error('Please provide the config file path.');
+        throw new Error(usageTest);
+      }
+      const packagePaths = argv.slice(4);
+      if (packagePaths.length === 0) {
+        console.error('Please provide the paths to test.');
+        throw new Error(usageTest);
+      }
+      test(configPath, packagePaths);
+      break;
     }
-    lint(configPath, packagePaths);
-    break;
-  }
 
-  case 'test': {
-    const usageTest = usage('test <config-path> <package-path>');
-    const configPath = process.argv[3];
-    if (!configPath) {
-      console.error('Please provide the config file path.');
-      throw new Error(usageTest);
+    case 'version': {
+      console.log(version);
+      break;
     }
-    const packagePaths = process.argv.slice(4);
-    if (packagePaths.length === 0) {
-      console.error('Please provide the paths to test.');
-      throw new Error(usageTest);
+
+    case undefined: {
+      // If no command was passed, just show the usage without an error.
+      console.log(usage('[lint | test | version] [options]'));
+      break;
     }
-    test(configPath, packagePaths);
-    break;
-  }
 
-  case 'version': {
-    console.log(version);
-    break;
-  }
-
-  case undefined: {
-    // If no command was passed, just show the usage without an error.
-    console.log(usage('[lint | test | version] [options]'));
-    break;
-  }
-
-  default: {
-    // Only throw an error if running the script directly.
-    // Otherwise, this file is being imported (for example, on tests).
-    if (process.argv[1] && process.argv[1].match(/custard\.(ts|js)$|^-$/)) {
-      throw new Error(usage('[lint | test] [options]'));
+    default: {
+      // Only throw an error if running the script directly.
+      // Otherwise, this file is being imported (for example, on tests).
+      if (argv[1] && argv[1].match(/custard\.(ts|js)$|^-$/)) {
+        throw new Error(usage('[lint | test] [options]'));
+      }
     }
   }
 }
+
+main(process.argv);
