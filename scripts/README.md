@@ -14,19 +14,35 @@ For consistency, we recommend running tests using this script.
 
 ## Running
 
-You can run the script directly from GitHub.
+Create an alias for this script, you can add this to your `.zshrc` or `.bashrc`.
 
 ```sh
-export CUSTARD_URL=https://raw.githubusercontent.com/GoogleCloudPlatform/cloud-samples-tools/refs/heads/main/scripts/src/custard.ts
-
-# Lint packages.
-curl -sSL $CUSTARD_URL | node - lint [config-file] [packages..]
-
-# Test packages
-curl -sSL $CUSTARD_URL | node - test [config-file] [packages..]
+alias custard="curl -sSL https://raw.githubusercontent.com/GoogleCloudPlatform/cloud-samples-tools/refs/heads/main/scripts/src/custard.ts | node - $@"
 ```
 
-TODO: add alias
+To lint a package, you must pass the path to a config file and then one or more packages.
+
+For example, to lint the test packages:
+
+```sh
+# This should pass.
+custard lint test/cmd/config.json test/cmd/pkg-pass
+
+# This fails and exits with a non-zero exit code.
+custard lint test/cmd/config.json test/cmd/pkg-fail
+```
+
+To test a package, you must pass the path to a config file and then one or more packages.
+
+For example, to test the test packages:
+
+```sh
+# This should pass.
+custard test test/cmd/config.json test/cmd/pkg-pass
+
+# This fails and exits with a non-zero exit code.
+custard test test/cmd/config.json test/cmd/pkg-fail
+```
 
 ## Contributing
 
