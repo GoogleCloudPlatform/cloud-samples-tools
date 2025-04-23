@@ -20,7 +20,7 @@
   },
   "scripts": {
     "lint": "gts lint",
-    "check": "npm run compile",
+    "check": "npm run lint && npm run compile && npm test",
     "test": "mocha -p -j 2 src/**/*.test.ts",
     "clean": "gts clean",
     "compile": "tsc",

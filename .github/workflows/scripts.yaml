@@ -67,7 +67,7 @@ jobs:
         with:
           node-version: ${{ inputs.node-version || '23' }}
       - run: npm ci
-      - run: npm run check
+      - run: npm run compile
 
   test:
     runs-on: ubuntu-latest

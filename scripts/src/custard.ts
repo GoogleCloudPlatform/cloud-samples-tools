@@ -82,7 +82,10 @@ function run(cmd: Command, paths: string[], setup?: (path: string) => void) {
     const steps = asArray(cmd.pre) || [];
     for (const step of steps) {
       console.log(`\n#pre> [root]$ ${step}`);
+      const start = Date.now();
       execSync(step, {stdio: 'inherit'});
+      const end = Date.now();
+      console.log(`Done in ${Math.round((end - start) / 1000)}s`);
     }
   }
   const failures = [];
@@ -90,14 +93,20 @@ function run(cmd: Command, paths: string[], setup?: (path: string) => void) {
     for (const path of paths) {
       if (setup) {
         console.log(`\n#run> ${path}$ ci-setup`);
+        const start = Date.now();
         setup(path);
+        const end = Date.now();
+        console.log(`Done in ${Math.round((end - start) / 1000)}s`);
       }
       try {
         // For each path, stop on the first command failure.
         const steps = asArray(cmd.run) || [];
         for (const step of steps) {
           console.log(`\n#run> ${path}$ ${step}`);
+          const start = Date.now();
           execSync(step, {stdio: 'inherit', cwd: path});
+          const end = Date.now();
+          console.log(`Done in ${Math.round((end - start) / 1000)}s`);
         }
       } catch (e) {
         // Run all paths always, catch the exception and report errors.
@@ -110,7 +119,10 @@ function run(cmd: Command, paths: string[], setup?: (path: string) => void) {
     const steps = asArray(cmd.post) || [];
     for (const step of steps) {
       console.log(`\n#post> [root]$ ${step}`);
+      const start = Date.now();
       execSync(step, {stdio: 'inherit'});
+      const end = Date.now();
+      console.log(`Done in ${Math.round((end - start) / 1000)}s`);
     }
   }
 
