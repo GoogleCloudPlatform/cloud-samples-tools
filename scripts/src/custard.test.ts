@@ -27,7 +27,11 @@ describe('loadJsonc', () => {
 
   it('comments', () => {
     const filePath = path.join('test', 'jsonc', 'comments.jsonc');
-    expect(custard.loadJsonc(filePath)).deep.equals({x: 1, y: 2});
+    expect(custard.loadJsonc(filePath)).deep.equals({
+      x: 1,
+      y: 2,
+      url: 'https://example.com',
+    });
   });
 });
 

@@ -296,7 +296,7 @@ export function loadJsonc(filePath: string) {
   const jsoncData = fs.readFileSync(filePath, 'utf8');
   const jsonData = jsoncData
     .replaceAll(/\s*\/\*.*?\*\//gs, '') // remove multi-line comments
-    .replaceAll(/\/\/.*/g, ''); // remove single-line comments
+    .replaceAll(/(^|[,{}"\d])\s*\/\/.*/g, '$1'); // remove single-line comments
   return JSON.parse(jsonData);
 }
 
