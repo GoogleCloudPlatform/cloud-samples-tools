@@ -172,7 +172,7 @@ export function* listEnv(
     RUN_ID: () => uniqueId(),
     SERVICE_ACCOUNT: () => '',
   };
-  console.log('env:');
+  console.log('export env:');
   const vars = [...listVars(env, ciSetup, defaults, automatic)];
   const subs = Object.fromEntries(vars.map(([key, {value}]) => [key, value]));
   for (const [key, {value, source}] of vars) {
@@ -386,7 +386,6 @@ export function validateConfig(config: any): string[] {
     checkStringOrStrings(config, 'ignore'),
     checkStringOrStrings(config['lint'], 'lint.pre'),
     checkStringOrStrings(config['lint'], 'lint.run'),
-    checkStringOrStrings(config['lint'], 'lint.post'),
     checkStringOrStrings(config['test'], 'test.pre'),
     checkStringOrStrings(config['test'], 'test.run'),
     checkStringOrStrings(config['test'], 'test.post'),
