@@ -85,8 +85,8 @@ describe('validateConfig', () => {
     expect(custard.validateConfig(config)).to.deep.equal([
       "'package-file' must be string or string[], got: 1",
       "'ci-setup-filename' must be string or string[], got: 1",
-      '\'ci-setup-defaults.env\' must be {string: string} definitions, got: {"A":1}',
-      '\'ci-setup-defaults.secrets\' must be {string: string} definitions, got: {"B":1}',
+      '\'ci-setup-defaults.env\' must be {string: string} mappings, got: {"A":1}',
+      '\'ci-setup-defaults.secrets\' must be {string: string} mappings, got: {"B":1}',
       "'ci-setup-help-url' must be string, got: 1",
       "'match' must be string or string[], got: 1",
       "'ignore' must be string or string[], got: 1",
@@ -135,8 +135,8 @@ describe('validateCISetup', () => {
       // var2 is undefined, this is ok
     };
     expect(custard.validateCISetup(config, ciSetup)).to.deep.equal([
-      '\'env\' must be {string: string} definitions, got: {"A":1}',
-      '\'secrets\' must be {string: string} definitions, got: {"B":1}',
+      '\'env\' must be {string: string} mappings, got: {"A":1}',
+      '\'secrets\' must be {string: string} mappings, got: {"B":1}',
       "'var1' must be string, got: 1",
     ]);
   });

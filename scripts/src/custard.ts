@@ -381,8 +381,8 @@ export function validateConfig(config: any): string[] {
   errors = errors.concat(
     checkStringOrStrings(config, 'package-file'),
     checkStringOrStrings(config, 'ci-setup-filename'),
-    checkDefinitions(config['ci-setup-defaults'], 'ci-setup-defaults.env'),
-    checkDefinitions(config['ci-setup-defaults'], 'ci-setup-defaults.secrets'),
+    checkMappings(config['ci-setup-defaults'], 'ci-setup-defaults.env'),
+    checkMappings(config['ci-setup-defaults'], 'ci-setup-defaults.secrets'),
     checkString(config, 'ci-setup-help-url'),
     checkStringOrStrings(config, 'match'),
     checkStringOrStrings(config, 'ignore'),
@@ -413,8 +413,8 @@ export function validateCISetup(config: Config, ciSetup: any): string[] {
 
   // Type checking.
   errors = errors.concat(
-    checkDefinitions(ciSetup, 'env'),
-    checkDefinitions(ciSetup, 'secrets'),
+    checkMappings(ciSetup, 'env'),
+    checkMappings(ciSetup, 'secrets'),
   );
   if (config['ci-setup-defaults']) {
     for (const key in config['ci-setup-defaults'] || {}) {
@@ -460,8 +460,8 @@ function checkStringOrStrings(kvs: any, key: string): string[] {
   return check(kvs, key, isStringOrStrings, 'string or string[]');
 }
 
-function checkDefinitions(kvs: any, key: string): string[] {
-  return check(kvs, key, isMapStringString, '{string: string} definitions');
+function checkMappings(kvs: any, key: string): string[] {
+  return check(kvs, key, isMapStringString, '{string: string} mappings');
 }
 
 function isString(x: any): boolean {
