@@ -33,6 +33,7 @@ outputs:
     description: The whole check in JSON.
     value: ${{ steps.check.outputs.check }}
 
+# x-release-please-start-version
 runs:
   using: composite
   steps:
@@ -48,3 +49,4 @@ runs:
         repository-name: ${{ fromJson(inputs.check).repository-name }}
         repository-owner: ${{ fromJson(inputs.check).repository-owner }}
         if: ${{ fromJson(inputs.check).if }}
+# x-release-please-end-version
