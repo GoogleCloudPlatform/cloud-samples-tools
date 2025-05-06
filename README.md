@@ -38,7 +38,7 @@ This way, the check will block a PR until everything finishes.
 ```yaml
 jobs:
   affected:
-    uses: GoogleCloudPlatform/cloud-samples-tools/.github/workflows/affected.yaml@v0.2.5
+    uses: GoogleCloudPlatform/cloud-samples-tools/.github/workflows/affected.yaml@v0.3.0
     permissions:
       statuses: write
     with:
@@ -56,7 +56,7 @@ jobs:
     permissions:
       statuses: write
     steps:
-      - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.5
+      - uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.3.0
         with:
           check: ${{ needs.affected.outputs.check }}
           status: success
@@ -107,7 +107,7 @@ jobs:
           id_token_audience: https://action.test/ # service must have this custom audience
           id_token_include_email: true
         - name: Setup Custard
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@v0.2.5
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/setup-custard@v0.3.0
         with:
           path: ${{ matrix.path }}
           ci-setup: ${{ toJson(fromJson(needs.affected.outputs.ci-setups)[matrix.path]) }}
@@ -131,7 +131,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run linter
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/map-run@v0.2.5
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/map-run@v0.3.0
         with:
           command: ./run-my-linter
           paths: ${{ needs.affected.outputs.paths }}
@@ -156,7 +156,7 @@ jobs:
       statuses: write
     steps:
       - name: Check queued
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@v0.2.5
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@v0.3.0
         id: queued
         with:
           sha: ${{ github.event.workflow_run.head_sha || github.sha }}
@@ -168,7 +168,7 @@ jobs:
       # Checkout code, setup language and the environment.
 
       - name: Check in_progress
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.5
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.3.0
         id: in_progress
         with:
           check: ${{ steps.queued.outputs.check }}
@@ -177,12 +177,12 @@ jobs:
       # Run something.
 
       - name: Check success
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.5
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.3.0
         with:
           check: ${{ steps.in_progress.outputs.check }}
           status: success
       - name: Check failure
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.5
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.3.0
         if: failure()
         with:
           check: ${{ steps.in_progress.outputs.check }}
@@ -211,7 +211,7 @@ jobs:
   my-job:
     steps:
       - name: Get job
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/get-job@v0.2.5
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/get-job@v0.3.0
         id: job
         # with:
         #   job-name: my-job
