@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/GoogleCloudPlatform/cloud-samples-tools/compare/v0.3.0...v0.3.1) (2025-05-06)
+
+
+### Bug Fixes
+
+* fix syntax error on get-job ([#54](https://github.com/GoogleCloudPlatform/cloud-samples-tools/issues/54)) ([468a0a0](https://github.com/GoogleCloudPlatform/cloud-samples-tools/commit/468a0a0e9138896f0071102a6201b27d4ac9d247))
+
 ## [0.3.0](https://github.com/GoogleCloudPlatform/cloud-samples-tools/compare/v0.2.5...v0.3.0) (2025-04-17)
 
 
