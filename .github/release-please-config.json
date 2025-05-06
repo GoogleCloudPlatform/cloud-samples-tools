@@ -9,7 +9,9 @@
         "prerelease": false,
         "extra-files": [
           "README.md",
-          "custard/cmd/custard/main.go"
+          "custard/cmd/custard/main.go",
+          {"type": "yaml", "jsonpath": "$.runs.steps.*.uses",   "path": "actions/steps/create-check/action.yaml" },
+          {"type": "yaml", "jsonpath": "$.runs.steps.*.uses",   "path": "actions/steps/update-check/action.yaml" }
         ]
       }
     },
