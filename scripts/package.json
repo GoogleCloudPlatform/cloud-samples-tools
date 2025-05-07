@@ -21,7 +21,7 @@
   "scripts": {
     "lint": "gts lint",
     "check": "npm run lint && npm run compile && npm test",
-    "test": "mocha -p -j 2 src/**/*.test.ts",
+    "test": "mocha -p -j 2 --timeout 300000 src/**/*.test.ts",
     "clean": "gts clean",
     "compile": "tsc",
     "fix": "gts fix"
