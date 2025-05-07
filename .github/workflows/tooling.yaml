@@ -52,7 +52,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Check in_progress
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@v0.2.5
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@v0.3.1
         id: in_progress
         with:
           sha: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
@@ -74,12 +74,12 @@ jobs:
         shell: bash
         working-directory: custard/
       - name: Check success
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.5
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.3.1
         with:
           check: ${{ steps.in_progress.outputs.check }}
           status: success
       - name: Check failure
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.5
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.3.1
         if: failure()
         with:
           check: ${{ steps.in_progress.outputs.check }}
@@ -92,7 +92,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Check in_progress
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@v0.2.5
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check@v0.3.1
         id: in_progress
         with:
           sha: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
@@ -110,12 +110,12 @@ jobs:
         shell: bash
         working-directory: custard/
       - name: Check success
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.5
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.3.1
         with:
           check: ${{ steps.in_progress.outputs.check }}
           status: success
       - name: Check failure
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.2.5
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.3.1
         if: failure()
         with:
           check: ${{ steps.in_progress.outputs.check }}
