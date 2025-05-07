@@ -33,11 +33,12 @@ outputs:
     description: The whole check in JSON.
     value: ${{ steps.check.outputs.check }}
 
+# x-release-please-start-version
 runs:
   using: composite
   steps:
     - name: Update check
-      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@v0.2.5
+      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@v0.3.2
       id: check
       with:
         sha: ${{ fromJson(inputs.check).sha }}
@@ -48,3 +49,4 @@ runs:
         repository-name: ${{ fromJson(inputs.check).repository-name }}
         repository-owner: ${{ fromJson(inputs.check).repository-owner }}
         if: ${{ fromJson(inputs.check).if }}
+# x-release-please-end-version

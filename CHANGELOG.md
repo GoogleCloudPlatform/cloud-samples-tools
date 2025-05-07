@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.3.2](https://github.com/GoogleCloudPlatform/cloud-samples-tools/compare/v0.3.1...v0.3.2) (2025-05-06)
+
+
+### Bug Fixes
+
+* update steps as part of release-please config ([#58](https://github.com/GoogleCloudPlatform/cloud-samples-tools/issues/58)) ([ddb3a79](https://github.com/GoogleCloudPlatform/cloud-samples-tools/commit/ddb3a79d94b2f064dffd65a7b4e4a08d5c800830))
+* use generic updater for yaml files, prevent header check issues ([#60](https://github.com/GoogleCloudPlatform/cloud-samples-tools/issues/60)) ([d9928e7](https://github.com/GoogleCloudPlatform/cloud-samples-tools/commit/d9928e7d406bde1162c80f3b5e39c8ec112295ea))
+
+## [0.3.1](https://github.com/GoogleCloudPlatform/cloud-samples-tools/compare/v0.3.0...v0.3.1) (2025-05-06)
+
+
+### Bug Fixes
+
+* fix syntax error on get-job ([#54](https://github.com/GoogleCloudPlatform/cloud-samples-tools/issues/54)) ([468a0a0](https://github.com/GoogleCloudPlatform/cloud-samples-tools/commit/468a0a0e9138896f0071102a6201b27d4ac9d247))
+
+## [0.3.0](https://github.com/GoogleCloudPlatform/cloud-samples-tools/compare/v0.2.5...v0.3.0) (2025-04-17)
+
+
+### Features
+
+* remove checkout and auth from setup-custard action ([#48](https://github.com/GoogleCloudPlatform/cloud-samples-tools/issues/48)) ([e1b1b61](https://github.com/GoogleCloudPlatform/cloud-samples-tools/commit/e1b1b61656742c910cf06efdd6e5a7b83b647e36))
+
 ## [0.2.5](https://github.com/GoogleCloudPlatform/cloud-samples-tools/compare/v0.2.4...v0.2.5) (2025-04-15)
 
 
