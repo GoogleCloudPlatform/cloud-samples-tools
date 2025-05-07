@@ -141,7 +141,7 @@ export function lint(configPath: string, packagePaths: string[]) {
   if (!config.lint) {
     throw new Error(`No 'lint' command defined in ${configPath}.`);
   }
-  run(config.lint, packagePaths, path => loadCISetup(config, path));
+  run(config.lint, packagePaths, path => setup(config, path));
 }
 
 export function test(
