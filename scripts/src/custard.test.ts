@@ -43,34 +43,20 @@ describe('loadConfig', () => {
       match: ['*'],
     });
   });
-
-  it('validation', () => {
-    const configPath = path.join('test', 'config', 'empty.json');
-    expect(() => custard.loadConfig(configPath)).to.throw(
-      "'package-file' is required",
-    );
-  });
 });
 
 describe('validateConfig', () => {
-  it('required fields', () => {
-    const config = {};
-    expect(custard.validateConfig(config)).to.deep.equal([
-      "'package-file' is required",
-    ]);
-  });
-
   it('undefined fields', () => {
     const config = {
       'package-file': 'pkg.txt',
       'undefined-field': 1,
-      lint: {'undefined-lint': 1},
-      test: {'undefined-test': 1},
+      commands: {
+        test: {undefined: 1},
+      },
     };
     expect(custard.validateConfig(config)).to.deep.equal([
       "'undefined-field' is not a valid field",
-      "'lint.undefined-lint' is not a valid field",
-      "'test.undefined-test' is not a valid field",
+      "'commands.test.undefined' is not a valid field",
     ]);
   });
 
@@ -82,8 +68,9 @@ describe('validateConfig', () => {
       'ci-setup-help-url': 1,
       match: 1,
       ignore: 1,
-      lint: {pre: 1, run: 1, post: 1},
-      test: {pre: 1, run: 1, post: 1},
+      commands: {
+        test: {pre: 1, run: 1, post: 1},
+      },
       'exclude-packages': 1,
     };
     expect(custard.validateConfig(config)).to.deep.equal([
@@ -94,13 +81,10 @@ describe('validateConfig', () => {
       "'ci-setup-help-url' must be string, got: 1",
       "'match' must be string or string[], got: 1",
       "'ignore' must be string or string[], got: 1",
-      "'lint.pre' must be string or string[], got: 1",
-      "'lint.run' must be string or string[], got: 1",
-      "'lint.post' must be string or string[], got: 1",
-      "'test.pre' must be string or string[], got: 1",
-      "'test.run' must be string or string[], got: 1",
-      "'test.post' must be string or string[], got: 1",
       "'exclude-packages' must be string or string[], got: 1",
+      "'commands.test.pre' must be string or string[], got: 1",
+      "'commands.test.run' must be string or string[], got: 1",
+      "'commands.test.post' must be string or string[], got: 1",
     ]);
   });
 });
@@ -383,85 +367,54 @@ describe('listSecrets', () => {
   });
 });
 
-describe('lint', () => {
-  it('undefined', () => {
-    const config = 'test/cmd/config-no-cmd.json';
-    const paths: string[] = [];
-    console.log(`\n--- lint.undefined ${config} ${paths}`);
-    expect(() => custard.lint(config, paths)).to.throw(
-      `No 'lint' command defined in ${config}`,
-    );
-  });
-
-  it('empty', () => {
-    const config = 'test/cmd/config.json';
-    const paths: string[] = [];
-    console.log(`\n--- lint.empty ${config} ${paths}`);
-    expect(() => custard.lint(config, paths)).to.not.throw();
-  });
-
-  it('one', () => {
-    const config = 'test/cmd/config.json';
-    const paths = ['test/cmd/pkg-pass'];
-    console.log(`\n--- lint.one ${config} ${paths}`);
-    expect(() => custard.lint(config, paths)).to.not.throw();
-  });
-
-  it('fail 1', () => {
-    const config = 'test/cmd/config.json';
-    const paths = ['test/cmd/pkg-fail', 'test/cmd/pkg-pass'];
-    console.log(`\n--- lint.two ${config} ${paths}`);
-    expect(() => custard.lint(config, paths)).to.throw();
-  });
-
-  it('fail 2', () => {
-    const config = 'test/cmd/config.json';
-    const paths = ['test/cmd/pkg-pass', 'test/cmd/pkg-fail'];
-    console.log(`\n--- lint.two ${config} ${paths}`);
-    expect(() => custard.lint(config, paths)).to.throw();
-  });
-});
-
-describe('test', () => {
-  it('undefined', () => {
+describe('run', () => {
+  it('undefined commands', () => {
     const config = 'test/cmd/config-no-cmd.json';
     const paths: string[] = [];
     const env = {};
-    console.log(`\n--- test.undefined ${config} ${paths} ${env}`);
-    expect(() => custard.test(config, paths, env)).to.throw(
-      `No 'test' command defined in ${config}`,
+    console.log(`\n--- run.undefined ${config} ${paths} ${env}`);
+    expect(() => custard.run(config, 'test', paths, env)).to.throw(
+      `No 'commands' defined in ${config}`,
     );
+  });
+
+  it('command not found', () => {
+    const config = 'test/cmd/config.json';
+    const paths: string[] = [];
+    const env = {};
+    console.log(`\n--- run.not-found ${config} ${paths} ${env}`);
+    expect(() => custard.run(config, 'test', paths, env)).to.not.throw();
   });
 
   it('empty', () => {
     const config = 'test/cmd/config.json';
     const paths: string[] = [];
     const env = {};
-    console.log(`\n--- test.empty ${config} ${paths} ${env}`);
-    expect(() => custard.test(config, paths, env)).to.not.throw();
+    console.log(`\n--- run.empty ${config} ${paths} ${env}`);
+    expect(() => custard.run(config, 'test', paths, env)).to.not.throw();
   });
 
   it('one', () => {
     const config = 'test/cmd/config.json';
     const paths = ['test/cmd/pkg-pass'];
     const env = {PROJECT_ID: 'project-id', ID_TOKEN: 'id-token'};
-    console.log(`\n--- test.one ${config} ${paths} ${env}`);
-    expect(() => custard.test(config, paths, env)).to.not.throw();
+    console.log(`\n--- run.one ${config} ${paths} ${env}`);
+    expect(() => custard.run(config, 'test', paths, env)).to.not.throw();
   });
 
   it('fail 1', () => {
     const config = 'test/cmd/config.json';
     const paths = ['test/cmd/pkg-fail', 'test/cmd/pkg-pass'];
     const env = {PROJECT_ID: 'project-id', ID_TOKEN: 'id-token'};
-    console.log(`\n--- test.two ${config} ${paths} ${env}`);
-    expect(() => custard.test(config, paths, env)).to.throw();
+    console.log(`\n--- run.two ${config} ${paths} ${env}`);
+    expect(() => custard.run(config, 'test', paths, env)).to.throw();
   });
 
   it('fail 2', () => {
     const config = 'test/cmd/config.json';
     const paths = ['test/cmd/pkg-pass', 'test/cmd/pkg-fail'];
     const env = {PROJECT_ID: 'project-id', ID_TOKEN: 'id-token'};
-    console.log(`\n--- test.two ${config} ${paths} ${env}`);
-    expect(() => custard.test(config, paths, env)).to.throw();
+    console.log(`\n--- run.two ${config} ${paths} ${env}`);
+    expect(() => custard.run(config, 'test', paths, env)).to.throw();
   });
 });

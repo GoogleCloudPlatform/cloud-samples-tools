@@ -1,13 +1,9 @@
 {
-  "package-file": "pkg.json",
-  "lint": {
-    "pre": "echo 'pre-lint'",
-    "run": "sh lint.sh",
-    "post": "echo 'post-lint'"
-  },
-  "test": {
-    "pre": "echo 'pre-test'",
-    "run": "sh test.sh",
-    "post": "echo 'post-test'"
+  "commands": {
+    "test": {
+      "pre": "echo 'pre-test'",
+      "run": "sh test.sh",
+      "post": "echo 'post-test'"
+    }
   }
 }
