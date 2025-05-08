@@ -72,10 +72,25 @@ export type Config = {
   'exclude-packages'?: string | string[];
 };
 
+/**
+ * @param flags command line flags
+ * @returns usage string
+ */
 function usage(flags: string): string {
   return `usage: node custard.ts ${flags}`;
 }
 
+/**
+ * Run a command defined in the config file.
+ *
+ * Defines the environment variables and secrets, runs the command,
+ * and then cleans up the environment to its previous state.
+ *
+ * @param configPath path to the config file
+ * @param command command to run
+ * @param paths paths to the packages
+ * @param env environment variables
+ */
 export function run(
   configPath: string,
   command: string,
@@ -152,6 +167,14 @@ export function run(
   }
 }
 
+/**
+ * Defines the environment variables and secrets.
+ *
+ * @param config config object
+ * @param packagetPath path to the package
+ * @param env environment variables
+ * @returns environment variables that were defined
+ */
 export function setup(
   config: Config,
   packagetPath: string,
@@ -178,6 +201,14 @@ export function setup(
   return [...Object.keys(env)].filter(x => !definedBefore.has(x));
 }
 
+/**
+ * List environment variables based on the config file and ci-setup file.
+ *
+ * @param env environment variables
+ * @param ciSetup ci-setup variables
+ * @param defaults variables default values from the config file
+ * @returns generator of the environment variables
+ */
 export function* listEnv(
   env: NodeJS.ProcessEnv = {},
   ciSetup: {[k: string]: string} = {},
@@ -198,6 +229,14 @@ export function* listEnv(
   }
 }
 
+/**
+ * List secret variables based on the config file and ci-setup file.
+ *
+ * @param env environment variables
+ * @param ciSetup ci-setup secrets
+ * @param defaults secrets default values from the config file
+ * @returns generator of the secrets
+ */
 export function* listSecrets(
   env: NodeJS.ProcessEnv = {},
   ciSetup: {[k: string]: string} = {},
@@ -218,6 +257,16 @@ export function* listSecrets(
   }
 }
 
+/**
+ * List variables based on the config file and ci-setup file.
+ *
+ * @param env environment variables
+ * @param ciSetup ci-setup variables
+ * @param defaults variables default values from the config file
+ * @param automatic automatic variables
+ * @param transform optional function to apply to the variable values
+ * @returns generator of the variables
+ */
 export function* listVars(
   env: NodeJS.ProcessEnv = {},
   ciSetup: {[k: string]: string} = {},
@@ -249,6 +298,12 @@ export function* listVars(
   }
 }
 
+/**
+ * Loads and validates a config file.
+ *
+ * @param filePath path to the config file
+ * @returns config object
+ */
 export function loadConfig(filePath: string): Config {
   const config: Config = loadJsonc(filePath);
 
@@ -269,6 +324,13 @@ export function loadConfig(filePath: string): Config {
   return config;
 }
 
+/**
+ * Loads and validates a CI setup file.
+ *
+ * @param config config object
+ * @param packagePath path to the package
+ * @returns ci-setup object
+ */
 export function loadCISetup(config: Config, packagePath: string): CISetup {
   const defaultNames = ['ci-setup.jsonc', 'ci-setup.json'];
   const filenames = asArray(config['ci-setup-filename']) || defaultNames;
@@ -295,6 +357,12 @@ export function loadCISetup(config: Config, packagePath: string): CISetup {
   return {};
 }
 
+/**
+ * Loads a JSON with Comments (JSONC) file.
+ *
+ * @param filePath path to the JSONC file
+ * @returns JSON object
+ */
 export function loadJsonc(filePath: string) {
   const jsoncData = fs.readFileSync(filePath, 'utf8');
   const jsonData = jsoncData
@@ -303,7 +371,14 @@ export function loadJsonc(filePath: string) {
   return JSON.parse(jsonData);
 }
 
-export function substitute(subs: {[k: string]: string}, value: string) {
+/**
+ * Applies variable interpolation to the given variables.
+ *
+ * @param subs variable substitutions
+ * @param value original value
+ * @returns value after substitutions
+ */
+export function substitute(subs: {[k: string]: string}, value: string): string {
   for (const key in subs) {
     const re = new RegExp(`\\$(${key}\\b|\\{\\s*${key}\\s*\\})`, 'g');
     // JavaScript doesn't allow lazy substitutions, so we check if
@@ -321,6 +396,12 @@ export function substitute(subs: {[k: string]: string}, value: string) {
   return value;
 }
 
+/**
+ * Generates a random alphanumeric ID.
+ *
+ * @param length length of the ID
+ * @returns random alhpanumeric string
+ */
 export function uniqueId(length = 6) {
   const min = 2 ** 32;
   const max = 2 ** 64;
@@ -329,11 +410,22 @@ export function uniqueId(length = 6) {
     .slice(0, length);
 }
 
+/**
+ * Gets the default project ID from gcloud.
+ *
+ * @returns default project ID
+ */
 function defaultProject(): string {
   const cmd = 'gcloud config get-value project';
   return execSync(cmd).toString().trim();
 }
 
+/**
+ * Accesses a secret from Secret Manager.
+ *
+ * @param secretPath secret in the format project-id/secret-id
+ * @returns secret value
+ */
 function accessSecret(secretPath: string): string {
   const [projectId, ...secretIdParts] = secretPath.split('/');
   const secretId = secretIdParts.join('/');
@@ -341,6 +433,12 @@ function accessSecret(secretPath: string): string {
   return execSync(cmd).toString();
 }
 
+/**
+ * Gets the identity token from gcloud.
+ *
+ * @param projectId Google Cloud project ID
+ * @returns identity token
+ */
 function getIdToken(projectId?: string): string {
   if (projectId) {
     const cmd = `gcloud --project=${projectId} auth print-identity-token`;
@@ -349,17 +447,32 @@ function getIdToken(projectId?: string): string {
   return '';
 }
 
+/**
+ * Normalizes (string | string[]) into string[]
+ *
+ * @param x string or string[] or undefined
+ * @returns string[] or undefined
+ */
 function asArray(x: string | string[] | undefined): string[] | undefined {
+  // If undefined, return undefined.
   if (!x) {
     return undefined;
   }
+  // If it's a single string, return a single-element array.
   return Array.isArray(x) ? x : [x];
 }
 
-/* eslint-disable  @typescript-eslint/no-explicit-any */
 // For validation, the data comes from JSON files, so they can be anything.
 // There are no type guarantees, so many of these functions take
 // parameters of type `any` and validate the type at runtime.
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+/**
+ * Validates the config file.
+ *
+ * @param config config object
+ * @returns a list of validation errors
+ */
 export function validateConfig(config: any): string[] {
   // Undefined fields.
   let errors = [];
@@ -410,6 +523,13 @@ export function validateConfig(config: any): string[] {
   return errors;
 }
 
+/**
+ * Validates the CI setup file.
+ *
+ * @param config config object
+ * @param ciSetup ci-setup object
+ * @returns a list of validation errors
+ */
 export function validateCISetup(config: Config, ciSetup: any): string[] {
   // Undefined fields.
   let errors = [];
@@ -452,6 +572,15 @@ export function validateCISetup(config: Config, ciSetup: any): string[] {
   return errors;
 }
 
+/**
+ * Generic helper to check the type of a field.
+ *
+ * @param kvs object with fields
+ * @param key field to check
+ * @param isType type checker function
+ * @param err error message
+ * @returns a list of validation errors
+ */
 function check(
   kvs: any,
   key: string,
@@ -467,38 +596,84 @@ function check(
   return [];
 }
 
+/**
+ * Checks the type of a string field.
+ *
+ * @param kvs object with fields
+ * @param key field to check
+ * @returns a list of validation errors
+ */
 function checkString(kvs: any, key: string): string[] {
   return check(kvs, key, isString, 'string');
 }
 
+/**
+ * Checks the type of a string or string[] field.
+ *
+ * @param kvs object with fields
+ * @param key field to check
+ * @returns a list of validation errors
+ */
 function checkStringOrStrings(kvs: any, key: string): string[] {
   return check(kvs, key, isStringOrStrings, 'string or string[]');
 }
 
+/**
+ * Checks the type of a {string: string} mapping field.
+ *
+ * @param kvs object with fields
+ * @param key field to check
+ * @returns a list of validation errors
+ */
 function checkMappings(kvs: any, key: string): string[] {
   return check(kvs, key, isMapStringString, '{string: string} mappings');
 }
 
+/**
+ * Checks if a value is a string.
+ *
+ * @param x value to check
+ * @returns true if the value is a string
+ */
 function isString(x: any): boolean {
   return typeof x === 'string';
 }
 
-function isArray(xs: any, isElem: (x: any) => boolean): boolean {
+/**
+ * Checks if a value is an array of a certain type.
+ *
+ * @param xs array to check
+ * @param isType type checker function
+ * @returns true if the value is an array of the given type
+ */
+function isArray(xs: any, isType: (x: any) => boolean): boolean {
   if (!Array.isArray(xs)) {
     return false;
   }
   for (const x of xs) {
-    if (!isElem(x)) {
+    if (!isType(x)) {
       return false;
     }
   }
   return true;
 }
 
+/**
+ * Checks if a value is a string or an array of strings.
+ *
+ * @param x value to check
+ * @returns true if the value is a string or an array of strings
+ */
 function isStringOrStrings(x: any): boolean {
   return isString(x) || isArray(x, isString);
 }
 
+/**
+ * Checks if a value is a {string: string} mapping.
+ *
+ * @param kvs value to check
+ * @returns true if the value is a {string: string} mapping
+ */
 function isMapStringString(kvs: any): boolean {
   if (typeof kvs !== 'object') {
     return false;
@@ -512,6 +687,11 @@ function isMapStringString(kvs: any): boolean {
 }
 /* eslint-enable  @typescript-eslint/no-explicit-any */
 
+/**
+ * Main function to run the script.
+ *
+ * @param argv command line arguments
+ */
 function main(argv: string[]) {
   const mainUsage = usage('[run | version] [options]');
   switch (argv[2]) {
