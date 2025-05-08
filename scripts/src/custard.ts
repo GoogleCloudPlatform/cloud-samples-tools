@@ -18,7 +18,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {execSync} from 'node:child_process';
 
-const version = '0.2.5'; // x-release-please-version
+const version = 'v0.3.2'; // x-release-please-version
 
 export type CISetup = {
   // Environment variables to export.
