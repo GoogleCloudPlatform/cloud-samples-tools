@@ -1,0 +1,5 @@
+{
+  // This one supports comments.
+  "env": { "A": "a", "B": "b" },
+  "secrets": { "C": "c" }
+}

@@ -1,0 +1,10 @@
+/*
+ * Multi-line
+ * comment
+ */
+{
+  // Single line comment.
+  "x": 1, // trailing comment
+  "y": /* inline comment */ 2,
+  "url": "https://example.com"
+}
