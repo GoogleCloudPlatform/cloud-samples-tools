@@ -123,6 +123,8 @@ export function run(
         console.error(`${e}`);
         failures.push(path);
       } finally {
+        // Clean up the environment variables that were defined.
+        // This keeps the environment clean for subsequent runs.
         for (const envVar of defined) {
           delete env[envVar];
         }
