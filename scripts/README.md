@@ -78,6 +78,8 @@ Create an alias for this script, you can add this to your `.zshrc` or `.bashrc`.
 alias custard="curl -sSL https://raw.githubusercontent.com/GoogleCloudPlatform/cloud-samples-tools/refs/heads/main/scripts/src/custard.ts | node - $@"
 ```
 
+Here's how to run a command:
+
 ```sh
 custard run <config-file> <command> [args...]
 ```
