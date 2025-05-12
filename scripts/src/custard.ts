@@ -190,6 +190,10 @@ export function setup(
   for (const [key, value] of vars) {
     env[key] = value;
   }
+
+  // Export aliases required by tests.
+  env.GOOGLE_SAMPLES_PROJECT = env.PROJECT_ID;
+
   const secrets = listSecrets(
     env,
     ciSetup.secrets || {},
