@@ -19,12 +19,11 @@ on:
     branches:
       - main
     paths:
-      - .github/workflows/test-tooling.yaml
+      - .github/workflows/tooling.yaml
       - custard/**
   pull_request:
     paths:
-      - .github/**
-      - actions/**
+      - .github/workflows/tooling.yaml
       - custard/**
   workflow_run:
     workflows:

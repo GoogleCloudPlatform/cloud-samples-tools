@@ -1,0 +1,9 @@
+{
+  "commands": {
+    "test": {
+      "pre": "echo 'pre-test'",
+      "run": "sh test.sh",
+      "post": "echo 'post-test'"
+    }
+  }
+}
