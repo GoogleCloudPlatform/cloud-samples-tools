@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/GoogleCloudPlatform/cloud-samples-tools/compare/v0.3.2...v0.4.0) (2025-05-15)
+
+
+### Features
+
+* refactor into self-contained runner ([#49](https://github.com/GoogleCloudPlatform/cloud-samples-tools/issues/49)) ([6d250c5](https://github.com/GoogleCloudPlatform/cloud-samples-tools/commit/6d250c5fecf02c1bce612c2d4881b556e05ece3e))
+
 ## [0.3.2](https://github.com/GoogleCloudPlatform/cloud-samples-tools/compare/v0.3.1...v0.3.2) (2025-05-06)
 
 

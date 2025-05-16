@@ -50,13 +50,13 @@ runs:
   using: composite
   steps:
     - name: Get job
-      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/get-job@v0.3.2
+      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/get-job@v0.4.0
       if: inputs.if
       id: job
       with:
         job-name: ${{ inputs.job-name }}
     - name: Create check ${{ inputs.check-status }}
-      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@v0.3.2
+      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@v0.4.0
       id: check
       with:
         sha: ${{ inputs.sha }}
