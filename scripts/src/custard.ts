@@ -65,19 +65,37 @@ export type Config = {
   // Pattern to ignore filenames or directories.
   ignore?: string | string[];
 
-  // Commands like `custard run <command> [args]...`
+  // Commands like `custard run <config-file> <command> [args]...`
   commands?: {[k: string]: Command};
 
   // Packages to always exclude.
   'exclude-packages'?: string | string[];
 };
 
-/**
- * @param flags command line flags
- * @returns usage string
- */
-function usage(flags: string): string {
-  return `usage: node custard.ts ${flags}`;
+switch (process.env.CUSTARD_VERBOSE || 'info') {
+  case 'debug':
+    break;
+  case 'info':
+    console.debug = () => {};
+    break;
+  case 'warn':
+    console.debug = () => {};
+    console.info = () => {};
+    console.log = () => {};
+    break;
+  case 'error':
+    console.debug = () => {};
+    console.info = () => {};
+    console.log = () => {};
+    console.warn = () => {};
+    break;
+  default:
+    console.error(
+      'Unknown CUSTARD_VERBOSE value:',
+      process.env.CUSTARD_VERBOSE,
+    );
+    console.error('If set, it must be one of: error, info, warn, debug');
+    process.exit(1);
 }
 
 /**
@@ -86,27 +104,19 @@ function usage(flags: string): string {
  * Defines the environment variables and secrets, runs the command,
  * and then cleans up the environment to its previous state.
  *
- * @param configPath path to the config file
+ * @param config config object
  * @param command command to run
  * @param paths paths to the packages
  * @param env environment variables
  */
 export function run(
-  configPath: string,
-  command: string,
+  config: Config,
+  command: Command,
   paths: string[],
   env = process.env,
 ) {
-  const config = loadConfig(configPath);
-  if (!config.commands) {
-    throw new Error(`No 'commands' defined in ${configPath}.`);
-  }
-  const cmd = config.commands[command];
-  if (!cmd) {
-    throw new Error(`No command '${command}' defined in ${configPath}.`);
-  }
-  if (cmd.pre) {
-    const steps = asArray(cmd.pre) || [];
+  if (command.pre) {
+    const steps = asArray(command.pre) || [];
     for (const step of steps) {
       console.log(`\n➜ [root]$ ${step}`);
       const start = Date.now();
@@ -116,16 +126,16 @@ export function run(
     }
   }
   const failures = [];
-  if (cmd.run) {
+  if (command.run) {
     for (const path of paths) {
-      console.log(`\n➜ ${path}$ ci-setup`);
+      console.log(`\n➜ Configuring ci-setup`);
       const start = Date.now();
       const defined = setup(config, path, env);
       const end = Date.now();
       console.log(`Done in ${Math.round((end - start) / 1000)}s`);
       try {
         // For each path, stop on the first command failure.
-        const steps = asArray(cmd.run) || [];
+        const steps = asArray(command.run) || [];
         for (const step of steps) {
           console.log(`\n➜ ${path}$ ${step}`);
           const start = Date.now();
@@ -146,8 +156,8 @@ export function run(
       }
     }
   }
-  if (cmd.post) {
-    const steps = asArray(cmd.post) || [];
+  if (command.post) {
+    const steps = asArray(command.post) || [];
     for (const step of steps) {
       console.log(`\n➜ [root]$ ${step}`);
       const start = Date.now();
@@ -182,8 +192,8 @@ export function setup(
 ): string[] {
   const defaults = config['ci-setup-defaults'] || {};
   const ciSetup = loadCISetup(config, packagetPath);
-  console.log(`ci-setup defaults: ${JSON.stringify(defaults, null, 2)}`);
-  console.log(`ci-setup.json: ${JSON.stringify(ciSetup, null, 2)}`);
+  console.debug(`ci-setup defaults: ${JSON.stringify(defaults, null, 2)}`);
+  console.debug(`ci-setup.json: ${JSON.stringify(ciSetup, null, 2)}`);
 
   const definedBefore = new Set(Object.keys(env));
   const vars = listEnv(env, ciSetup.env || {}, defaults.env || {});
@@ -223,7 +233,7 @@ export function* listEnv(
     RUN_ID: () => uniqueId(),
     SERVICE_ACCOUNT: () => '',
   };
-  console.log('export env:');
+  console.log('Environment variables:');
   const vars = [...listVars(env, ciSetup, defaults, automatic)];
   const subs = Object.fromEntries(vars.map(([key, {value}]) => [key, value]));
   for (const [key, {value, source}] of vars) {
@@ -252,7 +262,7 @@ export function* listSecrets(
     // usage: curl -H 'Bearer: $ID_TOKEN' https://
     ID_TOKEN: () => getIdToken(env.PROJECT_ID),
   };
-  console.log('export secrets:');
+  console.log('Secrets:');
   const vars = listVars(env, ciSetup, defaults, automatic, accessSecret);
   for (const [key, {value: value, source}] of vars) {
     // ⚠️ DO NOT print the secret value.
@@ -341,7 +351,6 @@ export function loadCISetup(config: Config, packagePath: string): CISetup {
   for (const filename of filenames) {
     const ciSetupPath = path.join(packagePath, filename);
     if (fs.existsSync(ciSetupPath)) {
-      console.log(`Loading CI setup: ${ciSetupPath}`);
       const ciSetup: CISetup = loadJsonc(ciSetupPath);
       const errors = validateCISetup(config, ciSetup);
       if (errors.length > 0) {
@@ -357,7 +366,7 @@ export function loadCISetup(config: Config, packagePath: string): CISetup {
       return ciSetup;
     }
   }
-  console.log(`No CI setup found for '${packagePath}'`);
+  console.debug(`No CI setup found for '${packagePath}'`);
   return {};
 }
 
@@ -697,18 +706,40 @@ function isMapStringString(kvs: any): boolean {
  * @param argv command line arguments
  */
 function main(argv: string[]) {
-  const mainUsage = usage('[run | version] [options]');
-  switch (argv[2]) {
+  const usageRunFlags = 'run <config-path> <command> [package-path...]';
+  const usageRun = `usage: custard ${usageRunFlags}`;
+  const usageMain = `usage: custard [ ${usageRunFlags} | version ]`;
+
+  const action = argv[2];
+  switch (action) {
     case 'run': {
-      const usageRun = usage('run <config-path> <command> [package-path...]');
       const configPath = argv[3];
       if (!configPath) {
         console.error('Please provide the config file path.');
         throw new Error(usageRun);
       }
-      const command = argv[4];
-      if (!command) {
+      const config = loadConfig(configPath);
+      if (!config.commands) {
+        console.error(`No "commands" found in ${configPath}`);
+        throw new Error(usageRun);
+      }
+      const commands = Object.keys(config.commands || {});
+      const commandName = argv[4];
+      if (!commandName) {
         console.error('Please provide the command to run.');
+        console.error(`Found ${commands.length} command(s) in ${configPath}:`);
+        for (const cmd of commands) {
+          console.error(` - ${cmd}`);
+        }
+        throw new Error(usageRun);
+      }
+      const command = config.commands[commandName];
+      if (!command) {
+        console.error(`Command "${commandName}" not found in ${configPath}`);
+        console.error(`Found ${commands.length} command(s) in ${configPath}:`);
+        for (const cmd of commands) {
+          console.error(` - ${cmd}`);
+        }
         throw new Error(usageRun);
       }
       const paths = argv.slice(5);
@@ -716,7 +747,7 @@ function main(argv: string[]) {
         console.error('Please provide one or more package paths.');
         throw new Error(usageRun);
       }
-      run(configPath, command, paths);
+      run(config, command, paths);
       break;
     }
 
@@ -727,7 +758,7 @@ function main(argv: string[]) {
 
     case undefined: {
       // If no command was passed, just show the usage without an error.
-      console.log(mainUsage);
+      console.error(usageMain);
       break;
     }
 
@@ -735,10 +766,21 @@ function main(argv: string[]) {
       // Only throw an error if running the script directly.
       // Otherwise, this file is being imported (for example, on tests).
       if (argv[1] && argv[1].match(/custard\.(ts|js)$|^-$/)) {
-        throw new Error(mainUsage);
+        console.error(`Unknown action: ${action}`);
+        console.error('Action must be "run" or "version".');
+        throw new Error(usageMain);
       }
     }
   }
 }
 
-main(process.argv);
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable n/no-process-exit */
+try {
+  main(process.argv);
+} catch (e: any) {
+  console.error(e.message);
+  process.exit(1);
+}
+/* eslint-enable n/no-process-exit */
+/* eslint-enable @typescript-eslint/no-explicit-any */
