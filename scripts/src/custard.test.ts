@@ -17,6 +17,7 @@
 import * as path from 'node:path';
 import {expect} from 'chai';
 import * as custard from './custard.ts';
+import assert from 'node:assert';
 
 describe('loadJsonc', () => {
   it('file does not exist', () => {
@@ -370,7 +371,8 @@ describe('listSecrets', () => {
 describe('run', () => {
   it('command not found', () => {
     const config = custard.loadConfig('test/cmd/config.json');
-    const command = config.commands?.test!;
+    const command = config.commands?.test;
+    assert(command);
     const paths: string[] = [];
     const env = {};
     console.log(`\n--- run.not-found ${config} ${paths} ${env}`);
@@ -379,7 +381,8 @@ describe('run', () => {
 
   it('empty', () => {
     const config = custard.loadConfig('test/cmd/config.json');
-    const command = config.commands?.test!;
+    const command = config.commands?.test;
+    assert(command);
     const paths: string[] = [];
     const env = {};
     console.log(`\n--- run.empty ${config} ${paths} ${env}`);
@@ -388,7 +391,8 @@ describe('run', () => {
 
   it('one', () => {
     const config = custard.loadConfig('test/cmd/config.json');
-    const command = config.commands?.test!;
+    const command = config.commands?.test;
+    assert(command);
     const paths = ['test/cmd/pkg-pass'];
     const env = {PROJECT_ID: 'project-id', ID_TOKEN: 'id-token'};
     console.log(`\n--- run.one ${config} ${paths} ${env}`);
@@ -397,7 +401,8 @@ describe('run', () => {
 
   it('fail 1', () => {
     const config = custard.loadConfig('test/cmd/config.json');
-    const command = config.commands?.test!;
+    const command = config.commands?.test;
+    assert(command);
     const paths = ['test/cmd/pkg-fail', 'test/cmd/pkg-pass'];
     const env = {PROJECT_ID: 'project-id', ID_TOKEN: 'id-token'};
     console.log(`\n--- run.two ${config} ${paths} ${env}`);
@@ -406,7 +411,8 @@ describe('run', () => {
 
   it('fail 2', () => {
     const config = custard.loadConfig('test/cmd/config.json');
-    const command = config.commands?.test!;
+    const command = config.commands?.test;
+    assert(command);
     const paths = ['test/cmd/pkg-pass', 'test/cmd/pkg-fail'];
     const env = {PROJECT_ID: 'project-id', ID_TOKEN: 'id-token'};
     console.log(`\n--- run.two ${config} ${paths} ${env}`);
