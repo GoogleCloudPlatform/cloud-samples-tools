@@ -118,30 +118,30 @@ export function run(
   if (command.pre) {
     const steps = asArray(command.pre) || [];
     for (const step of steps) {
-      console.log(`\n➜ [root]$ ${step}`);
+      console.warn(`\n➜ [root]$ ${step}`);
       const start = Date.now();
       execSync(step, {stdio: 'inherit'});
       const end = Date.now();
-      console.log(`Done in ${Math.round((end - start) / 1000)}s`);
+      console.info(`Done in ${Math.round((end - start) / 1000)}s`);
     }
   }
   const failures = [];
   if (command.run) {
     for (const path of paths) {
-      console.log(`\n➜ Configuring ci-setup`);
+      console.warn(`\n➜ Configuring ci-setup`);
       const start = Date.now();
       const defined = setup(config, path, env);
       const end = Date.now();
-      console.log(`Done in ${Math.round((end - start) / 1000)}s`);
+      console.info(`Done in ${Math.round((end - start) / 1000)}s`);
       try {
         // For each path, stop on the first command failure.
         const steps = asArray(command.run) || [];
         for (const step of steps) {
-          console.log(`\n➜ ${path}$ ${step}`);
+          console.warn(`\n➜ ${path}$ ${step}`);
           const start = Date.now();
           execSync(step, {stdio: 'inherit', cwd: path});
           const end = Date.now();
-          console.log(`Done in ${Math.round((end - start) / 1000)}s`);
+          console.info(`Done in ${Math.round((end - start) / 1000)}s`);
         }
       } catch (e) {
         // Run all paths always, catch the exception and report errors.
@@ -159,18 +159,18 @@ export function run(
   if (command.post) {
     const steps = asArray(command.post) || [];
     for (const step of steps) {
-      console.log(`\n➜ [root]$ ${step}`);
+      console.warn(`\n➜ [root]$ ${step}`);
       const start = Date.now();
       execSync(step, {stdio: 'inherit'});
       const end = Date.now();
-      console.log(`Done in ${Math.round((end - start) / 1000)}s`);
+      console.info(`Done in ${Math.round((end - start) / 1000)}s`);
     }
   }
 
   if (paths.length > 1) {
-    console.log(`\n=== Summary (${paths.length} packages) ===`);
-    console.log(`  Passed: ${paths.length - failures.length}`);
-    console.log(`  Failed: ${failures.length}`);
+    console.info(`\n=== Summary (${paths.length} packages) ===`);
+    console.info(`  Passed: ${paths.length - failures.length}`);
+    console.info(`  Failed: ${failures.length}`);
   }
   if (failures.length > 0) {
     throw new Error(`Failed:\n${failures.map(path => `- ${path}`).join('\n')}`);
@@ -233,12 +233,12 @@ export function* listEnv(
     RUN_ID: () => uniqueId(),
     SERVICE_ACCOUNT: () => '',
   };
-  console.log('Environment variables:');
+  console.info('Environment variables:');
   const vars = [...listVars(env, ciSetup, defaults, automatic)];
   const subs = Object.fromEntries(vars.map(([key, {value}]) => [key, value]));
   for (const [key, {value, source}] of vars) {
     const result = substitute(subs, value);
-    console.log(`  ${key}: ${JSON.stringify(result)} (${source})`);
+    console.info(`  ${key}: ${JSON.stringify(result)} (${source})`);
     yield [key, result];
   }
 }
@@ -262,11 +262,11 @@ export function* listSecrets(
     // usage: curl -H 'Bearer: $ID_TOKEN' https://
     ID_TOKEN: () => getIdToken(env.PROJECT_ID),
   };
-  console.log('Secrets:');
+  console.info('Secrets:');
   const vars = listVars(env, ciSetup, defaults, automatic, accessSecret);
   for (const [key, {value: value, source}] of vars) {
     // ⚠️ DO NOT print the secret value.
-    console.log(`  ${key}: "***" (${source})`);
+    console.info(`  ${key}: "***" (${source})`);
     yield [key, value];
   }
 }
