@@ -94,7 +94,7 @@ switch (process.env.CUSTARD_VERBOSE || 'info') {
       'Unknown CUSTARD_VERBOSE value:',
       process.env.CUSTARD_VERBOSE,
     );
-    console.error('If set, it must be one of: error, info, warn, debug');
+    console.error('If set, it must be one of: debug, info, warn, error');
     /* eslint-disable n/no-process-exit */
     process.exit(1);
   /* eslint-enable n/no-process-exit */
