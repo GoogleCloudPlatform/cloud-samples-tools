@@ -95,7 +95,9 @@ switch (process.env.CUSTARD_VERBOSE || 'info') {
       process.env.CUSTARD_VERBOSE,
     );
     console.error('If set, it must be one of: error, info, warn, debug');
+    /* eslint-disable n/no-process-exit */
     process.exit(1);
+  /* eslint-enable n/no-process-exit */
 }
 
 /**
@@ -128,7 +130,7 @@ export function run(
   const failures = [];
   if (command.run) {
     for (const path of paths) {
-      console.warn(`\n➜ Configuring ci-setup`);
+      console.warn('\n➜ Configuring ci-setup');
       const start = Date.now();
       const defined = setup(config, path, env);
       const end = Date.now();
