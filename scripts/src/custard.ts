@@ -758,7 +758,7 @@ function main(argv: string[]) {
 
     case undefined: {
       // If no command was passed, just show the usage without an error.
-      console.error(usageMain);
+      console.log(usageMain);
       break;
     }
 
