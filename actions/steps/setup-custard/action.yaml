@@ -13,99 +13,35 @@
 # limitations under the License.
 
 name: Setup Custard
-description: Sets up the Custard testing environment.
+description: Install the Custard runner.
 
 inputs:
-  path:
-    description: Path of the package to run.
-    required: true
-  ci-setup:
-    description: The CI setup for the package path.
-    required: true
-  id-token:
-    description: The ID token to export variable, not exported if not provided.
-    required: false
+  install-path:
+    description: Path to install the Custard script to.
+    default: custard.ts
+  version:
+    description: Custard version to install.
+    default: v0.4.0 # x-release-please-version
+  temp-dir:
+    description: Temporary directory to download files.
+    default: custard-temp/
 
 runs:
-  # TODO: This should all be handled by the local runner.
-  #       When that's ready, we can call it directly and get rid of this.
   using: composite
   steps:
-    - name: Export environment variables
-      uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
-      id: vars
+    - name: Get custard runner
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       with:
-        script: |
-          function uniqueId(length = 6) {
-            const min = 2 ** 32;
-            const max = 2 ** 64;
-            return Math.floor(Math.random() * max + min)
-              .toString(36)
-              .slice(0, length);
-          }
-          function substituteVars(value, env) {
-            for (const key in env) {
-              const re = new RegExp(`\\$(${key}\\b|\\{\\s*${key}\\s*\\})`, 'g');
-              value = value.replaceAll(re, env[key]);
-            }
-            return value;
-          }
-
-          const setup = ${{ inputs.ci-setup }};
-
-          // Define automatic variables plus custom variables.
-          const vars = {
-            PROJECT_ID: '${{ inputs.project-id }}',
-            RUN_ID: uniqueId(),
-            SERVICE_ACCOUNT: '${{ inputs.service-account }}',
-            ...(setup.env || {}),
-          };
-
-          // Apply variable interpolation.
-          const env = Object.fromEntries(
-            Object.keys(vars).map(key => [key, substituteVars(vars[key], vars)])
-          );
-
-          // Export environment variables.
-          console.log('env:');
-          for (const key in env) {
-            const value = env[key];
-            console.log(`  ${key}: ${value}`);
-            core.exportVariable(key, value);
-          }
-
-          // Show exported secrets, for logging purposes.
-          // TODO: We might want to fetch the secrets here and export them directly.
-          //       https://cloud.google.com/secret-manager/docs/create-secret-quickstart#secretmanager-quickstart-nodejs
-          console.log('secrets:');
-          for (const key in setup.secrets || {}) {
-            // This is the Google Cloud Secret Manager secret ID.
-            // NOT the secret value, so it's ok to show.
-            console.log(`  ${key}: ${setup.secrets[key]}`);
-          }
-
-          // Set global secret for the Service Account identity token
-          // Use in place of 'gcloud auth print-identity-token' or auth.getIdTokenClient
-          // usage: curl -H 'Bearer: $ID_TOKEN' https://
-          const idToken = '${{ inputs.id-token }}';
-          if (idToken) {
-            core.exportVariable('ID_TOKEN', idToken)
-            core.setSecret(idToken)
-            // For logging, show the source of the ID_TOKEN
-            console.log(`  ID_TOKEN: steps.auth.outputs.id_token (from GitHub Action)`);
-          }
-
-          // Return env and secrets to use for further steps.
-          return {
-            env: env,
-            // Transform secrets into the format needed for the GHA secret manager step.
-            secrets: Object.keys(setup.secrets || {})
-              .map(key => `${key}:${setup.secrets[key]}`)
-              .join('\n'),
-          };
-    - name: Fetch secrets
-      uses: google-github-actions/get-secretmanager-secrets@e5bb06c2ca53b244f978d33348d18317a7f263ce # v2
-      if: ${{ fromJson(steps.vars.outputs.result).secrets }}
-      with:
-        secrets: ${{ fromJson(steps.vars.outputs.result).secrets }}
-        export_to_environment: true
+        repository: GoogleCloudPlatform/cloud-samples-tools
+        ref: ${{ inputs.version }}
+        path: ${{ inputs.temp-dir }}
+        sparse-checkout: |
+          scripts/src/custard.ts
+        sparse-checkout-cone-mode: false
+    - name: Install custard runner
+      shell: bash
+      run: |
+        mv ${{ inputs.temp-dir }}/scripts/src/custard.ts ${{ inputs.install-path }}
+        rm -rf ${{ inputs.temp-dir }}
+    - run: node custard.ts version
+      shell: bash
