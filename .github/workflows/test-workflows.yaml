@@ -107,7 +107,7 @@ jobs:
       - name: Setup Custard
         uses: ./actions/steps/setup-custard
       - name: Run Custard
-        run: node custard run .github/test/config.jsonc test ${{ matrix.path }}
+        run: node custard.ts run .github/test/config.jsonc test ${{ matrix.path }}
       - name: Check success
         uses: ./actions/steps/update-check
         with:
