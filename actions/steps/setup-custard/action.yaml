@@ -62,7 +62,6 @@ runs:
               'X-GitHub-Api-Version': '2022-11-28',
             },
           });
-          console.log(contents);
           fs.writeFileSync(installPath, contents.data);
     - run: node ${{ inputs.install-path }} version
       shell: bash
