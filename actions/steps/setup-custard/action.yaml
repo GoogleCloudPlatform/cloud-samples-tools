@@ -41,7 +41,7 @@ runs:
     - name: Install custard runner
       shell: bash
       run: |
-        ls -lh ${{ inputs.temp-dir }}
+        ls -lhR ${{ inputs.temp-dir }}
         mv ${{ inputs.temp-dir }}/scripts/src/custard.ts ${{ inputs.install-path }}
         rm -rf ${{ inputs.temp-dir }}
         ls -lh
