@@ -29,13 +29,14 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Make install directory
+      shell: bash
+      run: mkdir -p $( dirname ${{ inputs.temp-dir }} )
     - name: Install Custard
       uses: actions/github-script@v7
       with:
         script: |
           const fs = require('node:fs');
-
-          const installPath = "${{ inputs.install-path }}";
           const contents = await github.request('GET /repos/{owner}/{repo}/contents/{path}', {
             owner: 'GoogleCloudPlatform',
             repo: 'cloud-samples-tools',
@@ -46,6 +47,6 @@ runs:
               'X-GitHub-Api-Version': '2022-11-28',
             },
           });
-          fs.writeFileSync(installPath, contents.data);
+          fs.writeFileSync("${{ inputs.install-path }}", contents.data);
     - run: node ${{ inputs.install-path }} version
       shell: bash
