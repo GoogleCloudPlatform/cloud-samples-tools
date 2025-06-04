@@ -17,6 +17,7 @@
 import * as path from 'node:path';
 import {expect} from 'chai';
 import * as custard from './custard.ts';
+import assert from 'node:assert';
 
 describe('loadJsonc', () => {
   it('file does not exist', () => {
@@ -368,53 +369,53 @@ describe('listSecrets', () => {
 });
 
 describe('run', () => {
-  it('undefined commands', () => {
-    const config = 'test/cmd/config-no-cmd.json';
-    const paths: string[] = [];
-    const env = {};
-    console.log(`\n--- run.undefined ${config} ${paths} ${env}`);
-    expect(() => custard.run(config, 'test', paths, env)).to.throw(
-      `No 'commands' defined in ${config}`,
-    );
-  });
-
   it('command not found', () => {
-    const config = 'test/cmd/config.json';
+    const config = custard.loadConfig('test/cmd/config.json');
+    const command = config.commands?.test;
+    assert(command);
     const paths: string[] = [];
     const env = {};
     console.log(`\n--- run.not-found ${config} ${paths} ${env}`);
-    expect(() => custard.run(config, 'test', paths, env)).to.not.throw();
+    expect(() => custard.run(config, command, paths, env)).to.not.throw();
   });
 
   it('empty', () => {
-    const config = 'test/cmd/config.json';
+    const config = custard.loadConfig('test/cmd/config.json');
+    const command = config.commands?.test;
+    assert(command);
     const paths: string[] = [];
     const env = {};
     console.log(`\n--- run.empty ${config} ${paths} ${env}`);
-    expect(() => custard.run(config, 'test', paths, env)).to.not.throw();
+    expect(() => custard.run(config, command, paths, env)).to.not.throw();
   });
 
   it('one', () => {
-    const config = 'test/cmd/config.json';
+    const config = custard.loadConfig('test/cmd/config.json');
+    const command = config.commands?.test;
+    assert(command);
     const paths = ['test/cmd/pkg-pass'];
     const env = {PROJECT_ID: 'project-id', ID_TOKEN: 'id-token'};
     console.log(`\n--- run.one ${config} ${paths} ${env}`);
-    expect(() => custard.run(config, 'test', paths, env)).to.not.throw();
+    expect(() => custard.run(config, command, paths, env)).to.not.throw();
   });
 
   it('fail 1', () => {
-    const config = 'test/cmd/config.json';
+    const config = custard.loadConfig('test/cmd/config.json');
+    const command = config.commands?.test;
+    assert(command);
     const paths = ['test/cmd/pkg-fail', 'test/cmd/pkg-pass'];
     const env = {PROJECT_ID: 'project-id', ID_TOKEN: 'id-token'};
     console.log(`\n--- run.two ${config} ${paths} ${env}`);
-    expect(() => custard.run(config, 'test', paths, env)).to.throw();
+    expect(() => custard.run(config, command, paths, env)).to.throw();
   });
 
   it('fail 2', () => {
-    const config = 'test/cmd/config.json';
+    const config = custard.loadConfig('test/cmd/config.json');
+    const command = config.commands?.test;
+    assert(command);
     const paths = ['test/cmd/pkg-pass', 'test/cmd/pkg-fail'];
     const env = {PROJECT_ID: 'project-id', ID_TOKEN: 'id-token'};
     console.log(`\n--- run.two ${config} ${paths} ${env}`);
-    expect(() => custard.run(config, 'test', paths, env)).to.throw();
+    expect(() => custard.run(config, command, paths, env)).to.throw();
   });
 });
