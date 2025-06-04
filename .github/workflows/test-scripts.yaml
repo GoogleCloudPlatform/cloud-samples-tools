@@ -12,18 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: scripts
+name: test scripts
 
 on:
   push:
     branches:
       - main
     paths:
-      - .github/workflows/scripts.yaml
+      - .github/workflows/test-scripts.yaml
       - scripts/**
   pull_request:
     paths:
-      - .github/workflows/scripts.yaml
+      - .github/workflows/test-scripts.yaml
       - scripts/**
   workflow_dispatch:
     inputs:

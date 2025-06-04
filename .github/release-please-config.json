@@ -11,7 +11,9 @@
         "README.md",
         "custard/cmd/custard/main.go",
         "actions/steps/create-check/action.yaml",
-        "actions/steps/update-check/action.yaml"
+        "actions/steps/update-check/action.yaml",
+        "actions/steps/setup-custard/action.yaml",
+        "scripts/src/custard.ts"
       ]
     }
   },
