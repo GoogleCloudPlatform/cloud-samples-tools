@@ -15,5 +15,14 @@
  */
 
 {
-     "package-file": [ "pkg.json" ]
+     "package-file": [ "pkg.json" ],
+     "commands": {
+          "test": {
+               "pre": "echo 'pre-test'",
+               "run": [
+                    "echo 'run'",
+                    "bash run.sh"
+               ]
+          }
+     }
 }
