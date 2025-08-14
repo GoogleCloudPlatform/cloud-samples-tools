@@ -96,7 +96,7 @@ jobs:
           job-name: ${{ github.job }} (${{ matrix.path }})
           if: ${{ !!github.event.workflow_run || (github.event.pull_request && !github.event.pull_request.head.repo.fork) }}
       - name: Checkout
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.ref || github.sha }}
       - name: Setup Custard
@@ -155,7 +155,7 @@ jobs:
           name: workflows / ${{ github.job }} (create-check on ${{ (github.event.workflow_run && 'workflow_run') || (github.event.pull_request && 'pull_request') || (inputs && 'workflow_dispatch') }})
           if: ${{ !!github.event.workflow_run || (github.event.pull_request && !github.event.pull_request.head.repo.fork) }}
       - name: Checkout Custard
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - name: Run command on affected paths
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/map-run@v0.4.0
         with:
