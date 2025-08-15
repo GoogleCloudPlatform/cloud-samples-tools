@@ -53,7 +53,7 @@ runs:
       with:
         go-version: ${{ inputs.go-version }}
     - name: Checkout Custard
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       with:
         repository: GoogleCloudPlatform/cloud-samples-tools
         ref: ${{ inputs.custard-version }}
@@ -68,7 +68,7 @@ runs:
 
     # Find the affected packages.
     - name: Checkout the commit history
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       with:
         ref: ${{ inputs.head-sha }}
         fetch-depth: 0 # fetch the entire branch history to find diffs
