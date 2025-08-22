@@ -93,7 +93,7 @@ jobs:
       matrix:
         path: ${{ fromJson(needs.affected.outputs.paths) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: google-github-actions/auth@v2
