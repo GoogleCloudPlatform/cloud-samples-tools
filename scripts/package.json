@@ -30,7 +30,7 @@
     "@types/chai": "^5.2.1",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.14.1",
-    "chai": "^5.2.0",
+    "chai": "^6.0.0",
     "gts": "^6.0.2",
     "mocha": "^11.1.0",
     "typescript": "^5.6.3"
