@@ -97,6 +97,10 @@ function usage(flags: string): string {
  */
 export function affected(config: Config, diffs: string[]): string[] {
   const packages = matchPackages(config, diffs);
+  if (packages.includes('.')) {
+    console.log('⚠️ One or more global files changed, all packages affected.');
+    return [...findPackages(config, '.')];
+  }
   return packages;
 }
 
@@ -154,7 +158,7 @@ export function matchPackages(config: Config, paths: string[]): string[] {
     }
     if (pkg === '.') {
       // Warn which file was considered a global change for debugging.
-      console.log(`⚠️ Global file changed (all packages affected): ${pkg}`);
+      console.log(`⚠️ Global file changed: ${pkg}`);
     }
     packages.add(pkg);
   }

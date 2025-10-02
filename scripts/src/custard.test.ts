@@ -510,7 +510,13 @@ describe('affected', () => {
       'test/affected/valid-package',
     ]);
   });
-  it('affected all');
+  it('affected all', () => {
+    const diffs = ['test/affected/no-package-file/file.txt'];
+    expect(custard.affected(config, diffs)).to.deep.equals([
+      'test/affected/valid-package',
+      'test/affected/valid-package/subdir/subpackage',
+    ]);
+  });
 });
 
 describe('run', () => {
