@@ -186,7 +186,6 @@ export function* findPackages(config: Config, root: string): Generator<string> {
 export function getPackageDir(config: Config, filepath: string): string | null {
   const dir = path.dirname(filepath);
   if (!fs.existsSync(dir)) {
-    console.log(`⚠️ path '${dir}' does not exist.`);
     return null;
   }
   if (dir === '.' || isPackageDir(config, dir)) {
