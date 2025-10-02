@@ -91,7 +91,7 @@ function usage(flags: string): string {
  * If there are diffs on at leat one global file, this could be a global
  * config file, so this "marks" all packages as affected.
  *
- * @param configPath path to the config file
+ * @param config config object
  * @param diffs list of files changed
  * @returns list of affected packages
  */
@@ -209,8 +209,8 @@ export function isPackageDir(config: Config, dir: string): boolean {
  * Defines the environment variables and secrets, runs the command,
  * and then cleans up the environment to its previous state.
  *
- * @param configPath path to the config file
- * @param command command to run
+ * @param config config object
+ * @param cmd command to run
  * @param paths paths to the packages
  * @param env environment variables
  */
