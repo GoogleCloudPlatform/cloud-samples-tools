@@ -122,12 +122,12 @@ export function matches(fullPath: string, patterns: string[]): boolean {
       .split(/(\*\*|\*|\.)/)
       .map(token => ({'**': '.*', '*': '[^/]*', '.': '\\.'})[token] ?? token)
       .join('');
-    if (new RegExp(`(^|\/)${glob}$`).test(fullPath)) {
+    if (new RegExp(`(^|/)${glob}$`).test(fullPath)) {
       return true;
     }
 
     // 4) Regular expression match
-    if (new RegExp(`(^|\/)${pattern}$`).test(fullPath)) {
+    if (new RegExp(`(^|/)${pattern}$`).test(fullPath)) {
       return true;
     }
   }
