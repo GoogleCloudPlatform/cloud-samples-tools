@@ -30,7 +30,7 @@ on:
       node-version:
         description: Node version
         type: string
-        default: "23"
+        default: "24"
       ref:
         description: Branch, tag, or commit SHA to run tests on
         type: string
@@ -49,7 +49,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
-          node-version: ${{ inputs.node-version || '23' }}
+          node-version: ${{ inputs.node-version || '24' }}
       - run: npm ci
       - run: npm run lint
 
@@ -65,7 +65,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
-          node-version: ${{ inputs.node-version || '23' }}
+          node-version: ${{ inputs.node-version || '24' }}
       - run: npm ci
       - run: npm run compile
 
@@ -81,6 +81,6 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
-          node-version: ${{ inputs.node-version || '23' }}
+          node-version: ${{ inputs.node-version || '24' }}
       - run: npm ci
       - run: npm test
