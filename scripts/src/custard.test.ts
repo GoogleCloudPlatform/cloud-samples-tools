@@ -383,10 +383,11 @@ describe('isPackageDir', () => {
 describe('getPackageDir', () => {
   const config: custard.Config = {'package-file': 'package-file.txt'};
   it('path does not exist', () => {
-    console.log(' --- findPackage path/does-not-exist');
+    console.log(' --- getPackageDir path does not exist');
     expect(custard.getPackageDir(config, 'path/does-not-exist')).to.be.null;
   });
   it('global package', () => {
+    console.log(' --- getPackageDir global package');
     expect(
       custard.getPackageDir(config, 'test/affected/no-package-file/file.txt'),
     ).equals('.');
