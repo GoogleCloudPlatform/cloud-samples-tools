@@ -31,6 +31,8 @@ node src/custard.ts version
 node src/custard.ts help
 ```
 
+For information on how to run tests, see the [Contributing](#contributing) section.
+
 ## Finding affected packages
 
 On CI, we usually use `git diff` to find the files that changed.
