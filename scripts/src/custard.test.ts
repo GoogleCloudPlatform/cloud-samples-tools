@@ -91,7 +91,7 @@ describe('validateConfig', () => {
 
 describe('validateCISetup', () => {
   it('undefined fields', () => {
-    const config = {
+    const config: custard.Config = {
       'package-file': 'pkg.txt',
       'ci-setup-defaults': {
         'defined-field': 1,
@@ -110,7 +110,7 @@ describe('validateCISetup', () => {
   });
 
   it('type checking', () => {
-    const config = {
+    const config: custard.Config = {
       'package-file': 'pkg.txt',
       'ci-setup-defaults': {
         var1: 'override',
@@ -367,54 +367,195 @@ describe('listSecrets', () => {
   });
 });
 
-describe('run', () => {
-  it('undefined commands', () => {
-    const config = 'test/cmd/config-no-cmd.json';
-    const paths: string[] = [];
-    const env = {};
-    console.log(`\n--- run.undefined ${config} ${paths} ${env}`);
-    expect(() => custard.run(config, 'test', paths, env)).to.throw(
-      `No 'commands' defined in ${config}`,
-    );
+describe('isPackageDir', () => {
+  const config: custard.Config = {'package-file': 'package-file.txt'};
+  it('is package', () => {
+    expect(custard.isPackageDir(config, 'test/affected/valid-package'));
   });
+  it('is not package', () => {
+    expect(!custard.isPackageDir(config, 'test/affected/no-package-file'));
+  });
+  it('path does not exist', () => {
+    expect(!custard.isPackageDir(config, 'does-not-exist'));
+  });
+});
 
-  it('command not found', () => {
-    const config = 'test/cmd/config.json';
-    const paths: string[] = [];
-    const env = {};
-    console.log(`\n--- run.not-found ${config} ${paths} ${env}`);
-    expect(() => custard.run(config, 'test', paths, env)).to.not.throw();
+describe('getPackageDir', () => {
+  const config: custard.Config = {'package-file': 'package-file.txt'};
+  it('path does not exist', () => {
+    console.log(' --- getPackageDir path does not exist');
+    expect(custard.getPackageDir(config, 'path/does-not-exist')).to.be.null;
   });
+  it('global package', () => {
+    console.log(' --- getPackageDir global package');
+    expect(
+      custard.getPackageDir(config, 'test/affected/no-package-file/file.txt'),
+    ).equals('.');
+  });
+  it('local package', () => {
+    expect(
+      custard.getPackageDir(config, 'test/affected/valid-package/file.txt'),
+    ).equals('test/affected/valid-package');
+  });
+  it('diff in subdirectory', () => {
+    expect(
+      custard.getPackageDir(
+        config,
+        'test/affected/valid-package/path/to/file.txt',
+      ),
+    ).equals('test/affected/valid-package');
+  });
+  it('local subpackage', () => {
+    expect(
+      custard.getPackageDir(
+        config,
+        'test/affected/valid-package/subdir/subpackage/file.txt',
+      ),
+    ).equals('test/affected/valid-package/subdir/subpackage');
+  });
+});
+
+describe('matches', () => {
+  it('does not match', () =>
+    expect(custard.matches('does-not-match.txt', ['match.txt'])).to.be.false);
+  it('full match', () =>
+    expect(custard.matches('path/to/match', ['path/to/match'])).to.be.true);
+  it('filename match', () =>
+    expect(custard.matches('path/to/match', ['match'])).to.be.true);
+  it('glob star match', () =>
+    expect(custard.matches('path/to/match.txt', ['*.txt'])).to.be.true);
+  it('glob double star match', () =>
+    expect(custard.matches('path/to/match.txt', ['**/*.txt'])).to.be.true);
+  it('regex match', () =>
+    expect(custard.matches('path/to/match-wildcard.txt', ['match-[^.]*\\.txt']))
+      .to.be.true);
+});
+
+describe('fileMatchesConfig', () => {
+  const config: custard.Config = {match: ['*.md'], ignore: ['README.md']};
+  it('does not match', () => {
+    expect(custard.fileMatchesConfig(config, 'file.txt')).to.be.false;
+  });
+  it('matches', () => {
+    expect(custard.fileMatchesConfig(config, 'file.md')).to.be.true;
+  });
+  it('matches but ignored', () => {
+    expect(custard.fileMatchesConfig(config, 'README.md')).to.be.false;
+  });
+  it('matches all by default', () => {
+    expect(custard.fileMatchesConfig({}, 'file.md')).to.be.true;
+  });
+});
+
+describe('matchPackages', () => {
+  const config: custard.Config = {
+    'package-file': 'package-file.txt',
+    match: ['*.txt'],
+    'exclude-packages': ['test/affected/excluded'],
+  };
+  it('does not match', () => {
+    const diffs = ['test/affected/valid-package/file.md'];
+    expect(custard.matchPackages(config, diffs)).to.deep.equals([]);
+  });
+  it('does not exist', () => {
+    const diffs = ['path/does/not/exist/file.txt'];
+    expect(custard.matchPackages(config, diffs)).to.deep.equals([]);
+  });
+  it('matches', () => {
+    const diffs = ['test/affected/valid-package/file.txt'];
+    expect(custard.matchPackages(config, diffs)).to.deep.equals([
+      'test/affected/valid-package',
+    ]);
+  });
+  it('matches unique', () => {
+    const diffs = [
+      'test/affected/valid-package/file1.txt',
+      'test/affected/valid-package/file2.txt',
+      'test/affected/valid-package/path/to/file3.txt',
+    ];
+    expect(custard.matchPackages(config, diffs)).to.deep.equals([
+      'test/affected/valid-package',
+    ]);
+  });
+  it('matches global change', () => {
+    const diffs = ['test/affected/no-package-file/file.txt'];
+    expect(custard.matchPackages(config, diffs)).to.deep.equals(['.']);
+  });
+  it('matches but excluded', () => {
+    const diffs = ['test/affected/excluded/file.txt'];
+    expect(custard.matchPackages(config, diffs)).to.deep.equals([]);
+  });
+});
+
+describe('findPackages', () => {
+  const config: custard.Config = {
+    'package-file': 'package-file.txt',
+    'exclude-packages': ['test/affected/excluded'],
+  };
+  it('finds recursively', () => {
+    expect([...custard.findPackages(config, 'test/affected')]).to.deep.equals([
+      'test/affected/valid-package',
+      'test/affected/valid-package/subdir/subpackage',
+    ]);
+  });
+});
+
+describe('affected', () => {
+  const config: custard.Config = {
+    'package-file': 'package-file.txt',
+    'exclude-packages': ['test/affected/excluded'],
+  };
+  it('affected one', () => {
+    const diffs = ['test/affected/valid-package/file.txt'];
+    expect(custard.affected(config, diffs)).to.deep.equals([
+      'test/affected/valid-package',
+    ]);
+  });
+  it('affected all', () => {
+    const diffs = ['test/affected/no-package-file/file.txt'];
+    expect(custard.affected(config, diffs)).to.deep.equals([
+      'test/affected/valid-package',
+      'test/affected/valid-package/subdir/subpackage',
+    ]);
+  });
+});
+
+describe('run', () => {
+  const cmd: custard.Command = {
+    pre: 'echo "pre-test"',
+    run: 'sh test.sh',
+    post: 'echo "post-test"',
+  };
 
   it('empty', () => {
-    const config = 'test/cmd/config.json';
+    const config: custard.Config = {};
     const paths: string[] = [];
     const env = {};
     console.log(`\n--- run.empty ${config} ${paths} ${env}`);
-    expect(() => custard.run(config, 'test', paths, env)).to.not.throw();
+    expect(() => custard.run(config, cmd, paths, env)).to.not.throw();
   });
 
   it('one', () => {
-    const config = 'test/cmd/config.json';
-    const paths = ['test/cmd/pkg-pass'];
+    const config: custard.Config = {};
+    const paths = ['test/run/pkg-pass'];
     const env = {PROJECT_ID: 'project-id', ID_TOKEN: 'id-token'};
     console.log(`\n--- run.one ${config} ${paths} ${env}`);
-    expect(() => custard.run(config, 'test', paths, env)).to.not.throw();
+    expect(() => custard.run(config, cmd, paths, env)).to.not.throw();
   });
 
   it('fail 1', () => {
-    const config = 'test/cmd/config.json';
-    const paths = ['test/cmd/pkg-fail', 'test/cmd/pkg-pass'];
+    const config: custard.Config = {};
+    const paths = ['test/run/pkg-fail', 'test/run/pkg-pass'];
     const env = {PROJECT_ID: 'project-id', ID_TOKEN: 'id-token'};
     console.log(`\n--- run.two ${config} ${paths} ${env}`);
-    expect(() => custard.run(config, 'test', paths, env)).to.throw();
+    expect(() => custard.run(config, cmd, paths, env)).to.throw();
   });
 
   it('fail 2', () => {
-    const config = 'test/cmd/config.json';
-    const paths = ['test/cmd/pkg-pass', 'test/cmd/pkg-fail'];
+    const config: custard.Config = {};
+    const paths = ['test/run/pkg-pass', 'test/run/pkg-fail'];
     const env = {PROJECT_ID: 'project-id', ID_TOKEN: 'id-token'};
     console.log(`\n--- run.two ${config} ${paths} ${env}`);
-    expect(() => custard.run(config, 'test', paths, env)).to.throw();
+    expect(() => custard.run(config, cmd, paths, env)).to.throw();
   });
 });
