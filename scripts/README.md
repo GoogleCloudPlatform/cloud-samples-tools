@@ -60,7 +60,7 @@ For example, we can use the [`test/affected/config.jsonc`](test/affected/config.
 The relevant config file entries for "affected" are:
 
 - `package-file`: The name of the file defining a package (e.g. `package.json`, `requirements.txt`, `go.mod`, etc.)
-- `match`: File pattern(s) to match against the diffs.
+- `match`: File pattern(s) to match against the diffs, defaults to everything (`*`).
 - `ignore`: File pattern(s) to ignore (e.g. `README.md` should not trigger tests).
 - `exclude-packages`: List of packages to exclude/skip.
 
@@ -69,6 +69,9 @@ node src/custard.ts affected \
     test/affected/config.jsonc \
     /tmp/diffs.txt
 ```
+
+This prints one package per line in stdout.
+Warnings and errors are written to stderr.
 
 ## Contributing
 
