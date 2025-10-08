@@ -812,7 +812,7 @@ function isMapStringString(kvs: any): boolean {
  * @param argv command line arguments
  */
 function main(argv: string[]) {
-  const mainUsage = usage('[affected | run | version] [options]');
+  const mainUsage = usage('[affected | run | version | help] [options]');
   switch (argv[2]) {
     case 'affected': {
       const usageRun = usage('affected <config-path> <diffs-file>');
@@ -834,6 +834,7 @@ function main(argv: string[]) {
       }
       break;
     }
+
     case 'run': {
       const usageRun = usage('run <config-path> <command> [package-path...]');
       const configPath = argv[3];
@@ -865,6 +866,11 @@ function main(argv: string[]) {
 
     case 'version': {
       console.log(version);
+      break;
+    }
+
+    case 'help': {
+      console.log(mainUsage);
       break;
     }
 
