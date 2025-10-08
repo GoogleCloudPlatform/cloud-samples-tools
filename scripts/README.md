@@ -31,6 +31,45 @@ node src/custard.ts version
 node src/custard.ts help
 ```
 
+## Finding affected packages
+
+On CI, we usually use `git diff` to find the files that changed.
+To keep Custard flexible for different use cases, it won't automatically get the diffs from git, but instead we pass a file with the diffs.
+This allows for other use cases, like running a specific set of tests, rather than the ones changed.
+
+For example, here is how you could use `git diff` to get your changes compared to the main branch.
+
+```sh
+# This will both print the files, as well as write them to a /tmp/diffs.txt file.
+git --no-pager diff --name-only HEAD origin/main | tee /tmp/diffs.txt
+```
+
+> **NOTE**: The diffs passed to Custard must be relative to the directory from which we're running the script.
+> Note that `git diff` will generate files relative to the repository root directory, so you would have to run Custard from that directory.
+
+Alternatively, we could manually create the file with the files we're interested in.
+
+```sh
+# Assuming you're running from the custard directory, not the root directory.
+echo "test/affected/valid-package/my-file.txt" > /tmp/diffs.txt
+```
+
+We also need to provide a config file that describes how to resolve packages.
+
+For example, we can use the [`test/affected/config.jsonc`](test/affected/config.jsonc) file.
+The relevant config file entries for "affected" are:
+
+- `package-file`: The name of the file defining a package (e.g. `package.json`, `requirements.txt`, `go.mod`, etc.)
+- `match`: File pattern(s) to match against the diffs.
+- `ignore`: File pattern(s) to ignore (e.g. `README.md` should not trigger tests).
+- `exclude-packages`: List of packages to exclude/skip.
+
+```sh
+node src/custard.ts affected \
+    test/affected/config.jsonc \
+    /tmp/diffs.txt
+```
+
 ## Contributing
 
 To lint the project and run tests you'll need to set up your developer environment.
