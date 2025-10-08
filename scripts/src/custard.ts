@@ -98,7 +98,9 @@ function usage(flags: string): string {
 export function affected(config: Config, diffs: string[]): string[] {
   const packages = matchPackages(config, diffs);
   if (packages.includes('.')) {
-    console.log('⚠️ One or more global files changed, all packages affected.');
+    console.error(
+      '⚠️ One or more global files changed, all packages affected.',
+    );
     return [...findPackages(config, '.')];
   }
   return packages;
@@ -151,14 +153,14 @@ export function matchPackages(config: Config, paths: string[]): string[] {
     if (pkg === null) {
       // The package directory does not exist, it might have been removed.
       // We can't run anything on it, so skip it.
-      console.log(
+      console.error(
         `⚠️ path '${pkg}' does not exist, it might have been removed.`,
       );
       continue;
     }
     if (pkg === '.') {
       // Warn which file was considered a global change for debugging.
-      console.log(`⚠️ Global file changed: ${pkg}`);
+      console.error(`⚠️ Global file changed: ${pkg}`);
     }
     packages.add(pkg);
   }
@@ -827,7 +829,7 @@ function main(argv: string[]) {
         console.error('Please provide the diffs file path.');
         throw new Error(usageRun);
       }
-      const diffs = fs.readFileSync(diffsFile, 'utf8').split('\n');
+      const diffs = fs.readFileSync(diffsFile, 'utf8').trim().split('\n');
       const packages = affected(config, diffs);
       for (const pkg of packages) {
         console.log(pkg);
