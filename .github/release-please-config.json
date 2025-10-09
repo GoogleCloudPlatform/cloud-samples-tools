@@ -11,7 +11,8 @@
         "README.md",
         "custard/cmd/custard/main.go",
         "actions/steps/create-check/action.yaml",
-        "actions/steps/update-check/action.yaml"
+        "actions/steps/update-check/action.yaml",
+        ".github/workflows/affected.yaml"
       ]
     }
   },
