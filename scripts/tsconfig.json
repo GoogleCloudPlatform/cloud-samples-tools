@@ -1,8 +1,9 @@
 {
   "extends": "./node_modules/gts/tsconfig-google.json",
   "compilerOptions": {
-    "emitDeclarationOnly": true,
     "allowImportingTsExtensions": true,
+    "emitDeclarationOnly": true,
+    "esModuleInterop": true,
     "rootDir": ".",
     "outDir": "build"
   },
