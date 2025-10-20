@@ -17,7 +17,6 @@
 import * as path from 'node:path';
 import {expect} from 'chai';
 import * as custard from './custard.ts';
-import assert from 'node:assert';
 
 describe('loadJsonc', () => {
   it('file does not exist', () => {
