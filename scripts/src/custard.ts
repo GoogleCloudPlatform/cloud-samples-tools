@@ -913,9 +913,7 @@ function main(argv: string[]) {
       // Only throw an error if running the script directly.
       // Otherwise, this file is being imported (for example, on tests).
       if (argv[1] && argv[1].match(/custard\.(ts|js)$|^-$/)) {
-        console.error(`Unknown action: ${action}`);
-        console.error('Action must be "run" or "version".');
-        throw new Error(usageMain);
+        throw new Error(mainUsage);
       }
     }
   }
