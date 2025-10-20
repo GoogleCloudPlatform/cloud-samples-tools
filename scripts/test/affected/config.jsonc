@@ -1,0 +1,5 @@
+{
+  "package-file": "package-file.txt",
+  "ignore": [ "README.md" ],
+  "exclude-packages": [ "test/affected/excluded" ]
+}

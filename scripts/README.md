@@ -17,7 +17,65 @@ For consistency, we recommend running tests using this script.
 >
 > To disable the warning: `export NODE_OPTIONS="--no-warnings=75058"`
 
-## Config file
+## Running
+
+Custard does not depend on any third party dependencies at runtime, so you can run it directly without installing anything.
+
+To run the custard script:
+
+```sh
+# To check the version:
+node src/custard.ts version
+
+# To see the command usage:
+node src/custard.ts help
+```
+
+For information on how to run tests, see the [Contributing](#contributing) section.
+
+## Finding affected packages
+
+On CI, we usually use `git diff` to find the files that changed.
+To keep Custard flexible for different use cases, it won't automatically get the diffs from git, but instead we pass a file with the diffs.
+This allows for other use cases, like running a specific set of tests, rather than the ones changed.
+
+For example, here is how you could use `git diff` to get your changes compared to the main branch.
+
+```sh
+# This will both print the files, as well as write them to a /tmp/diffs.txt file.
+git --no-pager diff --name-only HEAD origin/main | tee /tmp/diffs.txt
+```
+
+> **NOTE**: The diffs passed to Custard must be relative to the directory from which we're running the script.
+> Note that `git diff` will generate files relative to the repository root directory, so you would have to run Custard from that directory.
+
+Alternatively, we could manually create the file with the files we're interested in.
+
+```sh
+# Assuming you're running from the custard directory, not the root directory.
+echo "test/affected/valid-package/my-file.txt" > /tmp/diffs.txt
+```
+
+We also need to provide a config file that describes how to resolve packages.
+
+For example, we can use the [`test/affected/config.jsonc`](test/affected/config.jsonc) file.
+The relevant config file entries for "affected" are:
+
+- `package-file`: The name of the file defining a package (e.g. `package.json`, `requirements.txt`, `go.mod`, etc.)
+- `match`: File pattern(s) to match against the diffs, defaults to everything (`*`).
+- `ignore`: File pattern(s) to ignore (e.g. `README.md` should not trigger tests).
+- `exclude-packages`: List of packages to exclude/skip.
+
+```sh
+node src/custard.ts affected \
+    test/affected/config.jsonc \
+    /tmp/diffs.txt
+```
+
+This prints one package per line in stdout.
+Warnings and errors are written to stderr.
+
+## Config file commands
 
 To support commands, we have to define them in the config file.
 Having these commands defined in the config file allows consistency between the CI infrastructure and local testing.
@@ -70,30 +128,27 @@ If any `run` fails, the errors are reported and the script exits with a non-zero
 You can define any command, not only `lint` and `test`.
 All commands first load the `ci-setup.json`, validate it, and export environment variables and secrets before running the `run` step.
 
-## Running
-
-Create an alias for this script, you can add this to your `.zshrc` or `.bashrc`.
-
-```sh
-alias custard="curl -sSL https://raw.githubusercontent.com/GoogleCloudPlatform/cloud-samples-tools/refs/heads/main/scripts/src/custard.ts | node - $@"
-```
-
-Here's how to run a command:
-
-```sh
-custard run <config-file> <command> [args...]
-```
-
-For example, to run some of the test packages in the `scripts/` directory:
-
-```sh
-# This should pass.
-custard run test/cmd/config.json test test/cmd/pkg-pass
-
-# This fails and exits with a non-zero exit code.
-custard run test/cmd/config.json test test/cmd/pkg-fail
-```
-
 ## Contributing
 
-TODO
+To lint the project and run tests you'll need to set up your developer environment.
+
+```sh
+# Install the dev dependencies.
+npm ci
+```
+
+To run the linter:
+
+```sh
+npm run lint
+```
+
+To run tests:
+
+```sh
+# Run all tests.
+npm test
+
+# Run a single test suite, for example the "affected" tests.
+npm test -- -g "affected"
+```

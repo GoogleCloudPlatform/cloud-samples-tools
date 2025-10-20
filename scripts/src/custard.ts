@@ -18,7 +18,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {execSync} from 'node:child_process';
 
-const version = 'v0.3.2'; // x-release-please-version
+const version = 'v0.4.0'; // x-release-please-version
 
 export type CISetup = {
   // Environment variables to export.
@@ -101,24 +101,149 @@ switch (process.env.CUSTARD_VERBOSE || 'info') {
 }
 
 /**
+ * Finds the packages that have been affected from diffs.
+ *
+ * A package is defined by a path containing a package-file as defined
+ * in the config file.
+ *
+ * A diff from a file in a directory without a package-file is
+ * considered a global diff.
+ * If there are diffs on at leat one global file, this could be a global
+ * config file, so this "marks" all packages as affected.
+ *
+ * @param config config object
+ * @param diffs list of files changed
+ * @returns list of affected packages
+ */
+export function affected(config: Config, diffs: string[]): string[] {
+  const packages = matchPackages(config, diffs);
+  if (packages.includes('.')) {
+    console.error(
+      '⚠️ One or more global files changed, all packages affected.',
+    );
+    return [...findPackages(config, '.')];
+  }
+  return packages;
+}
+
+export function matches(fullPath: string, patterns: string[]): boolean {
+  const filename = path.basename(fullPath);
+  for (const pattern of patterns) {
+    // 1) Exact full match
+    if (pattern === fullPath) {
+      return true;
+    }
+    // 2) Exact filename match
+    if (pattern === filename) {
+      return true;
+    }
+    // 3) Glob pattern match
+    //    Node does not support glob patterns as part of the standard library,
+    //    so to avoid third-party dependencies we convert them to a regex.
+    const glob = pattern
+      .split(/(\*\*|\*|\.)/)
+      .map(token => ({'**': '.*', '*': '[^/]*', '.': '\\.'})[token] ?? token)
+      .join('');
+    if (new RegExp(`(^|/)${glob}$`).test(fullPath)) {
+      return true;
+    }
+
+    // 4) Regular expression match
+    if (new RegExp(`(^|/)${pattern}$`).test(fullPath)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function fileMatchesConfig(config: Config, filepath: string): boolean {
+  const match = asArray(config.match) || ['*'];
+  const ignore = asArray(config.ignore) || [];
+  return matches(filepath, match) && !matches(filepath, ignore);
+}
+
+export function matchPackages(config: Config, paths: string[]): string[] {
+  const packages = new Set<string>();
+  for (const filepath of paths) {
+    if (!fileMatchesConfig(config, filepath)) {
+      // The file doesn't match the config file, so skip it.
+      continue;
+    }
+    const pkg = getPackageDir(config, filepath);
+    if (pkg === null) {
+      // The package directory does not exist, it might have been removed.
+      // We can't run anything on it, so skip it.
+      console.error(
+        `⚠️ path '${pkg}' does not exist, it might have been removed.`,
+      );
+      continue;
+    }
+    if (pkg === '.') {
+      // Warn which file was considered a global change for debugging.
+      console.error(`⚠️ Global file changed: ${pkg}`);
+    }
+    packages.add(pkg);
+  }
+
+  // Return all the affected packages, removing any excluded ones.
+  // Excluded packages must be exact full matches.
+  const excluded = asArray(config['exclude-packages']) || [];
+  return [...packages].filter(pkg => !excluded.includes(pkg));
+}
+
+export function* findPackages(config: Config, root: string): Generator<string> {
+  const excluded = asArray(config['exclude-packages']) || [];
+  const files = fs.readdirSync(root, {withFileTypes: true});
+  for (const file of files) {
+    const fullPath = path.join(root, file.name);
+    if (file.isDirectory()) {
+      if (isPackageDir(config, fullPath) && !excluded.includes(fullPath)) {
+        yield fullPath;
+      }
+      yield* findPackages(config, fullPath);
+    }
+  }
+}
+
+export function getPackageDir(config: Config, filepath: string): string | null {
+  const dir = path.dirname(filepath);
+  if (!fs.existsSync(dir)) {
+    return null;
+  }
+  if (dir === '.' || isPackageDir(config, dir)) {
+    return dir;
+  }
+  return getPackageDir(config, dir);
+}
+
+export function isPackageDir(config: Config, dir: string): boolean {
+  for (const pkgFile of asArray(config['package-file']) ?? []) {
+    if (fs.existsSync(path.join(dir, pkgFile))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
  * Run a command defined in the config file.
  *
  * Defines the environment variables and secrets, runs the command,
  * and then cleans up the environment to its previous state.
  *
  * @param config config object
- * @param command command to run
+ * @param cmd command to run
  * @param paths paths to the packages
  * @param env environment variables
  */
 export function run(
   config: Config,
-  command: Command,
+  cmd: Command,
   paths: string[],
   env = process.env,
 ) {
-  if (command.pre) {
-    const steps = asArray(command.pre) || [];
+  if (cmd.pre) {
+    const steps = asArray(cmd.pre) || [];
     for (const step of steps) {
       console.warn(`\n➜ [root]$ ${step}`);
       const start = Date.now();
@@ -128,7 +253,7 @@ export function run(
     }
   }
   const failures = [];
-  if (command.run) {
+  if (cmd.run) {
     for (const path of paths) {
       console.warn('\n➜ Configuring ci-setup');
       const start = Date.now();
@@ -137,7 +262,7 @@ export function run(
       console.info(`Done in ${Math.round((end - start) / 1000)}s`);
       try {
         // For each path, stop on the first command failure.
-        const steps = asArray(command.run) || [];
+        const steps = asArray(cmd.run) || [];
         for (const step of steps) {
           console.warn(`\n➜ ${path}$ ${step}`);
           const start = Date.now();
@@ -158,8 +283,8 @@ export function run(
       }
     }
   }
-  if (command.post) {
-    const steps = asArray(command.post) || [];
+  if (cmd.post) {
+    const steps = asArray(cmd.post) || [];
     for (const step of steps) {
       console.warn(`\n➜ [root]$ ${step}`);
       const start = Date.now();
@@ -708,12 +833,29 @@ function isMapStringString(kvs: any): boolean {
  * @param argv command line arguments
  */
 function main(argv: string[]) {
-  const usageRunFlags = 'run <config-path> <command> [package-path...]';
-  const usageRun = `usage: custard ${usageRunFlags}`;
-  const usageMain = `usage: custard [ ${usageRunFlags} | version ]`;
+  const mainUsage = usage('[affected | run | version | help] [options]');
+  switch (argv[2]) {
+    case 'affected': {
+      const usageRun = usage('affected <config-path> <diffs-file>');
+      const configPath = argv[3];
+      if (!configPath) {
+        console.error('Please provide the config file path.');
+        throw new Error(usageRun);
+      }
+      const config = loadConfig(configPath);
+      const diffsFile = argv[4];
+      if (!diffsFile) {
+        console.error('Please provide the diffs file path.');
+        throw new Error(usageRun);
+      }
+      const diffs = fs.readFileSync(diffsFile, 'utf8').trim().split('\n');
+      const packages = affected(config, diffs);
+      for (const pkg of packages) {
+        console.log(pkg);
+      }
+      break;
+    }
 
-  const action = argv[2];
-  switch (action) {
     case 'run': {
       const configPath = argv[3];
       if (!configPath) {
@@ -721,13 +863,8 @@ function main(argv: string[]) {
         throw new Error(usageRun);
       }
       const config = loadConfig(configPath);
-      if (!config.commands) {
-        console.error(`No "commands" found in ${configPath}`);
-        throw new Error(usageRun);
-      }
-      const commands = Object.keys(config.commands || {});
-      const commandName = argv[4];
-      if (!commandName) {
+      const command = argv[4];
+      if (!command) {
         console.error('Please provide the command to run.');
         console.error(`Found ${commands.length} command(s) in ${configPath}:`);
         for (const cmd of commands) {
@@ -744,17 +881,29 @@ function main(argv: string[]) {
         }
         throw new Error(usageRun);
       }
+      if (!config.commands) {
+        throw new Error(`No 'commands' defined in ${configPath}.`);
+      }
+      const cmd = config.commands[command];
+      if (!cmd) {
+        throw new Error(`No command '${command}' defined in ${configPath}.`);
+      }
       const paths = argv.slice(5);
       if (paths.length === 0) {
         console.error('Please provide one or more package paths.');
         throw new Error(usageRun);
       }
-      run(config, command, paths);
+      run(config, cmd, paths);
       break;
     }
 
     case 'version': {
       console.log(version);
+      break;
+    }
+
+    case 'help': {
+      console.log(mainUsage);
       break;
     }
 
