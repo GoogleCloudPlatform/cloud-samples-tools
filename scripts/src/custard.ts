@@ -72,6 +72,14 @@ export type Config = {
   'exclude-packages'?: string | string[];
 };
 
+/**
+ * @param flags command line flags
+ * @returns usage string
+ */
+function usage(flags: string): string {
+  return `usage: node custard.ts ${flags}`;
+}
+
 switch (process.env.CUSTARD_VERBOSE || 'info') {
   case 'debug':
     break;
@@ -857,6 +865,7 @@ function main(argv: string[]) {
     }
 
     case 'run': {
+      const usageRun = usage('run <config-path> <command> [package-path...]');
       const configPath = argv[3];
       if (!configPath) {
         console.error('Please provide the config file path.');
@@ -866,19 +875,6 @@ function main(argv: string[]) {
       const command = argv[4];
       if (!command) {
         console.error('Please provide the command to run.');
-        console.error(`Found ${commands.length} command(s) in ${configPath}:`);
-        for (const cmd of commands) {
-          console.error(` - ${cmd}`);
-        }
-        throw new Error(usageRun);
-      }
-      const command = config.commands[commandName];
-      if (!command) {
-        console.error(`Command "${commandName}" not found in ${configPath}`);
-        console.error(`Found ${commands.length} command(s) in ${configPath}:`);
-        for (const cmd of commands) {
-          console.error(` - ${cmd}`);
-        }
         throw new Error(usageRun);
       }
       if (!config.commands) {
@@ -909,7 +905,7 @@ function main(argv: string[]) {
 
     case undefined: {
       // If no command was passed, just show the usage without an error.
-      console.log(usageMain);
+      console.log(mainUsage);
       break;
     }
 
