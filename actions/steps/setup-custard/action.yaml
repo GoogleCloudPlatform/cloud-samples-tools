@@ -48,13 +48,13 @@ runs:
           const filename = "${{ inputs.install-path }}";
           fs.mkdirSync(path.dirname(filename), { recursive: true });
           fs.writeFileSync(filename, contents.data);
-    
+
     # Node is available in the default github runner, but at an order version
-    # that does not support TS by default. So, update the Node version used here. 
+    # that does not support TS by default. So, update the Node version used here.
     - name: Setup Node
       uses: actions/setup-node@v6
       with:
         node-version: 24
-        
+
     - run: node ${{ inputs.install-path }} version
       shell: bash
