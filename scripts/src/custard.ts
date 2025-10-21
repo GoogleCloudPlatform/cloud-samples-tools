@@ -65,7 +65,7 @@ export type Config = {
   // Pattern to ignore filenames or directories.
   ignore?: string | string[];
 
-  // Commands like `custard run <command> [args]...`
+  // Commands like `custard run <config-file> <command> [args]...`
   commands?: {[k: string]: Command};
 
   // Packages to always exclude.
@@ -78,6 +78,34 @@ export type Config = {
  */
 function usage(flags: string): string {
   return `usage: node custard.ts ${flags}`;
+}
+
+switch (process.env.CUSTARD_VERBOSE || 'info') {
+  case 'debug':
+    break;
+  case 'info':
+    console.debug = () => {};
+    break;
+  case 'warn':
+    console.debug = () => {};
+    console.info = () => {};
+    console.log = () => {};
+    break;
+  case 'error':
+    console.debug = () => {};
+    console.info = () => {};
+    console.log = () => {};
+    console.warn = () => {};
+    break;
+  default:
+    console.error(
+      'Unknown CUSTARD_VERBOSE value:',
+      process.env.CUSTARD_VERBOSE,
+    );
+    console.error('If set, it must be one of: debug, info, warn, error');
+    /* eslint-disable n/no-process-exit */
+    process.exit(1);
+  /* eslint-enable n/no-process-exit */
 }
 
 /**
@@ -225,30 +253,30 @@ export function run(
   if (cmd.pre) {
     const steps = asArray(cmd.pre) || [];
     for (const step of steps) {
-      console.log(`\n➜ [root]$ ${step}`);
+      console.warn(`\n➜ [root]$ ${step}`);
       const start = Date.now();
       execSync(step, {stdio: 'inherit'});
       const end = Date.now();
-      console.log(`Done in ${Math.round((end - start) / 1000)}s`);
+      console.info(`Done in ${Math.round((end - start) / 1000)}s`);
     }
   }
   const failures = [];
   if (cmd.run) {
     for (const path of paths) {
-      console.log(`\n➜ ${path}$ ci-setup`);
+      console.warn('\n➜ Configuring ci-setup');
       const start = Date.now();
       const defined = setup(config, path, env);
       const end = Date.now();
-      console.log(`Done in ${Math.round((end - start) / 1000)}s`);
+      console.info(`Done in ${Math.round((end - start) / 1000)}s`);
       try {
         // For each path, stop on the first command failure.
         const steps = asArray(cmd.run) || [];
         for (const step of steps) {
-          console.log(`\n➜ ${path}$ ${step}`);
+          console.warn(`\n➜ ${path}$ ${step}`);
           const start = Date.now();
           execSync(step, {stdio: 'inherit', cwd: path});
           const end = Date.now();
-          console.log(`Done in ${Math.round((end - start) / 1000)}s`);
+          console.info(`Done in ${Math.round((end - start) / 1000)}s`);
         }
       } catch (e) {
         // Run all paths always, catch the exception and report errors.
@@ -266,18 +294,18 @@ export function run(
   if (cmd.post) {
     const steps = asArray(cmd.post) || [];
     for (const step of steps) {
-      console.log(`\n➜ [root]$ ${step}`);
+      console.warn(`\n➜ [root]$ ${step}`);
       const start = Date.now();
       execSync(step, {stdio: 'inherit'});
       const end = Date.now();
-      console.log(`Done in ${Math.round((end - start) / 1000)}s`);
+      console.info(`Done in ${Math.round((end - start) / 1000)}s`);
     }
   }
 
   if (paths.length > 1) {
-    console.log(`\n=== Summary (${paths.length} packages) ===`);
-    console.log(`  Passed: ${paths.length - failures.length}`);
-    console.log(`  Failed: ${failures.length}`);
+    console.info(`\n=== Summary (${paths.length} packages) ===`);
+    console.info(`  Passed: ${paths.length - failures.length}`);
+    console.info(`  Failed: ${failures.length}`);
   }
   if (failures.length > 0) {
     throw new Error(`Failed:\n${failures.map(path => `- ${path}`).join('\n')}`);
@@ -299,8 +327,8 @@ export function setup(
 ): string[] {
   const defaults = config['ci-setup-defaults'] || {};
   const ciSetup = loadCISetup(config, packagetPath);
-  console.log(`ci-setup defaults: ${JSON.stringify(defaults, null, 2)}`);
-  console.log(`ci-setup.json: ${JSON.stringify(ciSetup, null, 2)}`);
+  console.debug(`ci-setup defaults: ${JSON.stringify(defaults, null, 2)}`);
+  console.debug(`ci-setup.json: ${JSON.stringify(ciSetup, null, 2)}`);
 
   const definedBefore = new Set(Object.keys(env));
   const vars = listEnv(env, ciSetup.env || {}, defaults.env || {});
@@ -340,12 +368,12 @@ export function* listEnv(
     RUN_ID: () => uniqueId(),
     SERVICE_ACCOUNT: () => '',
   };
-  console.log('export env:');
+  console.info('Environment variables:');
   const vars = [...listVars(env, ciSetup, defaults, automatic)];
   const subs = Object.fromEntries(vars.map(([key, {value}]) => [key, value]));
   for (const [key, {value, source}] of vars) {
     const result = substitute(subs, value);
-    console.log(`  ${key}: ${JSON.stringify(result)} (${source})`);
+    console.info(`  ${key}: ${JSON.stringify(result)} (${source})`);
     yield [key, result];
   }
 }
@@ -369,11 +397,11 @@ export function* listSecrets(
     // usage: curl -H 'Bearer: $ID_TOKEN' https://
     ID_TOKEN: () => getIdToken(env.PROJECT_ID),
   };
-  console.log('export secrets:');
+  console.info('Secrets:');
   const vars = listVars(env, ciSetup, defaults, automatic, accessSecret);
   for (const [key, {value: value, source}] of vars) {
     // ⚠️ DO NOT print the secret value.
-    console.log(`  ${key}: "***" (${source})`);
+    console.info(`  ${key}: "***" (${source})`);
     yield [key, value];
   }
 }
@@ -458,7 +486,6 @@ export function loadCISetup(config: Config, packagePath: string): CISetup {
   for (const filename of filenames) {
     const ciSetupPath = path.join(packagePath, filename);
     if (fs.existsSync(ciSetupPath)) {
-      console.log(`Loading CI setup: ${ciSetupPath}`);
       const ciSetup: CISetup = loadJsonc(ciSetupPath);
       const errors = validateCISetup(config, ciSetup);
       if (errors.length > 0) {
@@ -474,7 +501,7 @@ export function loadCISetup(config: Config, packagePath: string): CISetup {
       return ciSetup;
     }
   }
-  console.log(`No CI setup found for '${packagePath}'`);
+  console.debug(`No CI setup found for '${packagePath}'`);
   return {};
 }
 
@@ -892,4 +919,13 @@ function main(argv: string[]) {
   }
 }
 
-main(process.argv);
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable n/no-process-exit */
+try {
+  main(process.argv);
+} catch (e: any) {
+  console.error(e.message);
+  process.exit(1);
+}
+/* eslint-enable n/no-process-exit */
+/* eslint-enable @typescript-eslint/no-explicit-any */

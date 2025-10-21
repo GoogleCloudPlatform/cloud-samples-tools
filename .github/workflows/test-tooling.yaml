@@ -12,18 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: tooling
+name: test tooling
 
 on:
   push:
     branches:
       - main
     paths:
-      - .github/workflows/tooling.yaml
+      - .github/workflows/test-tooling.yaml
       - custard/**
   pull_request:
     paths:
-      - .github/workflows/tooling.yaml
+      - .github/workflows/test-tooling.yaml
       - custard/**
   workflow_run:
     workflows:
