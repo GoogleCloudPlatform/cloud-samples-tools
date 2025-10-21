@@ -77,7 +77,8 @@ jobs:
       check: ${{ steps.in_progress.outputs.check }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout repository code
+        uses: actions/checkout@v5
         with: 
           path: .cloud-samples-tools
       - name: Check queued
