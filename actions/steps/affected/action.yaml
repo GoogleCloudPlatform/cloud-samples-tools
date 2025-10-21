@@ -78,6 +78,7 @@ runs:
       id: custard
       shell: bash
       run: |
+        pwd
         node custard.ts affected ${{ inputs.config-file }} diffs.txt | tee paths.txt
         PATHS=$(jq -Rcn '[inputs]' paths.txt)
         echo "paths=$PATHS" >> $GITHUB_OUTPUT
