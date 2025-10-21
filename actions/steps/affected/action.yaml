@@ -78,8 +78,7 @@ runs:
       id: custard
       shell: bash
       run: |
-        PATHS=$(custard affected ${{ inputs.config-file }} diffs.txt paths.txt)
+        node custard.ts affected ${{ inputs.config-file }} diffs.txt | tee paths.txt
+        PATHS=$(jq -Rcn '[inputs]' paths.txt)
         echo "paths=$PATHS" >> $GITHUB_OUTPUT
         echo "num-paths=$(echo $PATHS | jq length)" >> $GITHUB_OUTPUT
-        cat paths.txt
-        echo "ci-setups=$(custard setup-files ${{ inputs.config-file }} paths.txt)" >> $GITHUB_OUTPUT
