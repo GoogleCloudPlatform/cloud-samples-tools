@@ -48,24 +48,8 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Setup Go
-      uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6
-      with:
-        go-version: ${{ inputs.go-version }}
-    - name: Checkout Custard
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
-      with:
-        repository: GoogleCloudPlatform/cloud-samples-tools
-        ref: ${{ inputs.custard-version }}
-        path: cloud-samples-tools
-    - name: Install Custard
-      shell: bash
-      run: go install ./cmd/custard
-      working-directory: cloud-samples-tools/custard
-    - name: Clean up the workspace
-      shell: bash
-      run: rm -rf cloud-samples-tools
-
+    - name: Setup Custard
+      uses: ./actions/steps/setup-custard
     # Find the affected packages.
     - name: Checkout the commit history
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
