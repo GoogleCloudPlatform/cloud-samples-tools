@@ -63,7 +63,7 @@ on:
         value: ${{ jobs.affected.outputs.ci-setups }}
       check:
         description: The check that was created by this job.
-        value: ${{ steps.final_status.outputs.check }}
+        value: ${{ jobs.affected.outputs.check }}
 
 jobs:
   affected:
@@ -74,7 +74,7 @@ jobs:
       paths: ${{ steps.custard.outputs.paths }}
       num-paths: ${{ steps.custard.outputs.num-paths }}
       ci-setups: ${{ steps.custard.outputs.ci-setups }}
-      check: ${{ steps.in_progress.outputs.check }}
+      check: ${{ steps.final_status.outputs.check }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
       - name: Check queued
