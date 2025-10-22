@@ -58,5 +58,5 @@ runs:
 
     - run: node ${{ inputs.install-path }} version
       shell: bash
-    - run: pwd
+    - run: pwd && ls
       shell: bash
