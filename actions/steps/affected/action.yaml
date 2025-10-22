@@ -55,12 +55,18 @@ runs:
       uses: ./.cloud-samples-tools/actions/steps/setup-custard
       with:
         install-path: ${{ inputs.install-path }}
+    - name: check dir before checkout
+      run: pwd && ls
+      shell: bash
     # Find the affected packages.
     - name: Checkout the commit history
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       with:
         ref: ${{ inputs.head-sha }}
         fetch-depth: 0 # fetch the entire branch history to find diffs
+    - name: check dir before checkout
+      run: pwd && ls
+      shell: bash
     - name: Get diffs from main and the PR
       shell: bash
       run: |
