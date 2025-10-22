@@ -37,6 +37,10 @@ inputs:
     description: Path to install the Custard script to.
     default: custard.ts
 
+  checkout-path:
+    description: Path to check out directory to find affected packages
+    default: repo-checkout
+
 outputs:
   paths:
     description: The affected paths as a JSON list.
@@ -55,7 +59,6 @@ runs:
       uses: ./.cloud-samples-tools/actions/steps/setup-custard
       with:
         install-path: ${{ inputs.install-path }}
-
     - run: node ${{ inputs.install-path }} version # affected
       shell: bash
     - name: check dir before checkout
@@ -67,7 +70,7 @@ runs:
       with:
         ref: ${{ inputs.head-sha }}
         fetch-depth: 0 # fetch the entire branch history to find diffs
-        clean: false # don't delete directory contents before checkout
+        path: ${{ inputs.checkout-path }}
     - name: check dir after checkout
       run: pwd && ls -a
       shell: bash
@@ -82,7 +85,7 @@ runs:
             | tee diffs.txt
         else
           # Otherwise, use git diff.
-          git --no-pager diff --name-only $HEAD $MAIN \
+          git -C ${{ inputs.checkout-path }} --no-pager diff --name-only $HEAD $MAIN \
             | tee diffs.txt
         fi
       env:
