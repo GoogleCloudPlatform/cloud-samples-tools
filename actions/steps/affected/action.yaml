@@ -51,15 +51,15 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: check original setup
-      run: pwd && ls
-      shell: bash
     - name: Setup Custard
       uses: ./.cloud-samples-tools/actions/steps/setup-custard
       with:
         install-path: ${{ inputs.install-path }}
+
+    - run: node ${{ inputs.install-path }} version # affected
+      shell: bash
     - name: check dir before checkout
-      run: pwd && ls
+      run: pwd && ls -a
       shell: bash
     # Find the affected packages.
     - name: Checkout the commit history
@@ -69,7 +69,7 @@ runs:
         fetch-depth: 0 # fetch the entire branch history to find diffs
         clean: false # don't delete directory contents before checkout
     - name: check dir after checkout
-      run: pwd && ls
+      run: pwd && ls -a
       shell: bash
     - name: Get diffs from main and the PR
       shell: bash
