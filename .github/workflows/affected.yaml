@@ -33,7 +33,7 @@ on:
       custard-version:
         description: Custard version to install.
         type: string
-        default: v0.2.1  # x-release-please-version 
+        default: v0.5.0rc1  # x-release-please-version
       go-version:
         description: Go version to build the custard tools.
         type: string
