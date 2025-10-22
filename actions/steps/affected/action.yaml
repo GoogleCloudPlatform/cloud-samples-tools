@@ -29,7 +29,7 @@ inputs:
     description: Comma-separated package paths instead of git diff.
   custard-version:
     description: Custard version to install.
-    default: v0.2.1
+    default: v0.5.0rc1
   go-version:
     description: Go version to build the custard tools.
     default: ^1.22.0
