@@ -63,7 +63,7 @@ on:
         value: ${{ jobs.affected.outputs.ci-setups }}
       check:
         description: The check that was created by this job.
-        value: ${{ jobs.affected.outputs.check }}
+        value: ${{ steps.final_status.outputs.check }}
 
 jobs:
   affected:
