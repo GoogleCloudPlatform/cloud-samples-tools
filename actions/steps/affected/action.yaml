@@ -36,7 +36,6 @@ inputs:
   install-path:
     description: Path to install the Custard script to.
     default: custard.ts
-
   checkout-path:
     description: Path to check out directory to find affected packages
     default: repo-checkout
@@ -88,7 +87,7 @@ runs:
       id: custard
       shell: bash
       run: |
-        node ${{ inputs.install-path }} affected ${{ inputs.config-file }} diffs.txt | tee paths.txt
+        node ${{ inputs.install-path }} affected ${{ inputs.checkout-path }}/${{ inputs.config-file }} diffs.txt | tee paths.txt
         PATHS=$(jq -Rcn '[inputs]' paths.txt)
         echo "paths=$PATHS" >> $GITHUB_OUTPUT
         echo "num-paths=$(echo $PATHS | jq length)" >> $GITHUB_OUTPUT
