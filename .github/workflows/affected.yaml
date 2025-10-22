@@ -98,7 +98,7 @@ jobs:
           custard-version: ${{ inputs.custard-version }}
           go-version: ${{ inputs.go-version }}
       - name: Check in_progress
-        uses: .GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@f47827df87f3a3c7ced26868844e1d6cc871c3ff
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@f47827df87f3a3c7ced26868844e1d6cc871c3ff
         id: in_progress
         with:
           check: ${{ steps.queued.outputs.check }}
