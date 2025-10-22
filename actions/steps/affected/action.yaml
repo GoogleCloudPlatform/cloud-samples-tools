@@ -64,7 +64,8 @@ runs:
       with:
         ref: ${{ inputs.head-sha }}
         fetch-depth: 0 # fetch the entire branch history to find diffs
-    - name: check dir before checkout
+        clean: false # don't delete directory contents before checkout
+    - name: check dir after checkout
       run: pwd && ls
       shell: bash
     - name: Get diffs from main and the PR
