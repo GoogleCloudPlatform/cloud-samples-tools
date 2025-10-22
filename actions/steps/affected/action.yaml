@@ -51,6 +51,9 @@ outputs:
 runs:
   using: composite
   steps:
+    - name: check original setup
+      run: pwd && ls
+      shell: bash
     - name: Setup Custard
       uses: ./.cloud-samples-tools/actions/steps/setup-custard
       with:
