@@ -59,11 +59,6 @@ runs:
       uses: ./.cloud-samples-tools/actions/steps/setup-custard
       with:
         install-path: ${{ inputs.install-path }}
-    - run: node ${{ inputs.install-path }} version # affected
-      shell: bash
-    - name: check dir before checkout
-      run: pwd && ls -a
-      shell: bash
     # Find the affected packages.
     - name: Checkout the commit history
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
@@ -71,9 +66,6 @@ runs:
         ref: ${{ inputs.head-sha }}
         fetch-depth: 0 # fetch the entire branch history to find diffs
         path: ${{ inputs.checkout-path }}
-    - name: check dir after checkout
-      run: pwd && ls -a
-      shell: bash
     - name: Get diffs from main and the PR
       shell: bash
       run: |
@@ -96,7 +88,6 @@ runs:
       id: custard
       shell: bash
       run: |
-        pwd && ls
         node ${{ inputs.install-path }} affected ${{ inputs.config-file }} diffs.txt | tee paths.txt
         PATHS=$(jq -Rcn '[inputs]' paths.txt)
         echo "paths=$PATHS" >> $GITHUB_OUTPUT
