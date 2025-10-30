@@ -29,10 +29,16 @@ inputs:
     description: Comma-separated package paths instead of git diff.
   custard-version:
     description: Custard version to install.
-    default: v0.2.1
+    default: v0.5.0rc1
   go-version:
     description: Go version to build the custard tools.
     default: ^1.22.0
+  install-path:
+    description: Path to install the Custard script to.
+    default: custard.ts
+  checkout-path:
+    description: Path to check out directory to find affected packages
+    default: repo-checkout
 
 outputs:
   paths:
@@ -48,30 +54,17 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Setup Go
-      uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6
+    - name: Setup Custard
+      uses: ./.cloud-samples-tools/actions/steps/setup-custard
       with:
-        go-version: ${{ inputs.go-version }}
-    - name: Checkout Custard
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
-      with:
-        repository: GoogleCloudPlatform/cloud-samples-tools
-        ref: ${{ inputs.custard-version }}
-        path: cloud-samples-tools
-    - name: Install Custard
-      shell: bash
-      run: go install ./cmd/custard
-      working-directory: cloud-samples-tools/custard
-    - name: Clean up the workspace
-      shell: bash
-      run: rm -rf cloud-samples-tools
-
+        install-path: ${{ inputs.install-path }}
     # Find the affected packages.
     - name: Checkout the commit history
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       with:
         ref: ${{ inputs.head-sha }}
         fetch-depth: 0 # fetch the entire branch history to find diffs
+        path: ${{ inputs.checkout-path }}
     - name: Get diffs from main and the PR
       shell: bash
       run: |
@@ -83,7 +76,7 @@ runs:
             | tee diffs.txt
         else
           # Otherwise, use git diff.
-          git --no-pager diff --name-only $HEAD $MAIN \
+          git -C ${{ inputs.checkout-path }} --no-pager diff --name-only $HEAD $MAIN \
             | tee diffs.txt
         fi
       env:
@@ -94,8 +87,7 @@ runs:
       id: custard
       shell: bash
       run: |
-        PATHS=$(custard affected ${{ inputs.config-file }} diffs.txt paths.txt)
+        node ${{ inputs.install-path }} affected ${{ inputs.checkout-path }}/${{ inputs.config-file }} diffs.txt | tee paths.txt
+        PATHS=$(jq -Rcn '[inputs]' paths.txt)
         echo "paths=$PATHS" >> $GITHUB_OUTPUT
         echo "num-paths=$(echo $PATHS | jq length)" >> $GITHUB_OUTPUT
-        cat paths.txt
-        echo "ci-setups=$(custard setup-files ${{ inputs.config-file }} paths.txt)" >> $GITHUB_OUTPUT
