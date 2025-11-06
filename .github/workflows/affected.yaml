@@ -74,7 +74,7 @@ jobs:
       paths: ${{ steps.custard.outputs.paths }}
       num-paths: ${{ steps.custard.outputs.num-paths }}
       ci-setups: ${{ steps.custard.outputs.ci-setups }}
-      check: ${{ steps.in_progress.outputs.check }}
+      check: ${{ steps.final_status.outputs.check }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
       - name: Check queued
@@ -104,6 +104,14 @@ jobs:
           check: ${{ steps.queued.outputs.check }}
           status: in_progress
           title: Running ${{ steps.custard.outputs.num-paths }} package(s)
+      - name: Check success
+        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.4.0
+        id: final_status
+        if: success()
+        with:
+          check: ${{ steps.queued.outputs.check }}
+          status: success
+          title: Completed finding ${{ steps.custard.outputs.num-paths }} package(s)
       - name: Check failure
         uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check@v0.4.0
         if: failure()
