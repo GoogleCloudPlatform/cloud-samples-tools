@@ -55,7 +55,7 @@ runs:
   using: composite
   steps:
     - name: Setup Custard
-      uses: GoogleCloudSamples/.cloud-samples-tools/actions/steps/setup-custard@v0.5.0rc1
+      uses: GoogleCloudSamples/.cloud-samples-tools/actions/steps/setup-custard@ts-gigapudding
       with:
         install-path: ${{ inputs.install-path }}
     # Find the affected packages.
