@@ -38,6 +38,7 @@ runs:
   using: composite
   steps:
     - name: Update check
+      if: ${{ inputs.check }}
       uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@v0.4.0
       id: check
       with:
