@@ -78,7 +78,7 @@ jobs:
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
       - name: Check queued
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-check
+        uses: ./actions/steps/create-check
         id: queued
         with:
           sha: ${{ inputs.head-sha }}
@@ -88,7 +88,7 @@ jobs:
           job-name: ${{ github.job }}
           if: ${{ inputs.create-check-if }}
       - name: Find affected packages
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/affected
+        uses: ./actions/steps/affected
         id: custard
         with:
           config-file: ${{ inputs.config-file }}
@@ -98,7 +98,7 @@ jobs:
           custard-version: ${{ inputs.custard-version }}
           go-version: ${{ inputs.go-version }}
       - name: Check in_progress
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check
+        uses: ./actions/steps/update-check
         id: in_progress
         with:
           check: ${{ steps.queued.outputs.check }}
@@ -113,7 +113,7 @@ jobs:
           status: success
           title: Completed finding ${{ steps.custard.outputs.num-paths }} package(s)
       - name: Check failure
-        uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/update-check
+        uses: ./actions/steps/update-check
         if: failure()
         with:
           check: ${{ steps.queued.outputs.check }}
