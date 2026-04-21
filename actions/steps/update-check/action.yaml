@@ -39,7 +39,7 @@ runs:
   steps:
     - name: Update check
       if: ${{ inputs.check }}
-      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@v0.4.0
+      uses: GoogleCloudPlatform/cloud-samples-tools/actions/steps/create-status@v0.5.0rc1
       id: check
       with:
         sha: ${{ fromJson(inputs.check).sha }}
